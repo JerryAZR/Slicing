@@ -5,7 +5,7 @@
 __global__
 void pps(triangle* triangles, int num_triangles, int x_dim, int y_dim, int z_dim, bool* out) {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
-    printf("starting thread %d\n", idx);
+    // printf("starting thread %d\n", idx);
     int y = idx / x_dim;
     if (y >= y_dim) return;
     int x = idx - (y*x_dim) - (x_dim / 2);
@@ -28,7 +28,7 @@ void pps(triangle* triangles, int num_triangles, int x_dim, int y_dim, int z_dim
         flag = intersect ^ flag;
         layerIdx += intersect;
     }
-    printf("exiting thread %d\n", idx);
+    // printf("exiting thread %d\n", idx);
 }
 
 __device__
