@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
     int threadsPerBlock = 256;
     int blocksPerGrid = (NUM_LAYERS * Y_DIM * X_DIM + threadsPerBlock - 1) / threadsPerBlock;
 
-    pps<<<blocksPerGrid, threadsPerBlock, triangles.size() * sizeof(triangle)>>>(&triangles_dev[0], triangles.size(), all_dev);
+    pps<<<blocksPerGrid, threadsPerBlock>>>(&triangles_dev[0], triangles.size(), all_dev);
     cudaDeviceSynchronize();
 
     // Copy result from device memory to host memory

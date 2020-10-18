@@ -12,15 +12,16 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
     y = y - (Y_DIM / 2);
 
     // Copy triangles to shared memory
-    extern __shared__ triangle triangles[];
-    size_t num_iters = num_triangles / 256;
-    size_t i;
-    for (i = 0; i < num_iters; i++) {
-        triangles[threadIdx.x * num_iters + i] = triangles_global[threadIdx.x * num_iters + i];
-    }
-    if (num_triangles > (num_iters * 256 + threadIdx.x)) {
-        triangles[256 * num_iters + threadIdx.x] = triangles[256 * num_iters + threadIdx.x];
-    }
+    triangle * triangles  = triangles_global;
+    //extern __shared__ triangle triangles[];
+    //size_t num_iters = num_triangles / 256;
+    //size_t i;
+    //for (i = 0; i < num_iters; i++) {
+    //    triangles[threadIdx.x * num_iters + i] = triangles_global[threadIdx.x * num_iters + i];
+    //}
+    //if (num_triangles > (num_iters * 256 + threadIdx.x)) {
+    //    triangles[256 * num_iters + threadIdx.x] = triangles[256 * num_iters + threadIdx.x];
+    //}
 
     __shared__ int layers[256][NUM_LAYERS+1];
     int length = getIntersectionTrunk(x, y, triangles, num_triangles, &layers[threadIdx.x][0]);
