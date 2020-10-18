@@ -14,7 +14,8 @@ void pps(triangle* triangles, int num_triangles, int x_dim, int y_dim, int z_dim
 
     int layers[NUM_LAYERS];
     int length = getIntersectionTrunk(x, y, triangles, num_triangles, &layers[0]);
-    if(length > 1) std::sort(layers, layers+length);
+    std::sort(layers, layers+length);
+    layers[0] = layers[0] * (length >= 1) + z_dim * (length == 0);
     bool flag = false;
     bool intersect;
     size_t layerIdx = 0;

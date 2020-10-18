@@ -14,7 +14,8 @@ void pps(triangle* triangles, int num_triangles, int x_dim, int y_dim, int z_dim
     int layers[NUM_LAYERS];
     int length = getIntersectionTrunk(x, y, triangles, num_triangles, &layers[0]);
 
-    if(length > 1) thrust::sort(thrust::device, &layers[0], &layers[length-1]);
+    thrust::sort(thrust::device, layers, layers+length);
+    if (length == 0) layers[0] = z_dim;
 
     bool flag = false;
     int layerIdx = 0;
