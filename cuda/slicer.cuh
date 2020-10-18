@@ -3,18 +3,27 @@
 
 #include "triangle.cuh"
 
-#define X_MIN -100
-#define X_MAX 100
-#define Y_MIN -100
-#define Y_MAX 100
-#define X_DIM (X_MAX - X_MIN + 1)
-#define Y_DIM (Y_MAX - Y_MIN + 1)
-#define NUM_LAYERS 100
-#define RESOLUTION 1
+// in mm
+#define X_LEN 200
+#define Y_LEN 200
+#define HEIGHT 50
+#define RESOLUTION 1.2
 
-__global__ void pps(triangle* triangles, int num_triangles, int x_dim, int y_dim, int z_dim, bool* out);
+// in pixels
+#define NUM_LAYERS (size_t)(HEIGHT / RESOLUTION)
+#define X_DIM (size_t)(X_LEN / RESOLUTION)
+#define Y_DIM (size_t)(Y_LEN / RESOLUTION)
+
+#define X_MIN (long)(-1 * X_LEN / 2)
+#define X_MAX (long)(X_LEN / 2)
+#define Y_MIN (long)(-1 * Y_LEN / 2)
+#define Y_MAX (long)(Y_LEN / 2)
+
+__global__ void pps(triangle* triangles, int num_triangles, bool* out);
 // returns the layer of intersection
 __device__ int pixelRayIntersection(triangle t, int x, int y);
 __device__ int getIntersectionTrunk(int x, int y, triangle* triangles, int num_triangles, int* layers);
+
+__global__ void fps1(triangle* triangles, int num_triangles, bool* out);
 
 #endif

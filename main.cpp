@@ -19,10 +19,10 @@ int main(int argc, char* argv[]) {
     read_stl(stl_file_name,triangles);
 
     // all[z][y][x]
-    bool all[100*201*201];
+    bool all[X_DIM * Y_DIM * NUM_LAYERS];
     for (int x = 0; x < X_DIM; x++) {
         for (int y = 0; y < Y_DIM; y++) {
-            pps(triangles.data(), triangles.size(), X_DIM, Y_DIM, NUM_LAYERS, &all[0], y*X_DIM + x);
+            pps(triangles.data(), triangles.size(), &all[0], y*X_DIM + x);
         }
     }
 

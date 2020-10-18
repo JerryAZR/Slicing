@@ -3,33 +3,48 @@
 #include <stdio.h>
 
 __global__
-void pps(triangle* triangles, int num_triangles, int x_dim, int y_dim, int z_dim, bool* out) {
+void pps(triangle* triangles, int num_triangles, bool* out) {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
     // printf("starting thread %d\n", idx);
-    int y = idx / x_dim;
-    if (y >= y_dim) return;
-    int x = idx % x_dim - (x_dim / 2);
-    y = y - (y_dim / 2);
+    int y = idx / X_DIM;
+    if (y >= Y_DIM) return;
+    int x = idx % X_DIM - (X_DIM / 2);
+    y = y - (Y_DIM / 2);
 
     int layers[NUM_LAYERS];
     int length = getIntersectionTrunk(x, y, triangles, num_triangles, &layers[0]);
 
     thrust::sort(thrust::device, layers, layers+length);
-    if (length == 0) layers[0] = z_dim;
+    if (length == 0) layers[0] = NUM_LAYERS;
 
     bool flag = false;
     int layerIdx = 0;
-    for (int z = 0; z < z_dim; z++) {
+    for (int z = 0; z < NUM_LAYERS; z++) {
         // If intersect
-        int x_idx = x + (x_dim / 2);
-        int y_idx = y + (y_dim / 2);
+        int x_idx = x + (X_DIM / 2);
+        int y_idx = y + (Y_DIM / 2);
         // std::cout << "(z,y,x) = " << z << ", " << y_idx << ", " << x_idx << std::endl;
         bool intersect = (z == layers[layerIdx]);
-        out[z*y_dim*x_dim + y_idx*x_dim + x_idx] = intersect || flag;
+        out[z*Y_DIM*X_DIM + y_idx*X_DIM + x_idx] = intersect || flag;
         flag = intersect ^ flag;
         layerIdx += intersect;
     }
     // printf("exiting thread %d\n", idx);
+}
+
+__global__
+void fps1(triangle* triangles, int num_triangles, bool* out) {
+    size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
+    size_t tri_idx = idx / (X_DIM * Y_DIM);
+    if (tri_idx >= num_triangles) return;
+    int y_idx = (idx - (tri_idx * X_DIM * Y_DIM)) / X_DIM;
+    int x_idx = (idx - (tri_idx * X_DIM * Y_DIM)) % X_DIM;
+
+    int x = x_idx - (X_DIM / 2);
+    int y = y_idx - (Y_DIM / 2);
+
+    // __shared__ int layers[256][NUM_LAYERS];
+    // __shared__ bool locks[256] = {false};
 }
 
 __device__

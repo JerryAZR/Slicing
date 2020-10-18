@@ -5,27 +5,27 @@
 using std::cout;
 using std::endl;
 
-void pps(triangle* triangles, int num_triangles, int x_dim, int y_dim, int z_dim, bool* out, unsigned id) {
+void pps(triangle* triangles, int num_triangles, bool* out, unsigned id) {
     unsigned idx = id;
-    int y = idx / x_dim;
-    if (y >= y_dim) return;
-    int x = idx - (y*x_dim) - (x_dim / 2);
-    y = y - (y_dim / 2);
+    int y = idx / X_DIM;
+    if (y >= Y_DIM) return;
+    int x = idx - (y*X_DIM) - (X_DIM / 2);
+    y = y - (Y_DIM / 2);
 
     int layers[NUM_LAYERS];
     int length = getIntersectionTrunk(x, y, triangles, num_triangles, &layers[0]);
     std::sort(layers, layers+length);
-    layers[0] = layers[0] * (length >= 1) + z_dim * (length == 0);
+    layers[0] = layers[0] * (length >= 1) + NUM_LAYERS * (length == 0);
     bool flag = false;
     bool intersect;
     size_t layerIdx = 0;
     size_t outIdx;
-    int x_idx = x + (x_dim / 2);
-    int y_idx = y + (y_dim / 2);
-    for (int z = 0; z < z_dim; z++) {
+    int x_idx = x + (X_DIM / 2);
+    int y_idx = y + (Y_DIM / 2);
+    for (int z = 0; z < NUM_LAYERS; z++) {
         // If intersect
         intersect = (z == layers[layerIdx]);
-        outIdx = z*y_dim*x_dim + y_idx*x_dim + x_idx;
+        outIdx = z*Y_DIM*X_DIM + y_idx*X_DIM + x_idx;
         out[outIdx] = intersect || flag;
         flag = intersect ^ flag;
         if (intersect)
