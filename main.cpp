@@ -19,18 +19,17 @@ int main(int argc, char* argv[]) {
     read_stl(stl_file_name,triangles);
 
     // all[z][y][x]
-    bool all[100][201][201];
-    
+    bool all[100*201*201];
     for (int x = 0; x < X_DIM; x++) {
-        for (int y = Y_MIN; y < Y_DIM; y++) {
-            pps(triangles.data(), triangles.size(), X_DIM, Y_DIM, NUM_LAYERS, &all[0][0][0], y*X_DIM + x);
+        for (int y = 0; y < Y_DIM; y++) {
+            pps(triangles.data(), triangles.size(), X_DIM, Y_DIM, NUM_LAYERS, &all[0], y*X_DIM + x);
         }
     }
 
     // Visualize
     for (int y = 200; y > 0; y--) {
-        for (int x = 50; x <150> 0; x++) {
-            if (all[8][y][x]) std::cout << "x";
+        for (int x = 25; x < 175; x++) {
+            if (all[8*X_DIM*Y_DIM + y*X_DIM + x]) std::cout << "x";
             else std::cout << " ";
         }
         std::cout << std::endl;

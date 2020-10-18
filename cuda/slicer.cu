@@ -8,7 +8,7 @@ void pps(triangle* triangles, int num_triangles, int x_dim, int y_dim, int z_dim
     printf("starting thread %d\n", idx);
     int y = idx / x_dim;
     if (y >= y_dim) return;
-    int x = idx - (y*x_dim) - (x_dim / 2);
+    int x = idx % x_dim - (x_dim / 2);
     y = y - (y_dim / 2);
 
     int layers[NUM_LAYERS];

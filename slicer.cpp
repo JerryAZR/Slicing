@@ -5,32 +5,30 @@
 using std::cout;
 using std::endl;
 
-void pps(triangle* triangles, int num_triangles, int x_dim, int y_dim, int z_dim, bool* out, int id) {
-    int idx = id;
+void pps(triangle* triangles, int num_triangles, int x_dim, int y_dim, int z_dim, bool* out, unsigned id) {
+    unsigned idx = id;
     int y = idx / x_dim;
     if (y >= y_dim) return;
     int x = idx - (y*x_dim) - (x_dim / 2);
     y = y - (y_dim / 2);
+
     int layers[NUM_LAYERS];
     int length = getIntersectionTrunk(x, y, triangles, num_triangles, &layers[0]);
-    if(length > 1) std::sort(&layers[0], &layers[length-1]);
+    if(length > 1) std::sort(layers, layers+length);
     bool flag = false;
     bool intersect;
-    int layerIdx = 0;
-    int x_idx, y_idx;
+    size_t layerIdx = 0;
+    size_t outIdx;
+    int x_idx = x + (x_dim / 2);
+    int y_idx = y + (y_dim / 2);
     for (int z = 0; z < z_dim; z++) {
         // If intersect
-        x_idx = x + (x_dim / 2);
-        y_idx = y + (y_dim / 2);
-        // std::cout << "(z,y,x) = " << z << ", " << y_idx << ", " << x_idx << std::endl;
-        // cout << "layerIdx: " << (int)layerIdx << endl;
         intersect = (z == layers[layerIdx]);
-        out[z*y_dim*x_dim + y_idx*x_dim + x_idx] = intersect || flag;
+        outIdx = z*y_dim*x_dim + y_idx*x_dim + x_idx;
+        out[outIdx] = intersect || flag;
         flag = intersect ^ flag;
-        // cout << "intersect: " << (int)intersect << endl;
         if (intersect)
         layerIdx++;
-        // cout << "layerIdxNew: " << (int)layerIdx << endl;
     }
 }
 

@@ -16,5 +16,5 @@
 // returns the layer of intersection
 int pixelRayIntersection(triangle t, int x, int y);
 int getIntersectionTrunk(int x, int y, triangle* triangles, int num_triangles, int* layers);
-void pps(triangle* triangles, int num_triangles, int x_dim, int y_dim, int z_dim, bool* out, int id);
+void pps(triangle* triangles, int num_triangles, int x_dim, int y_dim, int z_dim, bool* out, unsigned id);
 #endif
