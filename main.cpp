@@ -21,31 +21,9 @@ int main(int argc, char* argv[]) {
     // all[z][y][x]
     bool all[100][201][201];
     
-    for (int x = X_MIN; x <= X_MAX; x++) {
-        for (int y = Y_MIN; y <= Y_MAX; y++) {
-
-            // std::cout << "Step 1: get all intersections" << std::endl;
-            std::vector<int> layers;
-            getIntersectionTrunk(x, y, triangles, layers);
-
-            // std::cout << "Step 2: trunk sorting" << std::endl;
-            std::sort(layers.begin(),layers.end());
-
-            // Step 3: layer extraction
-            // std::cout << "Step 3: layer extraction" << std::endl;
-            bool flag = false;
-            int layerIdx = 0;
-            layers.push_back(NUM_LAYERS);
-            for (int z = 0; z < NUM_LAYERS; z++) {
-                // If intersect
-                int x_idx = x + 100;
-                int y_idx = y + 100;
-                // std::cout << "(z,y,x) = " << z << ", " << y_idx << ", " << x_idx << std::endl;
-                bool intersect = (z == layers[layerIdx]);
-                all[z][y_idx][x_idx] = intersect || flag;
-                flag = intersect ^ flag;
-                layerIdx += intersect;
-            }
+    for (int x = 0; x < X_DIM; x++) {
+        for (int y = Y_MIN; y < Y_DIM; y++) {
+            pps(triangles.data(), triangles.size(), X_DIM, Y_DIM, NUM_LAYERS, &all[0][0][0], y*X_DIM + x);
         }
     }
 

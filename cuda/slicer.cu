@@ -1,39 +1,37 @@
-#include "slicer.hpp"
-#include <algorithm>
-#include <iostream>
+#include "slicer.cuh"
+#include <thrust/sort.h>
+#include <stdio.h>
 
-using std::cout;
-using std::endl;
-
-void pps(triangle* triangles, int num_triangles, int x_dim, int y_dim, int z_dim, bool* out, int id) {
-    int idx = id;
+__global__
+void pps(triangle* triangles, int num_triangles, int x_dim, int y_dim, int z_dim, bool* out) {
+    int idx = blockDim.x * blockIdx.x + threadIdx.x;
+    printf("starting thread %d\n", idx);
     int y = idx / x_dim;
     if (y >= y_dim) return;
     int x = idx - (y*x_dim) - (x_dim / 2);
     y = y - (y_dim / 2);
+
     int layers[NUM_LAYERS];
     int length = getIntersectionTrunk(x, y, triangles, num_triangles, &layers[0]);
-    if(length > 1) std::sort(&layers[0], &layers[length-1]);
+
+    if(length > 1) thrust::sort(thrust::device, &layers[0], &layers[length-1]);
+
     bool flag = false;
-    bool intersect;
     int layerIdx = 0;
-    int x_idx, y_idx;
     for (int z = 0; z < z_dim; z++) {
         // If intersect
-        x_idx = x + (x_dim / 2);
-        y_idx = y + (y_dim / 2);
+        int x_idx = x + (x_dim / 2);
+        int y_idx = y + (y_dim / 2);
         // std::cout << "(z,y,x) = " << z << ", " << y_idx << ", " << x_idx << std::endl;
-        // cout << "layerIdx: " << (int)layerIdx << endl;
-        intersect = (z == layers[layerIdx]);
+        bool intersect = (z == layers[layerIdx]);
         out[z*y_dim*x_dim + y_idx*x_dim + x_idx] = intersect || flag;
         flag = intersect ^ flag;
-        // cout << "intersect: " << (int)intersect << endl;
-        if (intersect)
-        layerIdx++;
-        // cout << "layerIdxNew: " << (int)layerIdx << endl;
+        layerIdx += intersect;
     }
+    printf("exiting thread %d\n", idx);
 }
 
+__device__
 int pixelRayIntersection(triangle t, int x, int y) {
     /*
     Let A, B, C be the 3 vertices of the given triangle
@@ -60,6 +58,7 @@ int pixelRayIntersection(triangle t, int x, int y) {
     return layer;
 }
 
+__device__
 int getIntersectionTrunk(int x, int y, triangle* triangles, int num_triangles, int* layers) {
     int idx = 0;
     for (int i = 0; i < num_triangles; i++) {
