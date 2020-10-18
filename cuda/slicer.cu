@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 __global__
-void pps(triangle* triangles, int num_triangles, bool* out) {
+void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
     // printf("starting thread %d\n", idx);
     int y = idx / X_DIM;
@@ -11,11 +11,22 @@ void pps(triangle* triangles, int num_triangles, bool* out) {
     int x = idx % X_DIM - (X_DIM / 2);
     y = y - (Y_DIM / 2);
 
-    int layers[NUM_LAYERS];
-    int length = getIntersectionTrunk(x, y, triangles, num_triangles, &layers[0]);
+    // Copy triangles to shared memory
+    extern __shared__ triangle triangles[];
+    size_t num_iters = num_triangles / 256;
+    size_t i;
+    for (i = 0; i < num_iters; i++) {
+        triangles[threadIdx.x * num_iters + i] = triangles_global[threadIdx.x * num_iters + i];
+    }
+    if (num_triangles > (num_iters * 256 + threadIdx.x)) {
+        triangles[256 * num_iters + threadIdx.x] = triangles[256 * num_iters + threadIdx.x];
+    }
 
-    thrust::sort(thrust::device, layers, layers+length);
-    if (length == 0) layers[0] = NUM_LAYERS;
+    __shared__ int layers[256][NUM_LAYERS+1];
+    int length = getIntersectionTrunk(x, y, triangles, num_triangles, &layers[threadIdx.x][0]);
+
+    thrust::sort(thrust::device, &layers[threadIdx.x][0], &layers[threadIdx.x][length]);
+    layers[threadIdx.x][length] = NUM_LAYERS;
 
     bool flag = false;
     int layerIdx = 0;
@@ -24,7 +35,7 @@ void pps(triangle* triangles, int num_triangles, bool* out) {
         int x_idx = x + (X_DIM / 2);
         int y_idx = y + (Y_DIM / 2);
         // std::cout << "(z,y,x) = " << z << ", " << y_idx << ", " << x_idx << std::endl;
-        bool intersect = (z == layers[layerIdx]);
+        bool intersect = (z == layers[threadIdx.x][layerIdx]);
         out[z*Y_DIM*X_DIM + y_idx*X_DIM + x_idx] = intersect || flag;
         flag = intersect ^ flag;
         layerIdx += intersect;
@@ -33,7 +44,7 @@ void pps(triangle* triangles, int num_triangles, bool* out) {
 }
 
 __global__
-void fps1(triangle* triangles, int num_triangles, bool* out) {
+void fps1(triangle* triangles, size_t num_triangles, bool* out) {
     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
     size_t tri_idx = idx / (X_DIM * Y_DIM);
     if (tri_idx >= num_triangles) return;
@@ -75,7 +86,7 @@ int pixelRayIntersection(triangle t, int x, int y) {
 }
 
 __device__
-int getIntersectionTrunk(int x, int y, triangle* triangles, int num_triangles, int* layers) {
+int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles, int* layers) {
     int idx = 0;
     for (int i = 0; i < num_triangles; i++) {
         int layer = pixelRayIntersection(triangles[i], x, y);

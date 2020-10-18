@@ -19,11 +19,11 @@
 #define Y_MIN (long)(-1 * Y_LEN / 2)
 #define Y_MAX (long)(Y_LEN / 2)
 
-__global__ void pps(triangle* triangles, int num_triangles, bool* out);
+__global__ void pps(triangle* triangles, size_t num_triangles, bool* out);
 // returns the layer of intersection
 __device__ int pixelRayIntersection(triangle t, int x, int y);
-__device__ int getIntersectionTrunk(int x, int y, triangle* triangles, int num_triangles, int* layers);
+__device__ int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles, int* layers);
 
-__global__ void fps1(triangle* triangles, int num_triangles, bool* out);
+__global__ void fps1(triangle* triangles, size_t num_triangles, bool* out);
 
 #endif
