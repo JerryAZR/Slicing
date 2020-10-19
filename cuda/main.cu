@@ -4,7 +4,7 @@
 #include "slicer.cuh"
 #include <vector>
 
-#define PPS 1
+#define PPS 0
 
 
 int main(int argc, char* argv[]) {
@@ -55,6 +55,10 @@ int main(int argc, char* argv[]) {
     blocksPerGrid = (X_DIM * Y_DIM * NUM_LAYERS + threadsPerBlock - 1) / threadsPerBlock;
     fps3<<<blocksPerGrid, threadsPerBlock>>>(all_intersections, trunk_length, all_dev);
     cudaDeviceSynchronize();
+
+    cudaFree(all_intersections);
+    cudaFree(trunk_length);
+    cudaFree(locks);
 #endif
     // Copy result from device memory to host memory
     cudaMemcpy(&all[0][0][0], all_dev, size, cudaMemcpyDeviceToHost);

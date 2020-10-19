@@ -65,10 +65,11 @@ void fps1(triangle* triangles, size_t num_triangles, int* all_intersections, siz
     bool run = (intersection != -1);
     while (run) {
         if(atomicCAS(lock, 0, 1) == 0) {
+	    printf("Got Lock\n");
             layers[length[0]] = intersection;
             length[0]++;
+	    run = false;
             atomicExch(lock, 0);
-            run = false
         }
     }
 }
@@ -93,6 +94,7 @@ __global__
 void fps3(int* sorted_intersections, size_t* trunk_length, bool* out) {
     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
     int z_idx = idx / (X_DIM * Y_DIM);
+    if (z_idx >= NUM_LAYERS) return;
     int y_idx = (idx - (z_idx * X_DIM * Y_DIM)) / X_DIM;
     int x_idx = (idx - (z_idx * X_DIM * Y_DIM)) % X_DIM;
 
