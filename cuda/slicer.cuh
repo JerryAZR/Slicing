@@ -24,6 +24,8 @@ __global__ void pps(triangle* triangles, size_t num_triangles, bool* out);
 __device__ int pixelRayIntersection(triangle t, int x, int y);
 __device__ int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles, int* layers);
 
-__global__ void fps1(triangle* triangles, size_t num_triangles, bool* out);
+__global__ void fps1(triangle* triangles, size_t num_triangles, int* all_intersections, size_t* trunk_length, int* locks);
+__global__ void fps2(int* all_intersections, size_t* trunk_length);
+__global__ void fps3(int* sorted_intersections, size_t* trunk_length, bool* out);
 
 #endif

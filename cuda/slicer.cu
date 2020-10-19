@@ -1,5 +1,7 @@
 #include "slicer.cuh"
 #include <thrust/sort.h>
+#include <thrust/binary_search.h>
+#include <thrust/count.h>
 #include <stdio.h>
 
 __global__
@@ -45,7 +47,7 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
 }
 
 __global__
-void fps1(triangle* triangles, size_t num_triangles, bool* out) {
+void fps1(triangle* triangles, size_t num_triangles, int* all_intersections, size_t* trunk_length, int* locks) {
     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
     size_t tri_idx = idx / (X_DIM * Y_DIM);
     if (tri_idx >= num_triangles) return;
@@ -55,8 +57,49 @@ void fps1(triangle* triangles, size_t num_triangles, bool* out) {
     int x = x_idx - (X_DIM / 2);
     int y = y_idx - (Y_DIM / 2);
 
-    // __shared__ int layers[256][NUM_LAYERS];
-    // __shared__ bool locks[256] = {false};
+    // all_intersections[y][x][layer]
+    int* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
+    int* lock = locks + y_idx * X_DIM + x_idx;
+    size_t* length = 0;
+    int intersection = pixelRayIntersection(triangles[tri_idx], x, y);
+    bool run = (intersection != -1);
+    while (run) {
+        if(atomicCAS(lock, 0, 1) == 0) {
+            layers[*length] = intersection;
+            (*length)++;
+            atomicExch(lock, 0);
+        }
+    }
+}
+
+__global__
+void fps2(int* all_intersections, size_t* trunk_length) {
+    size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
+    if (idx >= X_DIM * Y_DIM) return;
+    size_t length = trunk_length[idx];
+    int* curr_trunk = all_intersections + (idx * NUM_LAYERS);
+    thrust::sort(thrust::device, curr_trunk, curr_trunk + length);
+}
+
+struct lessThan
+{
+  __host__ __device__ lessThan(int x) : target(x) {}
+  __host__ __device__ bool operator()(const int& curr) { return curr < target; }
+  int target;
+};
+
+__global__
+void fps3(int* sorted_intersections, size_t* trunk_length, bool* out) {
+    size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
+    int z_idx = idx / (X_DIM * Y_DIM);
+    int y_idx = (idx - (z_idx * X_DIM * Y_DIM)) / X_DIM;
+    int x_idx = (idx - (z_idx * X_DIM * Y_DIM)) % X_DIM;
+
+    size_t length = trunk_length[y_idx * X_DIM + x_idx];
+    int* intersection_trunk = sorted_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
+    bool inside = (bool) (thrust::count_if(thrust::device, intersection_trunk, intersection_trunk + length, lessThan(z_idx)));
+    bool edge = thrust::binary_search(thrust::device, intersection_trunk, intersection_trunk + length, z_idx);
+    out[idx] = inside || edge;
 }
 
 __device__

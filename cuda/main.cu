@@ -4,6 +4,8 @@
 #include "slicer.cuh"
 #include <vector>
 
+#define PPS 1
+
 
 int main(int argc, char* argv[]) {
     std::string stl_file_name;
@@ -28,11 +30,31 @@ int main(int argc, char* argv[]) {
     cudaMemcpy(triangles_dev, triangles.data(), num_triangles * sizeof(triangle), cudaMemcpyHostToDevice);
 
     int threadsPerBlock = 256;
-    int blocksPerGrid = (NUM_LAYERS * Y_DIM * X_DIM + threadsPerBlock - 1) / threadsPerBlock;
+    int blocksPerGrid;
 
+#if(PPS == 1)
+    blocksPerGrid = (NUM_LAYERS * Y_DIM * X_DIM + threadsPerBlock - 1) / threadsPerBlock;
     pps<<<blocksPerGrid, threadsPerBlock>>>(&triangles_dev[0], triangles.size(), all_dev);
     cudaDeviceSynchronize();
+#else
+    int* all_intersections;
+    cudaMalloc(&all_intersections, Y_DIM * X_DIM * NUM_LAYERS * sizeof(int));
+    size_t* trunk_length;
+    cudaMalloc(&trunk_length, Y_DIM * X_DIM * sizeof(size_t));
+    cudaMemset(trunk_length, 0, Y_DIM * X_DIM * sizeof(size_t));
+    int* locks;
+    cudaMalloc(&locks, Y_DIM * X_DIM * sizeof(int));
+    cudaMemset(locks, 0, Y_DIM * X_DIM * sizeof(int));
 
+    blocksPerGrid = (num_triangles * Y_DIM * X_DIM + threadsPerBlock - 1) / threadsPerBlock;
+    fps1<<<blocksPerGrid, threadsPerBlock>>>(&triangles_dev[0], num_triangles, all_intersections, trunk_length, locks);
+    cudaDeviceSynchronize();
+    blocksPerGrid = (X_DIM * Y_DIM + threadsPerBlock - 1) / threadsPerBlock;
+    fps2<<<blocksPerGrid, threadsPerBlock>>>(all_intersections, trunk_length);
+    cudaDeviceSynchronize();
+    blocksPerGrid = (X_DIM * Y_DIM * NUM_LAYERS + threadsPerBlock - 1) / threadsPerBlock;
+    fps3<<<blocksPerGrid, threadsPerBlock>>>(all_intersections, trunk_length, all_dev);
+#endif
     // Copy result from device memory to host memory
     cudaMemcpy(&all[0][0][0], all_dev, size, cudaMemcpyDeviceToHost);
 
