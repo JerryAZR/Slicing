@@ -8,7 +8,7 @@
 #define X_LEN 200
 #define Y_LEN 200
 #define HEIGHT 50
-#define RESOLUTION 0.8
+#define RESOLUTION 2
 
 // in pixels
 #define NUM_LAYERS (size_t)(HEIGHT / RESOLUTION)
@@ -25,4 +25,8 @@
 int pixelRayIntersection(triangle t, int x, int y);
 int getIntersectionTrunk(int x, int y, triangle* triangles, int num_triangles, int* layers);
 void pps(triangle* triangles, int num_triangles, bool* out, unsigned id);
+
+void fps1(triangle* triangles, size_t num_triangles, int* all_intersections, size_t* trunk_length, int* locks, long id);
+void fps2(int* all_intersections, size_t* trunk_length, long id);
+void fps3(int* sorted_intersections, size_t* trunk_length, bool* out, long id);
 #endif

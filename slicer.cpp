@@ -33,6 +33,56 @@ void pps(triangle* triangles, int num_triangles, bool* out, unsigned id) {
     }
 }
 
+void fps1(triangle* triangles, size_t num_triangles, int* all_intersections, size_t* trunk_length, int* locks, long id) {
+    size_t idx = id;
+    size_t tri_idx = idx / (X_DIM * Y_DIM);
+    if (tri_idx >= num_triangles) return;
+    int y_idx = (idx - (tri_idx * X_DIM * Y_DIM)) / X_DIM;
+    int x_idx = (idx - (tri_idx * X_DIM * Y_DIM)) % X_DIM;
+
+    int x = x_idx - (X_DIM / 2);
+    int y = y_idx - (Y_DIM / 2);
+
+    // all_intersections[y][x][layer]
+    int* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
+    int* lock = locks + y_idx * X_DIM + x_idx;
+    size_t* length = trunk_length + y_idx * X_DIM + x_idx;
+    int intersection = pixelRayIntersection(triangles[tri_idx], x, y);
+    bool run = (intersection != -1);
+    while (run) {
+        layers[length[0]] = intersection;
+        length[0]++;
+        run = false;
+    }
+}
+
+void fps2(int* all_intersections, size_t* trunk_length, long id) {
+    size_t idx = id;
+    if (idx >= X_DIM * Y_DIM) return;
+    size_t length = trunk_length[idx];
+    int* curr_trunk = all_intersections + (idx * NUM_LAYERS);
+    std::sort(curr_trunk, curr_trunk + length);
+}
+
+struct lessThan
+{
+    lessThan(int x) : target(x) {}
+    bool operator()(const int& curr) { return curr < target; }
+    int target;
+};
+
+void fps3(int* sorted_intersections, size_t* trunk_length, bool* out, long id) {
+    size_t idx = id;
+    int z_idx = idx / (X_DIM * Y_DIM);
+    int y_idx = (idx - (z_idx * X_DIM * Y_DIM)) / X_DIM;
+    int x_idx = (idx - (z_idx * X_DIM * Y_DIM)) % X_DIM;
+
+    size_t length = trunk_length[y_idx * X_DIM + x_idx];
+    int* intersection_trunk = sorted_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
+    bool inside = (bool) (1 & std::count_if(intersection_trunk, intersection_trunk + length, lessThan(z_idx)));
+    bool edge = std::binary_search(intersection_trunk, intersection_trunk + length, z_idx);
+    out[idx] = inside || edge;
+}
 int pixelRayIntersection(triangle t, int x, int y) {
     /*
     Let A, B, C be the 3 vertices of the given triangle

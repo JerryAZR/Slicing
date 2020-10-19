@@ -33,8 +33,8 @@ int main(int argc, char* argv[]) {
     int blocksPerGrid;
 
 #if(PPS == 1)
-    blocksPerGrid = (NUM_LAYERS * Y_DIM * X_DIM + threadsPerBlock - 1) / threadsPerBlock;
-    pps<<<blocksPerGrid, threadsPerBlock>>>(&triangles_dev[0], triangles.size(), all_dev);
+    blocksPerGrid = (Y_DIM * X_DIM + threadsPerBlock - 1) / threadsPerBlock;
+    pps<<<blocksPerGrid, threadsPerBlock>>>(&triangles_dev[0], num_triangles, all_dev);
     cudaDeviceSynchronize();
 #else
     int* all_intersections;
@@ -54,6 +54,7 @@ int main(int argc, char* argv[]) {
     cudaDeviceSynchronize();
     blocksPerGrid = (X_DIM * Y_DIM * NUM_LAYERS + threadsPerBlock - 1) / threadsPerBlock;
     fps3<<<blocksPerGrid, threadsPerBlock>>>(all_intersections, trunk_length, all_dev);
+    cudaDeviceSynchronize();
 #endif
     // Copy result from device memory to host memory
     cudaMemcpy(&all[0][0][0], all_dev, size, cudaMemcpyDeviceToHost);
