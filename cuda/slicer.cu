@@ -65,7 +65,6 @@ void fps1(triangle* triangles, size_t num_triangles, int* all_intersections, siz
     bool run = (intersection != -1);
     while (run) {
         if(atomicCAS(lock, 0, 1) == 0) {
-	    printf("Got Lock\n");
             layers[length[0]] = intersection;
             length[0]++;
 	    run = false;
@@ -100,8 +99,8 @@ void fps3(int* sorted_intersections, size_t* trunk_length, bool* out) {
 
     size_t length = trunk_length[y_idx * X_DIM + x_idx];
     int* intersection_trunk = sorted_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
+    bool edge = 0 < thrust::count(thrust::device, intersection_trunk, intersection_trunk + length, z_idx);
     bool inside = (bool) (1 & thrust::count_if(thrust::device, intersection_trunk, intersection_trunk + length, lessThan(z_idx)));
-    bool edge = thrust::binary_search(thrust::device, intersection_trunk, intersection_trunk + length, z_idx);
     out[idx] = inside || edge;
 }
 
