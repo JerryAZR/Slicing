@@ -45,11 +45,12 @@ void read_stl(string fname, vector <triangle>&v) {
     if (myFile) {
         myFile.read (nTri, 4);
         nTriLong = *((unsigned long*)nTri) ;
-        cout <<"Number of triangles: " << nTriLong << endl;
     }
     else{
         cout << "error" << endl;
     }
+
+    nTriLong = 0;
 
     //now read in all the triangles
     for(int i = 0; i < nTriLong; i++){
@@ -68,8 +69,10 @@ void read_stl(string fname, vector <triangle>&v) {
             v3 p3(facet+36);
             //add a new triangle to the array
             v.push_back( triangle(p1,p2,p3) );
+            nTriLong++;
         }
     }
+    cout <<"Number of triangles: " << nTriLong << endl;
 
     return;
 
