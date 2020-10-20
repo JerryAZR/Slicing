@@ -14,22 +14,32 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
     y = y - (Y_DIM / 2);
 
     // Copy triangles to shared memory
-    triangle * triangles  = triangles_global;
-    //extern __shared__ triangle triangles[];
-    //size_t num_iters = num_triangles / 256;
-    //size_t i;
-    //for (i = 0; i < num_iters; i++) {
-    //    triangles[threadIdx.x * num_iters + i] = triangles_global[threadIdx.x * num_iters + i];
-    //}
-    //if (num_triangles > (num_iters * 256 + threadIdx.x)) {
-    //    triangles[256 * num_iters + threadIdx.x] = triangles[256 * num_iters + threadIdx.x];
-    //}
+    // Each block has a shared memory storing some triangles.
+    __shared__ triangle triangles[256];
+    size_t num_iters = num_triangles / 256;
+    int length = 0;
+    int layers_local[NUM_LAYERS+1];
+    int* layers = &layers_local[0];
+    for (size_t i = 0; i < num_iters; i++) {
+        triangles[threadIdx.x + (i * 256)] = triangles_global[threadIdx.x + (i * 256)];
+        // Wait for other threads to complete;
+        __syncthreads();
+        length += getIntersectionTrunk(x, y, triangles, 256, layers);
+        layers = &layers_local[length]; // update pointer value
+    }
+    size_t remaining = num_triangles - (num_iters * 256);
+    if (threadIdx.x < remaining) {
+        triangles[threadIdx.x + (num_iters * 256)] = triangles_global[threadIdx.x + (num_iters * 256)];
+        __syncthreads();
+    }
+    if (remaining) {
+        length += getIntersectionTrunk(x, y, triangles, remaining, layers);
+        layers = &layers_local[length]; // update pointer value
+    }
 
-    __shared__ int layers[256][NUM_LAYERS+1];
-    int length = getIntersectionTrunk(x, y, triangles, num_triangles, &layers[threadIdx.x][0]);
-
-    thrust::sort(thrust::device, &layers[threadIdx.x][0], &layers[threadIdx.x][length]);
-    layers[threadIdx.x][length] = NUM_LAYERS;
+    layers = &layers_local[0]; // reset to beginning
+    thrust::sort(thrust::device, &layers[0], &layers[length]);
+    layers[length] = NUM_LAYERS;
 
     bool flag = false;
     int layerIdx = 0;
@@ -37,13 +47,11 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
         // If intersect
         int x_idx = x + (X_DIM / 2);
         int y_idx = y + (Y_DIM / 2);
-        // std::cout << "(z,y,x) = " << z << ", " << y_idx << ", " << x_idx << std::endl;
-        bool intersect = (z == layers[threadIdx.x][layerIdx]);
+        bool intersect = (z == layers[layerIdx]);
         out[z*Y_DIM*X_DIM + y_idx*X_DIM + x_idx] = intersect || flag;
         flag = intersect ^ flag;
         layerIdx += intersect;
     }
-    // printf("exiting thread %d\n", idx);
 }
 
 __global__
@@ -67,7 +75,7 @@ void fps1(triangle* triangles, size_t num_triangles, int* all_intersections, siz
         if(atomicCAS(lock, 0, 1) == 0) {
             layers[length[0]] = intersection;
             length[0]++;
-	    run = false;
+            run = false;
             atomicExch(lock, 0);
         }
     }

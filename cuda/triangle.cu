@@ -19,30 +19,8 @@ v3::v3(char* facet)
 
 v3::v3(double x, double y, double z) : x(x), y(y), z(z) {}
 
-void v3::display() {
-    cout << "(" << x << ", " << y << ", " << z << ")" << endl;
-}
-
-v3 v3::operator+(v3 ptr) {
-    return v3(x + ptr.x, y + ptr.y, z + ptr.z);
-}
-v3 v3::operator-(v3 ptr) {
-    return v3(x - ptr.x, y - ptr.y, z - ptr.z);
-}
-v3 v3::operator*(double a) {
-    return v3(x * a, y * a, z * a);
-}
-
 //triangle class
 triangle::triangle(v3 p1, v3 p2, v3 p3) : p1(p1), p2(p2), p3(p3) {}
-
-void triangle::display() {
-    cout << "----------------" << endl;
-    p1.display();
-    p2.display();
-    p3.display();
-    cout << "----------------" << endl;
-}
 
 // util
 __host__

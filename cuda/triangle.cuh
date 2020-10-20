@@ -14,28 +14,25 @@
 using std::string;
 using std::vector;
 
-class v3
+typedef
+struct v3
 {
     public:
     __host__ __device__ v3(char* bin);
     __host__ __device__ v3(double x = 0.0, double y = 0.0, double z = 0.0);
     // ~v3();
-    __host__ void display();
-    __host__ __device__ v3 operator+(v3 ptr);
-    __host__ __device__ v3 operator-(v3 ptr);
-    __host__ __device__ v3 operator*(double a);
 
     double x, y, z;
-};
+} v3;
 
-class triangle
+typedef
+struct triangle
 {
     public:
     __host__ __device__ triangle(v3 p1 = v3(), v3 p2 = v3(), v3 p3 = v3());
     // ~triangle();
-    __host__ void display();
     v3 p1, p2, p3;
-};
+} triangle;
 
 // utils
 __host__ void read_stl(string fname, vector<triangle>&v);

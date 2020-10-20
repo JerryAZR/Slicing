@@ -33,7 +33,40 @@ void pps(triangle* triangles, int num_triangles, bool* out, unsigned id) {
     }
 }
 
+int atomicCAS(int* ptr, int cmp, int val) {
+    int temp = *ptr;
+    if (temp == cmp) *ptr = val;
+    return (temp == cmp) ? temp : val;
+}
+
+int atomicExch(int* ptr, int val) {
+    int temp = *ptr;
+    *ptr = val;
+    return temp;
+}
 void fps1(triangle* triangles, size_t num_triangles, int* all_intersections, size_t* trunk_length, int* locks, long id) {
+    // size_t idx = id;
+    // size_t tri_idx = idx / (X_DIM * Y_DIM);
+    // if (tri_idx >= num_triangles) return;
+    // int y_idx = (idx - (tri_idx * X_DIM * Y_DIM)) / X_DIM;
+    // int x_idx = (idx - (tri_idx * X_DIM * Y_DIM)) % X_DIM;
+
+    // int x = x_idx - (X_DIM / 2);
+    // int y = y_idx - (Y_DIM / 2);
+
+    // // all_intersections[y][x][layer]
+    // int* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
+    // int* lock = locks + y_idx * X_DIM + x_idx;
+    // size_t* length = trunk_length + y_idx * X_DIM + x_idx;
+    // int intersection = pixelRayIntersection(triangles[tri_idx], x, y);
+    // bool run = (intersection != -1);
+    // while (run) {
+    //     if(*lock == 0) {
+    //         layers[length[0]] = intersection;
+    //         length[0]++;
+    //         run = false;
+    //     }
+    // }
     size_t idx = id;
     size_t tri_idx = idx / (X_DIM * Y_DIM);
     if (tri_idx >= num_triangles) return;
@@ -50,11 +83,15 @@ void fps1(triangle* triangles, size_t num_triangles, int* all_intersections, siz
     int intersection = pixelRayIntersection(triangles[tri_idx], x, y);
     bool run = (intersection != -1);
     while (run) {
-        layers[length[0]] = intersection;
-        length[0]++;
-        run = false;
+        if(atomicCAS(lock, 0, 1) == 0) {
+            layers[length[0]] = intersection;
+            length[0]++;
+	        run = false;
+            atomicExch(lock, 0);
+        }
     }
 }
+
 
 void fps2(int* all_intersections, size_t* trunk_length, long id) {
     size_t idx = id;
@@ -74,6 +111,7 @@ struct lessThan
 void fps3(int* sorted_intersections, size_t* trunk_length, bool* out, long id) {
     size_t idx = id;
     int z_idx = idx / (X_DIM * Y_DIM);
+    if (z_idx >= NUM_LAYERS) return;
     int y_idx = (idx - (z_idx * X_DIM * Y_DIM)) / X_DIM;
     int x_idx = (idx - (z_idx * X_DIM * Y_DIM)) % X_DIM;
 
@@ -113,10 +151,8 @@ int getIntersectionTrunk(int x, int y, triangle* triangles, int num_triangles, i
     int idx = 0;
     for (int i = 0; i < num_triangles; i++) {
         int layer = pixelRayIntersection(triangles[i], x, y);
-        if (layer != -1) {
-            layers[idx] = layer;
-            idx++;
-        }
+        layers[idx] = layer;
+        idx += (layer != -1);
     }
     return idx;
 }

@@ -8,7 +8,7 @@
 #define X_LEN 200
 #define Y_LEN 200
 #define HEIGHT 50
-#define RESOLUTION 2
+#define RESOLUTION 1.2
 
 // in pixels
 #define NUM_LAYERS (size_t)(HEIGHT / RESOLUTION)
