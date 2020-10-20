@@ -16,7 +16,7 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
 
     // Copy triangles to shared memory
     // Each block has a shared memory storing some triangles.
-    __shared__ char tri_base[18432];
+    __shared__ triangle tri_base[256];
     triangle* triangles = (triangle*) tri_base;
     size_t num_iters = num_triangles / 256;
     int length = 0;
