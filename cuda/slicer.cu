@@ -8,35 +8,40 @@ __global__
 void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
     // printf("starting thread %d\n", idx);
-    int y = idx / X_DIM;
-    if (y >= Y_DIM) return;
-    int x = idx % X_DIM - (X_DIM / 2);
-    y = y - (Y_DIM / 2);
+    int y_idx = idx / X_DIM;
+    // if (y >= Y_DIM) return;
+    int x_idx = idx % X_DIM;
+    int x = x_idx - (X_DIM / 2);
+    int y = y_idx - (Y_DIM / 2);
 
     // Copy triangles to shared memory
     // Each block has a shared memory storing some triangles.
-    __shared__ triangle triangles[256];
+    __shared__ char tri_base[18432];
+    triangle* triangles = (triangle*) tri_base;
     size_t num_iters = num_triangles / 256;
     int length = 0;
     int layers_local[NUM_LAYERS+1];
     int* layers = &layers_local[0];
     for (size_t i = 0; i < num_iters; i++) {
-        triangles[threadIdx.x + (i * 256)] = triangles_global[threadIdx.x + (i * 256)];
+        triangles[threadIdx.x] = triangles_global[threadIdx.x + (i * 256)];
         // Wait for other threads to complete;
         __syncthreads();
+        if (y_idx < Y_DIM)
         length += getIntersectionTrunk(x, y, triangles, 256, layers);
         layers = &layers_local[length]; // update pointer value
     }
     size_t remaining = num_triangles - (num_iters * 256);
     if (threadIdx.x < remaining) {
-        triangles[threadIdx.x + (num_iters * 256)] = triangles_global[threadIdx.x + (num_iters * 256)];
+        triangles[threadIdx.x] = triangles_global[threadIdx.x + (num_iters * 256)];
         __syncthreads();
     }
     if (remaining) {
+        if (y_idx < Y_DIM)
         length += getIntersectionTrunk(x, y, triangles, remaining, layers);
         layers = &layers_local[length]; // update pointer value
     }
 
+    if (y_idx >= Y_DIM) return;
     layers = &layers_local[0]; // reset to beginning
 
     thrust::sort(thrust::device, &layers[0], &layers[length]);
@@ -46,8 +51,6 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
     int layerIdx = 0;
     for (int z = 0; z < NUM_LAYERS; z++) {
         // If intersect
-        int x_idx = x + (X_DIM / 2);
-        int y_idx = y + (Y_DIM / 2);
         bool intersect = (z == layers[layerIdx]);
         out[z*Y_DIM*X_DIM + y_idx*X_DIM + x_idx] = intersect || flag;
         flag = intersect ^ flag;
