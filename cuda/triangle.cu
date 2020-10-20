@@ -30,7 +30,7 @@ void read_stl(string fname, vector <triangle>&v) {
 
     char header_info[80] = "";
     char nTri[4];
-    unsigned long nTriLong;
+    unsigned nTriLong;
 
     //read 80 byte header
     if (myFile) {
@@ -44,7 +44,7 @@ void read_stl(string fname, vector <triangle>&v) {
     //read 4-byte ulong
     if (myFile) {
         myFile.read (nTri, 4);
-        nTriLong = *((unsigned long*)nTri) ;
+        nTriLong = *((unsigned*)nTri) ;
         cout <<"Number of triangles: " << nTriLong << endl;
     }
     else{
