@@ -25,11 +25,11 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
     //    triangles[256 * num_iters + threadIdx.x] = triangles[256 * num_iters + threadIdx.x];
     //}
 
-    __shared__ int layers[256][NUM_LAYERS+1];
-    int length = getIntersectionTrunk(x, y, triangles, num_triangles, &layers[threadIdx.x][0]);
+    int layers[NUM_LAYERS+1];
+    int length = getIntersectionTrunk(x, y, triangles, num_triangles, &layers[0]);
 
-    thrust::sort(thrust::device, &layers[threadIdx.x][0], &layers[threadIdx.x][length]);
-    layers[threadIdx.x][length] = NUM_LAYERS;
+    thrust::sort(thrust::device, &layers[0], &layers[length]);
+    layers[length] = NUM_LAYERS;
 
     bool flag = false;
     int layerIdx = 0;
@@ -38,7 +38,7 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
         int x_idx = x + (X_DIM / 2);
         int y_idx = y + (Y_DIM / 2);
         // std::cout << "(z,y,x) = " << z << ", " << y_idx << ", " << x_idx << std::endl;
-        bool intersect = (z == layers[threadIdx.x][layerIdx]);
+        bool intersect = (z == layers[layerIdx]);
         out[z*Y_DIM*X_DIM + y_idx*X_DIM + x_idx] = intersect || flag;
         flag = intersect ^ flag;
         layerIdx += intersect;

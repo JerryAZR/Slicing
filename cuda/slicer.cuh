@@ -4,10 +4,10 @@
 #include "triangle.cuh"
 
 // in mm
-#define X_LEN 200
-#define Y_LEN 200
-#define HEIGHT 50
-#define RESOLUTION 1.2
+#define X_LEN 100
+#define Y_LEN 100
+#define HEIGHT 100
+#define RESOLUTION 1
 
 // in pixels
 #define NUM_LAYERS (size_t)(HEIGHT / RESOLUTION)

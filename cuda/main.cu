@@ -4,7 +4,7 @@
 #include "slicer.cuh"
 #include <vector>
 
-#define PPS 0
+#define PPS 1
 
 
 int main(int argc, char* argv[]) {
@@ -67,9 +67,9 @@ int main(int argc, char* argv[]) {
     cudaFree(triangles_dev);
 
     // Visualize
-    for (int y = 200; y > 0; y--) {
-        for (int x = 25; x < 175; x++) {
-            if (all[8][y][x]) std::cout << "x";
+    for (int y = Y_DIM; y > 0; y--) {
+        for (int x = 0; x < X_DIM; x++) {
+            if (all[(int)(NUM_LAYERS/2)][y][x]) std::cout << "x";
             else std::cout << " ";
         }
         std::cout << std::endl;
