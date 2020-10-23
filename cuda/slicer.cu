@@ -16,33 +16,33 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
 
     // Copy triangles to shared memory
     // Each block has a shared memory storing some triangles.
-    __shared__ triangle tri_base[256];
+    __shared__ triangle tri_base[THREADS_PER_BLOCK];
     triangle* triangles = (triangle*) tri_base;
-    size_t num_iters = num_triangles / 256;
+    size_t num_iters = num_triangles / THREADS_PER_BLOCK;
     int length = 0;
-    int layers_local[NUM_LAYERS+1];
-    int* layers = &layers_local[0];
+    __shared__ int layers_shared[THREADS_PER_BLOCK][NUM_LAYERS+1];
+    int* layers = &layers_shared[threadIdx.x][0];
     for (size_t i = 0; i < num_iters; i++) {
-        triangles[threadIdx.x] = triangles_global[threadIdx.x + (i * 256)];
+        triangles[threadIdx.x] = triangles_global[threadIdx.x + (i * THREADS_PER_BLOCK)];
         // Wait for other threads to complete;
         __syncthreads();
         if (y_idx < Y_DIM)
-        length += getIntersectionTrunk(x, y, triangles, 256, layers);
-        layers = &layers_local[length]; // update pointer value
+        length += getIntersectionTrunk(x, y, triangles, THREADS_PER_BLOCK, layers);
+        layers = &layers_shared[threadIdx.x][length]; // update pointer value
     }
-    size_t remaining = num_triangles - (num_iters * 256);
+    size_t remaining = num_triangles - (num_iters * THREADS_PER_BLOCK);
     if (threadIdx.x < remaining) {
-        triangles[threadIdx.x] = triangles_global[threadIdx.x + (num_iters * 256)];
+        triangles[threadIdx.x] = triangles_global[threadIdx.x + (num_iters * THREADS_PER_BLOCK)];
         __syncthreads();
     }
     if (remaining) {
         if (y_idx < Y_DIM)
         length += getIntersectionTrunk(x, y, triangles, remaining, layers);
-        layers = &layers_local[length]; // update pointer value
+        layers = &layers_shared[threadIdx.x][length]; // update pointer value
     }
 
     if (y_idx >= Y_DIM) return;
-    layers = &layers_local[0]; // reset to beginning
+    layers = &layers_shared[threadIdx.x][0]; // reset to beginning
 
     thrust::sort(thrust::device, &layers[0], &layers[length]);
     layers[length] = NUM_LAYERS;
