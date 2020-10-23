@@ -3,7 +3,7 @@
 
 #include "triangle.cuh"
 
-#define THREADS_PER_BLOCK 64
+#define THREADS_PER_BLOCK 256
 #define MAX_TRUNK_SIZE	48
 
 // in mm
@@ -24,8 +24,8 @@
 
 __global__ void pps(triangle* triangles, size_t num_triangles, bool* out);
 // returns the layer of intersection
-__device__ int pixelRayIntersection(triangle t, int x, int y);
-__device__ int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles, int* layers);
+__device__ char pixelRayIntersection(triangle t, int x, int y);
+__device__ int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles, char* layers);
 
 __global__ void fps1(triangle* triangles, size_t num_triangles, int* all_intersections, size_t* trunk_length, int* locks);
 __global__ void fps2(int* all_intersections, size_t* trunk_length);

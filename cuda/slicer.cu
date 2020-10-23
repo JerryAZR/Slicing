@@ -20,8 +20,8 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
     triangle* triangles = (triangle*) tri_base;
     size_t num_iters = num_triangles / THREADS_PER_BLOCK;
     int length = 0;
-    __shared__ int layers_shared[THREADS_PER_BLOCK][NUM_LAYERS+1];
-    int* layers = &layers_shared[threadIdx.x][0];
+    __shared__ char layers_shared[THREADS_PER_BLOCK][NUM_LAYERS+1];
+    char* layers = &layers_shared[threadIdx.x][0];
     for (size_t i = 0; i < num_iters; i++) {
         triangles[threadIdx.x] = triangles_global[threadIdx.x + (i * THREADS_PER_BLOCK)];
         // Wait for other threads to complete;
@@ -49,7 +49,7 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
 
     bool flag = false;
     int layerIdx = 0;
-    for (int z = 0; z < NUM_LAYERS; z++) {
+    for (char z = 0; z < NUM_LAYERS; z++) {
         // If intersect
         bool intersect = (z == layers[layerIdx]);
         out[z*Y_DIM*X_DIM + y_idx*X_DIM + x_idx] = intersect || flag;
@@ -117,7 +117,7 @@ void fps3(int* sorted_intersections, size_t* trunk_length, bool* out) {
 }
 
 __device__
-int pixelRayIntersection(triangle t, int x, int y) {
+char pixelRayIntersection(triangle t, int x, int y) {
     /*
     Let A, B, C be the 3 vertices of the given triangle
     Let S(x,y,z) be the intersection, where x,y are given
@@ -151,15 +151,15 @@ int pixelRayIntersection(triangle t, int x, int y) {
     bool inside = (a >= 0) && (b >= 0) && (a+b <= 1);
     double intersection = (a * z1 + b * z2) + t.p1.z;
     // // divide by layer width
-    int layer = (intersection / RESOLUTION) * inside - (!inside);
+    char layer = (intersection / RESOLUTION) * inside - (!inside);
     return layer;
 }
 
 __device__
-int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles, int* layers) {
+int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles, char* layers) {
     int idx = 0;
     for (int i = 0; i < num_triangles; i++) {
-        int layer = pixelRayIntersection(triangles[i], x, y);
+        char layer = pixelRayIntersection(triangles[i], x, y);
         if (layer != -1) {
             layers[idx] = layer;
             idx++;

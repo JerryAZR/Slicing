@@ -6,7 +6,7 @@
 
 
 #define PPS 1
-
+#define SHOW_LAYER 0
 
 int main(int argc, char* argv[]) {
     std::string stl_file_name;
@@ -73,7 +73,9 @@ int main(int argc, char* argv[]) {
     cudaFree(all_dev);
     cudaFree(triangles_dev);
 
+#if (SHOW_LAYER==0)
     return 0; // Skip the following code
+#endif
     // Visualize
     for (int y = Y_DIM; y > 0; y--) {
         for (int x = 0; x < X_DIM; x++) {
