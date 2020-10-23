@@ -3,12 +3,13 @@
 
 #include "triangle.cuh"
 
-#define THREADS_PER_BLOCK 256
+#define THREADS_PER_BLOCK 64
+#define MAX_TRUNK_SIZE	48
 
 // in mm
 #define X_LEN 200
 #define Y_LEN 200
-#define HEIGHT 20
+#define HEIGHT 100
 #define RESOLUTION 1
 
 // in pixels

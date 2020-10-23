@@ -4,6 +4,7 @@
 #include "slicer.cuh"
 #include <vector>
 
+
 #define PPS 1
 
 
@@ -29,6 +30,9 @@ int main(int argc, char* argv[]) {
     //cudaMemcpy(all_dev, &all[0][0][0], size, cudaMemcpyHostToDevice); // unnecessary
     cudaMemcpy(triangles_dev, triangles.data(), num_triangles * sizeof(triangle), cudaMemcpyHostToDevice);
 
+    cudaError_t err = cudaGetLastError();  // add
+    if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
+
     int threadsPerBlock = THREADS_PER_BLOCK;
     int blocksPerGrid;
 
@@ -36,6 +40,8 @@ int main(int argc, char* argv[]) {
     blocksPerGrid = (Y_DIM * X_DIM + threadsPerBlock - 1) / threadsPerBlock;
     pps<<<blocksPerGrid, threadsPerBlock>>>(&triangles_dev[0], num_triangles, all_dev);
     cudaDeviceSynchronize();
+    err = cudaGetLastError();  // add
+    if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
 #else
     int* all_intersections;
     cudaMalloc(&all_intersections, Y_DIM * X_DIM * NUM_LAYERS * sizeof(int));
@@ -62,7 +68,8 @@ int main(int argc, char* argv[]) {
 #endif
     // Copy result from device memory to host memory
     cudaMemcpy(&all[0][0][0], all_dev, size, cudaMemcpyDeviceToHost);
-
+    err = cudaGetLastError();  // add
+    if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
     cudaFree(all_dev);
     cudaFree(triangles_dev);
 
