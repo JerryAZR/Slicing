@@ -29,7 +29,7 @@ int main(int argc, char* argv[]) {
     cudaMemcpy(all_dev, &all[0][0][0], size, cudaMemcpyHostToDevice);
     cudaMemcpy(triangles_dev, triangles.data(), num_triangles * sizeof(triangle), cudaMemcpyHostToDevice);
 
-    int threadsPerBlock = 256;
+    int threadsPerBlock = THREADS_PER_BLOCK;
     int blocksPerGrid;
 
 #if(PPS == 1)

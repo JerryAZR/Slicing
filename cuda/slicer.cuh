@@ -3,6 +3,8 @@
 
 #include "triangle.cuh"
 
+#define THREADS_PER_BLOCK 256
+
 // in mm
 #define X_LEN 200
 #define Y_LEN 200
