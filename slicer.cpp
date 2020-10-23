@@ -5,23 +5,45 @@
 using std::cout;
 using std::endl;
 
-void pps(triangle* triangles, int num_triangles, bool* out, unsigned id) {
+void pps(triangle* triangles_global, int num_triangles, bool* out, unsigned id) {
     unsigned idx = id;
-    int y = idx / X_DIM;
-    if (y >= Y_DIM) return;
-    int x = idx - (y*X_DIM) - (X_DIM / 2);
-    y = y - (Y_DIM / 2);
+    int y_idx = idx / X_DIM;
+    int x_idx = idx % X_DIM;
+    int x = x_idx - (X_DIM / 2);
+    int y = y_idx - (Y_DIM / 2);
 
-    int layers[NUM_LAYERS];
-    int length = getIntersectionTrunk(x, y, triangles, num_triangles, &layers[0]);
+    // Copy triangles to shared memory
+    // Each block has a shared memory storing some triangles.
+    triangle* triangles;
+    size_t num_iters = num_triangles / 256;
+    int length = 0;
+    int layers_local[NUM_LAYERS+1];
+    int* layers = &layers_local[0];
+    for (size_t i = 0; i < num_iters; i++) {
+        triangles = triangles_global + i * 256;
+        // Wait for other threads to complete;
+        if (y_idx < Y_DIM)
+        length += getIntersectionTrunk(x, y, triangles, 256, layers);
+        layers = &layers_local[length]; // update pointer value
+    }
+    size_t remaining = num_triangles - (num_iters * 256);
+    triangles = triangles_global + (num_iters * 256);
+
+    if (remaining) {
+        if (y_idx < Y_DIM)
+        length += getIntersectionTrunk(x, y, triangles, remaining, layers);
+        layers = &layers_local[length]; // update pointer value
+    }
+
+    if (y_idx >= Y_DIM) return;
+
+    layers = &layers_local[0]; // reset to beginning
     std::sort(layers, layers+length);
     layers[0] = layers[0] * (length >= 1) + NUM_LAYERS * (length == 0);
     bool flag = false;
     bool intersect;
     size_t layerIdx = 0;
     size_t outIdx;
-    int x_idx = x + (X_DIM / 2);
-    int y_idx = y + (Y_DIM / 2);
     for (int z = 0; z < NUM_LAYERS; z++) {
         // If intersect
         intersect = (z == layers[layerIdx]);

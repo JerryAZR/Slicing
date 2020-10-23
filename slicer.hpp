@@ -5,10 +5,10 @@
 #include <vector>
 
 // in mm
-#define X_LEN 200
-#define Y_LEN 200
-#define HEIGHT 50
-#define RESOLUTION 1.2
+#define X_LEN 256
+#define Y_LEN 128
+#define HEIGHT 100
+#define RESOLUTION 1
 
 // in pixels
 #define NUM_LAYERS (size_t)(HEIGHT / RESOLUTION)
@@ -24,7 +24,7 @@
 // returns the layer of intersection
 int pixelRayIntersection(triangle t, int x, int y);
 int getIntersectionTrunk(int x, int y, triangle* triangles, int num_triangles, int* layers);
-void pps(triangle* triangles, int num_triangles, bool* out, unsigned id);
+void pps(triangle* triangles_global, int num_triangles, bool* out, unsigned id);
 
 void fps1(triangle* triangles, size_t num_triangles, int* all_intersections, size_t* trunk_length, int* locks, long id);
 void fps2(int* all_intersections, size_t* trunk_length, long id);

@@ -51,6 +51,7 @@ void read_stl(string fname, vector <triangle>&v) {
     char header_info[80] = "";
     char nTri[4];
     unsigned long nTriLong;
+    unsigned long count = 0;
 
     //read 80 byte header
     if (myFile) {
@@ -88,8 +89,10 @@ void read_stl(string fname, vector <triangle>&v) {
             v3 p3(facet+36);
             //add a new triangle to the array
             v.push_back( triangle(p1,p2,p3) );
+            count++;
         }
     }
+    cout << "Actual Number of triangles: " << count << endl;
 
     return;
 
