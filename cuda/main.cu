@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
     size_t size = NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool);
     cudaMalloc(&all_dev, size);
     cudaMalloc(&triangles_dev, num_triangles * sizeof(triangle));
-    cudaMemcpy(all_dev, &all[0][0][0], size, cudaMemcpyHostToDevice);
+    //cudaMemcpy(all_dev, &all[0][0][0], size, cudaMemcpyHostToDevice); // unnecessary
     cudaMemcpy(triangles_dev, triangles.data(), num_triangles * sizeof(triangle), cudaMemcpyHostToDevice);
 
     int threadsPerBlock = THREADS_PER_BLOCK;
@@ -66,6 +66,7 @@ int main(int argc, char* argv[]) {
     cudaFree(all_dev);
     cudaFree(triangles_dev);
 
+    return 0; // Skip the following code
     // Visualize
     for (int y = Y_DIM; y > 0; y--) {
         for (int x = 0; x < X_DIM; x++) {
