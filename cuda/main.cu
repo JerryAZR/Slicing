@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
     cudaFree(all_dev);
     cudaFree(triangles_dev);
 
-    //return 0; // Skip the following code
+    return 0; // Skip the following code
     // Visualize
     for (int y = Y_DIM; y > 0; y--) {
         for (int x = 0; x < X_DIM; x++) {
