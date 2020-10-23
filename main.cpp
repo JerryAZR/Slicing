@@ -6,7 +6,7 @@
 #include "triangle.hpp"
 #include "slicer.hpp"
 
-#define TEST_PPS 0
+#define TEST_PPS 1
 
 int main(int argc, char* argv[]) {
     std::cout << "beginning of program" << std::endl;
