@@ -123,7 +123,16 @@ int pixelRayIntersection(triangle t, int x, int y) {
     Let S(x,y,z) be the intersection, where x,y are given
     We want to find some a, b such that AS = a*AB + b*AC
     If a >= 0, b >= 0, and a+b <= 1, S is a valid intersection.
+
+    return the layer of intersection, or -1 if none
     */
+
+    if (   (x < t.p1.x && x < t.p2.x && x < t.p3.x)
+        || (x > t.p1.x && x > t.p2.x && x > t.p3.x)
+        || (y < t.p1.y && y < t.p2.y && y < t.p3.y)
+        || (y > t.p1.y && y > t.p2.y && y > t.p3.y)
+    ) return -1;
+
     double x_d = x * RESOLUTION - t.p1.x;
     double y_d = y * RESOLUTION - t.p1.y;
 
