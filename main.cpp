@@ -6,7 +6,7 @@
 #include "triangle.hpp"
 #include "slicer.hpp"
 
-#define TEST_PPS 1
+#define TEST_PPS 0
 
 int main(int argc, char* argv[]) {
     std::cout << "beginning of program" << std::endl;
@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
     // Visualize
     for (int y = Y_DIM; y > 0; y--) {
         for (int x = 0; x < X_DIM; x++) {
-            if (all[8*X_DIM*Y_DIM + y*X_DIM + x]) std::cout << "x";
+            if (all[y*X_DIM + x]) std::cout << "x";
             else std::cout << " ";
         }
         std::cout << std::endl;

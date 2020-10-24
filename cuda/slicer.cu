@@ -94,13 +94,6 @@ void fps2(int* all_intersections, size_t* trunk_length) {
     thrust::sort(thrust::device, curr_trunk, curr_trunk + length);
 }
 
-struct lessThan
-{
-  __host__ __device__ lessThan(int x) : target(x) {}
-  __host__ __device__ bool operator()(const int& curr) { return curr < target; }
-  int target;
-};
-
 __global__
 void fps3(int* sorted_intersections, size_t* trunk_length, bool* out) {
     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
@@ -111,9 +104,7 @@ void fps3(int* sorted_intersections, size_t* trunk_length, bool* out) {
 
     size_t length = trunk_length[y_idx * X_DIM + x_idx];
     int* intersection_trunk = sorted_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
-    bool edge = 0 < thrust::count(thrust::device, intersection_trunk, intersection_trunk + length, z_idx);
-    bool inside = (bool) (1 & thrust::count_if(thrust::device, intersection_trunk, intersection_trunk + length, lessThan(z_idx)));
-    out[idx] = inside || edge;
+    out[idx] = isInside(z_idx, intersection_trunk, length);
 }
 
 __device__
@@ -166,4 +157,23 @@ int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles
         }
     }
     return idx;
+}
+
+__device__
+bool isInside(int current, int* trunk, size_t length) {
+    size_t startIdx = 0;
+    size_t endIdx = length;
+    size_t mid;
+    bool goLeft, goRight;
+
+    // perform binary search
+    while (startIdx < endIdx) {
+        mid = (startIdx + endIdx) / 2;
+        if (trunk[mid] == current) return true;
+        goLeft = trunk[mid] > current;
+        startIdx = goLeft ? startIdx : (mid + 1);
+        endIdx = goLeft ? mid : endIdx;
+    }
+
+    return (bool)(startIdx & 1);
 }

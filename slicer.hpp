@@ -5,7 +5,7 @@
 #include <vector>
 
 // in mm
-#define X_LEN 256
+#define X_LEN 128
 #define Y_LEN 128
 #define HEIGHT 18
 #define RESOLUTION 1
@@ -24,6 +24,8 @@
 // returns the layer of intersection
 int pixelRayIntersection(triangle t, int x, int y);
 int getIntersectionTrunk(int x, int y, triangle* triangles, int num_triangles, int* layers);
+bool isInside(int current, int* trunk, size_t length);
+
 void pps(triangle* triangles_global, int num_triangles, bool* out, unsigned id);
 
 void fps1(triangle* triangles, size_t num_triangles, int* all_intersections, size_t* trunk_length, int* locks, long id);

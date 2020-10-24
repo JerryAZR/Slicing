@@ -26,6 +26,7 @@ __global__ void pps(triangle* triangles, size_t num_triangles, bool* out);
 // returns the layer of intersection
 __device__ char pixelRayIntersection(triangle t, int x, int y);
 __device__ int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles, char* layers);
+__device__ bool isInside(int current, int* trunk, size_t length);
 
 __global__ void fps1(triangle* triangles, size_t num_triangles, int* all_intersections, size_t* trunk_length, int* locks);
 __global__ void fps2(int* all_intersections, size_t* trunk_length);

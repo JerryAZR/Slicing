@@ -142,6 +142,9 @@ void fps3(int* sorted_intersections, size_t* trunk_length, bool* out, long id) {
     bool inside = (bool) (1 & std::count_if(intersection_trunk, intersection_trunk + length, lessThan(z_idx)));
     bool edge = std::binary_search(intersection_trunk, intersection_trunk + length, z_idx);
     out[idx] = inside || edge;
+    if ((inside || edge) != isInside(z_idx, intersection_trunk, length)) {
+        std::cout << "result mismatch" << std::endl;
+    }
 }
 int pixelRayIntersection(triangle t, int x, int y) {
     /*
@@ -187,4 +190,22 @@ int getIntersectionTrunk(int x, int y, triangle* triangles, int num_triangles, i
         idx += (layer != -1);
     }
     return idx;
+}
+
+bool isInside(int current, int* trunk, size_t length) {
+    size_t startIdx = 0;
+    size_t endIdx = length;
+    size_t mid;
+    bool goLeft, goRight;
+
+    // perform binary search
+    while (startIdx < endIdx) {
+        mid = (startIdx + endIdx) / 2;
+        if (trunk[mid] == current) return true;
+        goLeft = trunk[mid] > current;
+        startIdx = goLeft ? startIdx : (mid + 1);
+        endIdx = goLeft ? mid : endIdx;
+    }
+
+    return (bool)(startIdx & 1);
 }
