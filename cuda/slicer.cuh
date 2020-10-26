@@ -7,8 +7,8 @@
 #define MAX_TRUNK_SIZE	48
 
 // in mm
-#define X_LEN 200
-#define Y_LEN 200
+#define X_LEN 256
+#define Y_LEN 128
 #define HEIGHT 100
 #define RESOLUTION 1
 

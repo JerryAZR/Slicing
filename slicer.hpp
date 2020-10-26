@@ -5,9 +5,9 @@
 #include <vector>
 
 // in mm
-#define X_LEN 128
+#define X_LEN 256
 #define Y_LEN 128
-#define HEIGHT 18
+#define HEIGHT 100
 #define RESOLUTION 1
 
 // in pixels
