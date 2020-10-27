@@ -1,0 +1,735 @@
+==2933676== NVPROF is profiling process 2933676, command: ./fps ../models/bunny.stl
+==2933676== Some kernel(s) will be replayed on device 0 in order to collect all events/metrics.
+==2933676== Profiling application: ./fps ../models/bunny.stl
+==2933676== Profiling result:
+==2933676== Event result:
+"Device","Kernel","Invocations","Event Name","Min","Max","Avg","Total"
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"tex0_cache_sector_queries",40152761,40152761,40152761,40152761
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"tex1_cache_sector_queries",40152773,40152773,40152773,40152773
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"tex0_cache_sector_misses",40152964,40152964,40152964,40152964
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"tex1_cache_sector_misses",40152570,40152570,40152570,40152570
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"fb_subp0_read_sectors",83876,83876,83876,83876
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"fb_subp1_read_sectors",83054,83054,83054,83054
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"fb_subp0_write_sectors",24616,24616,24616,24616
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"fb_subp1_write_sectors",24579,24579,24579,24579
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_subp0_write_sector_misses",24251,24251,24251,24251
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_subp1_write_sector_misses",24336,24336,24336,24336
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_subp0_read_sector_misses",83335,83335,83335,83335
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_subp1_read_sector_misses",83595,83595,83595,83595
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_subp0_read_tex_sector_queries",40133336,40133336,40133336,40133336
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_subp1_read_tex_sector_queries",40137108,40137108,40137108,40137108
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_subp0_write_tex_sector_queries",8888,8888,8888,8888
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_subp1_write_tex_sector_queries",8686,8686,8686,8686
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_subp0_read_tex_hit_sectors",40054489,40054489,40054489,40054489
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_subp1_read_tex_hit_sectors",40058246,40058246,40058246,40058246
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_subp0_write_tex_hit_sectors",7067,7067,7067,7067
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_subp1_write_tex_hit_sectors",6854,6854,6854,6854
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_subp0_total_read_sector_queries",40146246,40146246,40146246,40146246
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_subp1_total_read_sector_queries",40149194,40149194,40149194,40149194
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_subp0_total_write_sector_queries",18558,18558,18558,18558
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_subp1_total_write_sector_queries",17289,17289,17289,17289
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_subp0_read_sysmem_sector_queries",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_subp1_read_sysmem_sector_queries",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_subp0_write_sysmem_sector_queries",5,5,5,5
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_subp1_write_sysmem_sector_queries",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"elapsed_cycles_sm",23834248460,23834248460,23834248460,23834248460
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"gld_inst_8bit",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"gld_inst_16bit",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"gld_inst_32bit",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"gld_inst_64bit",80270560,80270560,80270560,80270560
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"gld_inst_128bit",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"gst_inst_8bit",8816,8816,8816,8816
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"gst_inst_16bit",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"gst_inst_32bit",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"gst_inst_64bit",8816,8816,8816,8816
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"gst_inst_128bit",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"prof_trigger_00",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"prof_trigger_01",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"prof_trigger_02",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"prof_trigger_03",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"prof_trigger_04",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"prof_trigger_05",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"prof_trigger_06",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"prof_trigger_07",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"warps_launched",71335936,71335936,71335936,71335936
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_issued0",86847114500,86847114500,86847114500,86847114500
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_issued1",7918918413,7918918413,7918918413,7918918413
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_issued2",570736049,570736049,570736049,570736049
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_executed",9059882322,9059882322,9059882322,9059882322
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"thread_inst_executed",281054891236,281054891236,281054891236,281054891236
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"not_predicated_off_thread_inst_executed",273154484186,273154484186,273154484186,273154484186
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"active_cycles",23834281899,23834281899,23834281899,23834281899
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"active_warps",882380077868,882380077868,882380077868,882380077868
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"global_load",80270404,80270404,80270404,80270404
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"global_store",17476,17476,17476,17476
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"generic_load",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"generic_store",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_executed_in_trap",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"active_cycles_in_trap",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"local_store",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"local_load",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"shared_load",642023424,642023424,642023424,642023424
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"shared_store",80252928,80252928,80252928,80252928
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_executed_shared_atom_cas",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"shared_atom",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"global_atom_cas",8738,8738,8738,8738
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"atom_count",8738,8738,8738,8738
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"gred_count",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"divergent_branch",8916992,8916992,8916992,8916992
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"branch",436967560,436967560,436967560,436967560
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"shared_ld_bank_conflict",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"shared_st_bank_conflict",0,0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"shared_ld_transactions",642023424,642023424,642023424,642023424
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"shared_st_transactions",160505856,160505856,160505856,160505856
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"active_cycles_pm",23834220079,23834220079,23834220079,23834220079
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"active_warps_pm",109626899548,109626899548,109626899548,109626899548
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"elapsed_cycles_pm",23834351030,23834351030,23834351030,23834351030
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"tex0_cache_sector_queries",279062,279062,279062,279062
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"tex1_cache_sector_queries",239935,239935,239935,239935
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"tex0_cache_sector_misses",226381,226381,226381,226381
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"tex1_cache_sector_misses",245558,245558,245558,245558
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"fb_subp0_read_sectors",14015,14015,14015,14015
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"fb_subp1_read_sectors",13893,13893,13893,13893
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"fb_subp0_write_sectors",38329,38329,38329,38329
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"fb_subp1_write_sectors",38178,38178,38178,38178
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_subp0_write_sector_misses",36343,36343,36343,36343
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_subp1_write_sector_misses",36116,36116,36116,36116
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_subp0_read_sector_misses",13969,13969,13969,13969
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_subp1_read_sector_misses",13939,13939,13939,13939
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_subp0_read_tex_sector_queries",88149,88149,88149,88149
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_subp1_read_tex_sector_queries",74104,74104,74104,74104
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_subp0_write_tex_sector_queries",68462,68462,68462,68462
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_subp1_write_tex_sector_queries",67673,67673,67673,67673
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_subp0_read_tex_hit_sectors",69985,69985,69985,69985
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_subp1_read_tex_hit_sectors",63140,63140,63140,63140
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_subp0_write_tex_hit_sectors",59229,59229,59229,59229
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_subp1_write_tex_hit_sectors",56615,56615,56615,56615
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_subp0_total_read_sector_queries",187000,187000,187000,187000
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_subp1_total_read_sector_queries",125383,125383,125383,125383
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_subp0_total_write_sector_queries",168688,168688,168688,168688
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_subp1_total_write_sector_queries",122763,122763,122763,122763
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_subp0_read_sysmem_sector_queries",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_subp1_read_sysmem_sector_queries",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_subp0_write_sysmem_sector_queries",1,1,1,1
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_subp1_write_sysmem_sector_queries",4,4,4,4
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"elapsed_cycles_sm",56974195,56974195,56974195,56974195
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"gld_inst_8bit",19136,19136,19136,19136
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"gld_inst_16bit",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"gld_inst_32bit",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"gld_inst_64bit",32768,32768,32768,32768
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"gld_inst_128bit",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"gst_inst_8bit",11323,11323,11323,11323
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"gst_inst_16bit",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"gst_inst_32bit",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"gst_inst_64bit",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"gst_inst_128bit",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"prof_trigger_00",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"prof_trigger_01",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"prof_trigger_02",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"prof_trigger_03",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"prof_trigger_04",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"prof_trigger_05",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"prof_trigger_06",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"prof_trigger_07",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"warps_launched",1024,1024,1024,1024
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_issued0",38387582,38387582,38387582,38387582
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_issued1",2622590,2622590,2622590,2622590
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_issued2",653600,653600,653600,653600
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_executed",3923935,3923935,3923935,3923935
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"thread_inst_executed",18138562,18138562,18138562,18138562
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"not_predicated_off_thread_inst_executed",16397246,16397246,16397246,16397246
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"active_cycles",15158419,15158419,15158419,15158419
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"active_warps",66770482,66770482,66770482,66770482
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"global_load",14375,14375,14375,14375
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"global_store",4473,4473,4473,4473
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"generic_load",53197,53197,53197,53197
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"generic_store",34334,34334,34334,34334
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_executed_in_trap",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"active_cycles_in_trap",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"local_store",64374,64374,64374,64374
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"local_load",38078,38078,38078,38078
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"shared_load",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"shared_store",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_executed_shared_atom_cas",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"shared_atom",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"global_atom_cas",32805,32805,32805,32805
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"atom_count",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"gred_count",2463,2463,2463,2463
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"divergent_branch",7285,7285,7285,7285
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"branch",1137736,1137736,1137736,1137736
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"shared_ld_bank_conflict",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"shared_st_bank_conflict",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"shared_ld_transactions",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"shared_st_transactions",0,0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"active_cycles_pm",15056709,15056709,15056709,15056709
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"active_warps_pm",68679814,68679814,68679814,68679814
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"elapsed_cycles_pm",55915620,55915620,55915620,55915620
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"tex0_cache_sector_queries",904856,904856,904856,904856
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"tex1_cache_sector_queries",909222,909222,909222,909222
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"tex0_cache_sector_misses",909326,909326,909326,909326
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"tex1_cache_sector_misses",904752,904752,904752,904752
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"fb_subp0_read_sectors",5884,5884,5884,5884
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"fb_subp1_read_sectors",5856,5856,5856,5856
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"fb_subp0_write_sectors",53633,53633,53633,53633
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"fb_subp1_write_sectors",53520,53520,53520,53520
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_subp0_write_sector_misses",53547,53547,53547,53547
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_subp1_write_sector_misses",53566,53566,53566,53566
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_subp0_read_sector_misses",5872,5872,5872,5872
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_subp1_read_sector_misses",5868,5868,5868,5868
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_subp0_read_tex_sector_queries",702847,702847,702847,702847
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_subp1_read_tex_sector_queries",701631,701631,701631,701631
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_subp0_write_tex_sector_queries",51200,51200,51200,51200
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_subp1_write_tex_sector_queries",51200,51200,51200,51200
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_subp0_read_tex_hit_sectors",696975,696975,696975,696975
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_subp1_read_tex_hit_sectors",695765,695765,695765,695765
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_subp0_write_tex_hit_sectors",38434,38434,38434,38434
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_subp1_write_tex_hit_sectors",38434,38434,38434,38434
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_subp0_total_read_sector_queries",702895,702895,702895,702895
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_subp1_total_read_sector_queries",701679,701679,701679,701679
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_subp0_total_write_sector_queries",51201,51201,51201,51201
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_subp1_total_write_sector_queries",51212,51212,51212,51212
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_subp0_read_sysmem_sector_queries",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_subp1_read_sysmem_sector_queries",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_subp0_write_sysmem_sector_queries",1,1,1,1
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_subp1_write_sysmem_sector_queries",4,4,4,4
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"elapsed_cycles_sm",2486060,2486060,2486060,2486060
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"gld_inst_8bit",585278,585278,585278,585278
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"gld_inst_16bit",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"gld_inst_32bit",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"gld_inst_64bit",3276800,3276800,3276800,3276800
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"gld_inst_128bit",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"gst_inst_8bit",3276800,3276800,3276800,3276800
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"gst_inst_16bit",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"gst_inst_32bit",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"gst_inst_64bit",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"gst_inst_128bit",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"prof_trigger_00",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"prof_trigger_01",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"prof_trigger_02",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"prof_trigger_03",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"prof_trigger_04",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"prof_trigger_05",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"prof_trigger_06",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"prof_trigger_07",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"warps_launched",102400,102400,102400,102400
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_issued0",3395255,3395255,3395255,3395255
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_issued1",5801488,5801488,5801488,5801488
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_issued2",280047,280047,280047,280047
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_executed",6358185,6358185,6358185,6358185
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"thread_inst_executed",183048452,183048452,183048452,183048452
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"not_predicated_off_thread_inst_executed",171945938,171945938,171945938,171945938
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"active_cycles",2326372,2326372,2326372,2326372
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"active_warps",104819936,104819936,104819936,104819936
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"global_load",144612,144612,144612,144612
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"global_store",102400,102400,102400,102400
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"generic_load",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"generic_store",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_executed_in_trap",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"active_cycles_in_trap",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"local_store",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"local_load",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"shared_load",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"shared_store",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_executed_shared_atom_cas",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"shared_atom",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"global_atom_cas",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"atom_count",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"gred_count",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"divergent_branch",12794,12794,12794,12794
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"branch",629300,629300,629300,629300
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"shared_ld_bank_conflict",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"shared_st_bank_conflict",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"shared_ld_transactions",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"shared_st_transactions",0,0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"active_cycles_pm",2332104,2332104,2332104,2332104
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"active_warps_pm",104467796,104467796,104467796,104467796
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"elapsed_cycles_pm",2523445,2523445,2523445,2523445
+
+==2933676== Metric result:
+"Device","Kernel","Invocations","Metric Name","Metric Description","Min","Max","Avg"
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_per_warp","Instructions per warp",127.003062,127.003062,127.003062
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"branch_efficiency","Branch Efficiency",97.959347%,97.959347%,97.959347%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"warp_execution_efficiency","Warp Execution Efficiency",96.943482%,96.943482%,96.943482%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"warp_nonpred_execution_efficiency","Warp Non-Predicated Execution Efficiency",94.218416%,94.218416%,94.218416%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_replay_overhead","Instruction Replay Overhead",0.000056,0.000056,0.000056
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"shared_load_transactions_per_request","Shared Memory Load Transactions Per Request",1.000000,1.000000,1.000000
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"shared_store_transactions_per_request","Shared Memory Store Transactions Per Request",2.000000,2.000000,2.000000
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"local_load_transactions_per_request","Local Memory Load Transactions Per Request",0.000000,0.000000,0.000000
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"local_store_transactions_per_request","Local Memory Store Transactions Per Request",0.000000,0.000000,0.000000
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"gld_transactions_per_request","Global Load Transactions Per Request",8.000004,8.000004,8.000004
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"gst_transactions_per_request","Global Store Transactions Per Request",1.005608,1.005608,1.005608
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"shared_store_transactions","Shared Store Transactions",160505856,160505856,160505856
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"shared_load_transactions","Shared Load Transactions",642023424,642023424,642023424
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"local_load_transactions","Local Load Transactions",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"local_store_transactions","Local Store Transactions",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"gld_transactions","Global Load Transactions",642163554,642163554,642163554
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"gst_transactions","Global Store Transactions",17574,17574,17574
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"sysmem_read_transactions","System Memory Read Transactions",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"sysmem_write_transactions","System Memory Write Transactions",5,5,5
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_read_transactions","L2 Read Transactions",80295440,80295440,80295440
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_write_transactions","L2 Write Transactions",35847,35847,35847
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"global_hit_rate","Global Hit Rate in unified l1/tex",0.000000%,0.000000%,0.000000%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"local_hit_rate","Local Hit Rate",0.000000%,0.000000%,0.000000%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"gld_requested_throughput","Requested Global Load Throughput",1.395557GB/s,1.395557GB/s,1.395557GB/s
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"gst_requested_throughput","Requested Global Store Throughput",180.806641KB/s,180.806641KB/s,180.805664KB/s
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"gld_throughput","Global Load Throughput",5.582221GB/s,5.582221GB/s,5.582221GB/s
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"gst_throughput","Global Store Throughput",1.251473MB/s,1.251473MB/s,1.251472MB/s
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"local_memory_overhead","Local Memory Overhead",0.000000%,0.000000%,0.000000%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"tex_cache_hit_rate","Unified Cache Hit Rate",0.021812%,0.021812%,0.021812%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_tex_read_hit_rate","L2 Hit Rate (Texture Reads)",99.803528%,99.803528%,99.803528%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_tex_write_hit_rate","L2 Hit Rate (Texture Writes)",79.213611%,79.213611%,79.213611%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"tex_cache_throughput","Unified Cache Throughput",11.165660GB/s,11.165660GB/s,11.165660GB/s
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_tex_read_throughput","L2 Throughput (Texture Reads)",5.582221GB/s,5.582221GB/s,5.582221GB/s
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_tex_write_throughput","L2 Throughput (Texture Writes)",1.251473MB/s,1.251473MB/s,1.251472MB/s
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_read_throughput","L2 Throughput (Reads)",5.583959GB/s,5.583959GB/s,5.583959GB/s
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_write_throughput","L2 Throughput (Writes)",2.552725MB/s,2.552725MB/s,2.552724MB/s
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"sysmem_read_throughput","System Memory Read Throughput",0.000000B/s,0.000000B/s,0.000000B/s
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"sysmem_write_throughput","System Memory Write Throughput",373.000000B/s,373.000000B/s,372.000000B/s
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"local_load_throughput","Local Memory Load Throughput",0.000000B/s,0.000000B/s,0.000000B/s
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"local_store_throughput","Local Memory Store Throughput",0.000000B/s,0.000000B/s,0.000000B/s
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"shared_load_throughput","Shared Memory Load Throughput",178.592083GB/s,178.592083GB/s,178.592083GB/s
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"shared_store_throughput","Shared Memory Store Throughput",44.648021GB/s,44.648021GB/s,44.648021GB/s
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"gld_efficiency","Global Memory Load Efficiency",25.000036%,25.000036%,25.000036%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"gst_efficiency","Global Memory Store Efficiency",14.108911%,14.108911%,14.108911%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"tex_cache_transactions","Unified Cache Transactions",160558404,160558404,160558404
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"flop_count_dp","Floating Point Operations(Double Precision)",105419676517,105419676517,105419676517
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"flop_count_dp_add","Floating Point Operations(Double Precision Add)",25523428197,25523428197,25523428197
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"flop_count_dp_fma","Floating Point Operations(Double Precision FMA)",31958499328,31958499328,31958499328
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"flop_count_dp_mul","Floating Point Operations(Double Precision Mul)",15979249664,15979249664,15979249664
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"flop_count_sp","Floating Point Operations(Single Precision)",9130999808,9130999808,9130999808
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"flop_count_sp_add","Floating Point Operations(Single Precision Add)",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"flop_count_sp_fma","Floating Point Operations(Single Precision FMA)",4565499904,4565499904,4565499904
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"flop_count_sp_mul","Floating Point Operation(Single Precision Mul)",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"flop_count_sp_special","Floating Point Operations(Single Precision Special)",4565499904,4565499904,4565499904
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_executed","Instructions Executed",9059882322,9059882322,9059882322
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_issued","Instructions Issued",9060390573,9060390573,9060390573
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"sysmem_utilization","System Memory Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"stall_inst_fetch","Issue Stall Reasons (Instructions Fetch)",0.938472%,0.938472%,0.938472%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"stall_exec_dependency","Issue Stall Reasons (Execution Dependency)",73.242241%,73.242241%,73.242241%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"stall_memory_dependency","Issue Stall Reasons (Data Request)",0.316515%,0.316515%,0.316515%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"stall_texture","Issue Stall Reasons (Texture)",0.016150%,0.016150%,0.016150%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"stall_sync","Issue Stall Reasons (Synchronization)",13.288699%,13.288699%,13.288699%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"stall_other","Issue Stall Reasons (Other)",12.088540%,12.088540%,12.088540%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"stall_constant_memory_dependency","Issue Stall Reasons (Immediate constant)",0.001606%,0.001606%,0.001606%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"stall_pipe_busy","Issue Stall Reasons (Pipe Busy)",0.054095%,0.054095%,0.054095%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"shared_efficiency","Shared Memory Efficiency",5.625000%,5.625000%,5.625000%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_fp_32","FP Instructions(Single)",18261999616,18261999616,18261999616
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_fp_64","FP Instructions(Double)",78439855818,78439855818,78439855818
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_integer","Integer Instructions",100934526517,100934526517,100934526517
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_bit_convert","Bit-Convert Instructions",13696499712,13696499712,13696499712
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_control","Control-Flow Instructions",18253100256,18253100256,18253100256
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_compute_ld_st","Load/Store Instructions",22988058272,22988058272,22988058272
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_misc","Misc Instructions",20580443984,20580443984,20580443984
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_inter_thread_communication","Inter-Thread Instructions",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"issue_slots","Issue Slots",8489653959,8489653959,8489653959
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"cf_issued","Issued Control-Flow Instructions",650984106,650984106,650984106
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"cf_executed","Executed Control-Flow Instructions",650984106,650984106,650984106
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"ldst_issued","Issued Load/Store Instructions",1087925572,1087925572,1087925572
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"ldst_executed","Executed Load/Store Instructions",1159261388,1159261388,1159261388
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"atomic_transactions","Atomic Transactions",17516,17516,17516
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"atomic_transactions_per_request","Atomic Transactions Per Request",1.002289,1.002289,1.002289
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_atomic_throughput","L2 Throughput (Atomic requests)",1.247343MB/s,1.247343MB/s,1.247342MB/s
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_atomic_transactions","L2 Transactions (Atomic requests)",35032,35032,35032
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_tex_read_transactions","L2 Transactions (Texture Reads)",80270444,80270444,80270444
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"stall_memory_throttle","Issue Stall Reasons (Memory Throttle)",0.000197%,0.000197%,0.000197%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"stall_not_selected","Issue Stall Reasons (Not Selected)",0.053486%,0.053486%,0.053486%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_tex_write_transactions","L2 Transactions (Texture Writes)",17574,17574,17574
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"flop_count_hp","Floating Point Operations(Half Precision)",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"flop_count_hp_add","Floating Point Operations(Half Precision Add)",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"flop_count_hp_mul","Floating Point Operation(Half Precision Mul)",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"flop_count_hp_fma","Floating Point Operations(Half Precision FMA)",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_fp_16","HP Instructions(Half)",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"sysmem_read_utilization","System Memory Read Utilization","Idle (0)","Idle (0)","Idle (0)"
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"sysmem_write_utilization","System Memory Write Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"pcie_total_data_transmitted","PCIe Total Data Transmitted",170496,170496,170496
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"pcie_total_data_received","PCIe Total Data Received",138752,138752,138752
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_executed_global_loads","Warp level instructions for global loads",80270404,80270404,80270404
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_executed_local_loads","Warp level instructions for local loads",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_executed_shared_loads","Warp level instructions for shared loads",642023424,642023424,642023424
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_executed_surface_loads","Warp level instructions for surface loads",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_executed_global_stores","Warp level instructions for global stores",17476,17476,17476
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_executed_local_stores","Warp level instructions for local stores",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_executed_shared_stores","Warp level instructions for shared stores",80252928,80252928,80252928
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_executed_surface_stores","Warp level instructions for surface stores",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_executed_global_atomics","Warp level instructions for global atom and atom cas",17476,17476,17476
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_executed_global_reductions","Warp level instructions for global reductions",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_executed_surface_atomics","Warp level instructions for surface atom and atom cas",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_executed_surface_reductions","Warp level instructions for surface reductions",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_executed_shared_atomics","Warp level shared instructions for atom and atom CAS",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"inst_executed_tex_ops","Warp level instructions for texture",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_global_load_bytes","Bytes read from L2 for misses in Unified Cache for global loads",2568654208,2568654208,2568654208
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_local_load_bytes","Bytes read from L2 for misses in Unified Cache for local loads",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_surface_load_bytes","Bytes read from L2 for misses in Unified Cache for surface loads",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_local_global_store_bytes","Bytes written to L2 from Unified Cache for local and global stores.",562368,562368,562368
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_global_reduction_bytes","Bytes written to L2 from Unified cache for global reductions",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_global_atomic_store_bytes","Bytes written to L2 from Unified cache for global atomics",562176,562176,562176
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_surface_store_bytes","Bytes written to L2 from Unified Cache for surface stores.",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_surface_reduction_bytes","Bytes written to L2 from Unified Cache for surface reductions",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_surface_atomic_store_bytes","Bytes transferred between Unified Cache and L2 for surface atomics",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"global_load_requests","Total number of global load requests from Multiprocessor",80270444,80270444,80270444
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"local_load_requests","Total number of local load requests from Multiprocessor",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"surface_load_requests","Total number of surface load requests from Multiprocessor",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"global_store_requests","Total number of global store requests from Multiprocessor",17516,17516,17516
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"local_store_requests","Total number of local store requests from Multiprocessor",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"surface_store_requests","Total number of surface store requests from Multiprocessor",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"global_atomic_requests","Total number of global atomic requests from Multiprocessor",17516,17516,17516
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"global_reduction_requests","Total number of global reduction requests from Multiprocessor",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"surface_atomic_requests","Total number of surface atomic requests from Multiprocessor",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"surface_reduction_requests","Total number of surface reduction requests from Multiprocessor",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"sysmem_read_bytes","System Memory Read Bytes",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"sysmem_write_bytes","System Memory Write Bytes",160,160,160
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_tex_hit_rate","L2 Cache Hit Rate",99.799021%,99.799021%,99.799021%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"texture_load_requests","Total number of texture Load requests from Multiprocessor",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"unique_warps_launched","Number of warps launched",71335936,71335936,71335936
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"sm_efficiency","Multiprocessor Activity",99.999103%,99.999103%,99.999103%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"achieved_occupancy","Achieved Occupancy",0.578462,0.578462,0.578462
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"ipc","Executed IPC",0.380121,0.380121,0.380121
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"issued_ipc","Issued IPC",0.380144,0.380144,0.380144
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"issue_slot_utilization","Issue Slot Utilization",8.904951%,8.904951%,8.904951%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"eligible_warps_per_cycle","Eligible Warps Per Active Cycle",0.375773,0.375773,0.375773
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"tex_utilization","Unified Cache Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"l2_utilization","L2 Cache Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"shared_utilization","Shared Memory Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"ldst_fu_utilization","Load/Store Function Unit Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"cf_fu_utilization","Control-Flow Function Unit Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"special_fu_utilization","Special Function Unit Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"tex_fu_utilization","Texture Function Unit Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"single_precision_fu_utilization","Single-Precision Function Unit Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"double_precision_fu_utilization","Double-Precision Function Unit Utilization","Max (10)","Max (10)","Max (10)"
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"flop_hp_efficiency","FLOP Efficiency(Peak Half)",0.000000%,0.000000%,0.000000%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"flop_sp_efficiency","FLOP Efficiency(Peak Single)",0.149650%,0.149650%,0.149650%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"flop_dp_efficiency","FLOP Efficiency(Peak Double)",55.287917%,55.287917%,55.287917%
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"dram_read_transactions","Device Memory Read Transactions",166930,166930,166930
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"dram_write_transactions","Device Memory Write Transactions",49195,49195,49195
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"dram_read_throughput","Device Memory Read Throughput",11.887367MB/s,11.887367MB/s,11.887366MB/s
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"dram_write_throughput","Device Memory Write Throughput",3.503259MB/s,3.503259MB/s,3.503258MB/s
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"dram_utilization","Device Memory Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"half_precision_fu_utilization","Half-Precision Function Unit Utilization","Idle (0)","Idle (0)","Idle (0)"
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"ecc_transactions","ECC Transactions",0,0,0
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"ecc_throughput","ECC Throughput",0.000000B/s,0.000000B/s,0.000000B/s
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"dram_read_bytes","Total bytes read from DRAM to L2 cache",5341760,5341760,5341760
+"TITAN Xp (0)","fps1(triangle*, unsigned long, char*, unsigned long*, int*)",1,"dram_write_bytes","Total bytes written from L2 cache to DRAM",1574240,1574240,1574240
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_per_warp","Instructions per warp",3829.255859,3829.255859,3829.255859
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"branch_efficiency","Branch Efficiency",99.359693%,99.359693%,99.359693%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"warp_execution_efficiency","Warp Execution Efficiency",14.455680%,14.455680%,14.455680%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"warp_nonpred_execution_efficiency","Warp Non-Predicated Execution Efficiency",13.058675%,13.058675%,13.058675%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_replay_overhead","Instruction Replay Overhead",0.001492,0.001492,0.001492
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"shared_load_transactions_per_request","Shared Memory Load Transactions Per Request",0.000000,0.000000,0.000000
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"shared_store_transactions_per_request","Shared Memory Store Transactions Per Request",0.000000,0.000000,0.000000
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"local_load_transactions_per_request","Local Memory Load Transactions Per Request",2.327381,2.327381,2.327381
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"local_store_transactions_per_request","Local Memory Store Transactions Per Request",1.437972,1.437972,1.437972
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"gld_transactions_per_request","Global Load Transactions Per Request",25.218296,25.218296,25.218296
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"gst_transactions_per_request","Global Store Transactions Per Request",10.735971,10.735971,10.735971
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"shared_store_transactions","Shared Store Transactions",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"shared_load_transactions","Shared Load Transactions",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"local_load_transactions","Local Load Transactions",88622,88622,88622
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"local_store_transactions","Local Store Transactions",92292,92292,92292
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"gld_transactions","Global Load Transactions",362513,362513,362513
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"gst_transactions","Global Store Transactions",48022,48022,48022
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"sysmem_read_transactions","System Memory Read Transactions",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"sysmem_write_transactions","System Memory Write Transactions",5,5,5
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_read_transactions","L2 Read Transactions",312383,312383,312383
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_write_transactions","L2 Write Transactions",291451,291451,291451
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"global_hit_rate","Global Hit Rate in unified l1/tex",10.988897%,10.988897%,10.988897%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"local_hit_rate","Local Hit Rate",38.517524%,38.517524%,38.517524%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"gld_requested_throughput","Requested Global Load Throughput",260.678115MB/s,260.678115MB/s,260.678114MB/s
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"gst_requested_throughput","Requested Global Store Throughput",10.493666MB/s,10.493666MB/s,10.493665MB/s
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"gld_throughput","Global Load Throughput",810.445000MB/s,810.445000MB/s,810.444999MB/s
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"gst_throughput","Global Store Throughput",1.390772GB/s,1.390772GB/s,1.390772GB/s
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"local_memory_overhead","Local Memory Overhead",49.880214%,49.880214%,49.880214%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"tex_cache_hit_rate","Unified Cache Hit Rate",42.001784%,42.001784%,42.001784%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_tex_read_hit_rate","L2 Hit Rate (Texture Reads)",84.710980%,84.710980%,84.710980%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_tex_write_hit_rate","L2 Hit Rate (Texture Writes)",80.527190%,80.527190%,80.527190%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"tex_cache_throughput","Unified Cache Throughput",6.632740GB/s,6.632740GB/s,6.632740GB/s
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_tex_read_throughput","L2 Throughput (Texture Reads)",4.551302GB/s,4.551302GB/s,4.551302GB/s
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_tex_write_throughput","L2 Throughput (Texture Writes)",4.166264GB/s,4.166264GB/s,4.166264GB/s
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_read_throughput","L2 Throughput (Reads)",9.046970GB/s,9.046970GB/s,9.046970GB/s
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_write_throughput","L2 Throughput (Writes)",8.440755GB/s,8.440755GB/s,8.440755GB/s
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"sysmem_read_throughput","System Memory Read Throughput",0.000000B/s,0.000000B/s,0.000000B/s
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"sysmem_write_throughput","System Memory Write Throughput",151.838867KB/s,151.838867KB/s,151.837891KB/s
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"local_load_throughput","Local Memory Load Throughput",2.566595GB/s,2.566595GB/s,2.566595GB/s
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"local_store_throughput","Local Memory Store Throughput",2.672882GB/s,2.672882GB/s,2.672882GB/s
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"shared_load_throughput","Shared Memory Load Throughput",0.000000B/s,0.000000B/s,0.000000B/s
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"shared_store_throughput","Shared Memory Store Throughput",0.000000B/s,0.000000B/s,0.000000B/s
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"gld_efficiency","Global Memory Load Efficiency",32.164813%,32.164813%,32.164813%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"gst_efficiency","Global Memory Store Efficiency",0.736837%,0.736837%,0.736837%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"tex_cache_transactions","Unified Cache Transactions",229022,229022,229022
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"flop_count_dp","Floating Point Operations(Double Precision)",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"flop_count_dp_add","Floating Point Operations(Double Precision Add)",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"flop_count_dp_fma","Floating Point Operations(Double Precision FMA)",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"flop_count_dp_mul","Floating Point Operations(Double Precision Mul)",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"flop_count_sp","Floating Point Operations(Single Precision)",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"flop_count_sp_add","Floating Point Operations(Single Precision Add)",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"flop_count_sp_fma","Floating Point Operations(Single Precision FMA)",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"flop_count_sp_mul","Floating Point Operation(Single Precision Mul)",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"flop_count_sp_special","Floating Point Operations(Single Precision Special)",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_executed","Instructions Executed",3923935,3923935,3923935
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_issued","Instructions Issued",3939397,3939397,3939397
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"sysmem_utilization","System Memory Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"stall_inst_fetch","Issue Stall Reasons (Instructions Fetch)",15.409438%,15.409438%,15.409438%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"stall_exec_dependency","Issue Stall Reasons (Execution Dependency)",25.376414%,25.376414%,25.376414%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"stall_memory_dependency","Issue Stall Reasons (Data Request)",56.432771%,56.432771%,56.432771%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"stall_texture","Issue Stall Reasons (Texture)",0.015731%,0.015731%,0.015731%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"stall_sync","Issue Stall Reasons (Synchronization)",0.000000%,0.000000%,0.000000%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"stall_other","Issue Stall Reasons (Other)",1.693281%,1.693281%,1.693281%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"stall_constant_memory_dependency","Issue Stall Reasons (Immediate constant)",0.802799%,0.802799%,0.802799%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"stall_pipe_busy","Issue Stall Reasons (Pipe Busy)",0.127385%,0.127385%,0.127385%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"shared_efficiency","Shared Memory Efficiency",0.000000%,0.000000%,0.000000%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_fp_32","FP Instructions(Single)",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_fp_64","FP Instructions(Double)",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_integer","Integer Instructions",1252285,1252285,1252285
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_bit_convert","Bit-Convert Instructions",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_control","Control-Flow Instructions",295292,295292,295292
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_compute_ld_st","Load/Store Instructions",63227,63227,63227
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_misc","Misc Instructions",551230,551230,551230
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_inter_thread_communication","Inter-Thread Instructions",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"issue_slots","Issue Slots",3287972,3287972,3287972
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"cf_issued","Issued Control-Flow Instructions",1440512,1440512,1440512
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"cf_executed","Executed Control-Flow Instructions",1440512,1440512,1440512
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"ldst_issued","Issued Load/Store Instructions",371740,371740,371740
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"ldst_executed","Executed Load/Store Instructions",264995,264995,264995
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"atomic_transactions","Atomic Transactions",149643,149643,149643
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"atomic_transactions_per_request","Atomic Transactions Per Request",4.243025,4.243025,4.243025
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_atomic_throughput","L2 Throughput (Atomic requests)",4.403397GB/s,4.403397GB/s,4.403397GB/s
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_atomic_transactions","L2 Transactions (Atomic requests)",304090,304090,304090
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_tex_read_transactions","L2 Transactions (Texture Reads)",157152,157152,157152
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"stall_memory_throttle","Issue Stall Reasons (Memory Throttle)",0.000497%,0.000497%,0.000497%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"stall_not_selected","Issue Stall Reasons (Not Selected)",0.141684%,0.141684%,0.141684%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_tex_write_transactions","L2 Transactions (Texture Writes)",143857,143857,143857
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"flop_count_hp","Floating Point Operations(Half Precision)",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"flop_count_hp_add","Floating Point Operations(Half Precision Add)",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"flop_count_hp_mul","Floating Point Operation(Half Precision Mul)",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"flop_count_hp_fma","Floating Point Operations(Half Precision FMA)",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_fp_16","HP Instructions(Half)",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"sysmem_read_utilization","System Memory Read Utilization","Idle (0)","Idle (0)","Idle (0)"
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"sysmem_write_utilization","System Memory Write Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"pcie_total_data_transmitted","PCIe Total Data Transmitted",512,512,512
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"pcie_total_data_received","PCIe Total Data Received",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_executed_global_loads","Warp level instructions for global loads",14375,14375,14375
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_executed_local_loads","Warp level instructions for local loads",38078,38078,38078
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_executed_shared_loads","Warp level instructions for shared loads",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_executed_surface_loads","Warp level instructions for surface loads",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_executed_global_stores","Warp level instructions for global stores",4473,4473,4473
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_executed_local_stores","Warp level instructions for local stores",64374,64374,64374
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_executed_shared_stores","Warp level instructions for shared stores",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_executed_surface_stores","Warp level instructions for surface stores",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_executed_global_atomics","Warp level instructions for global atom and atom cas",32805,32805,32805
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_executed_global_reductions","Warp level instructions for global reductions",2463,2463,2463
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_executed_surface_atomics","Warp level instructions for surface atom and atom cas",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_executed_surface_reductions","Warp level instructions for surface reductions",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_executed_shared_atomics","Warp level shared instructions for atom and atom CAS",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"inst_executed_tex_ops","Warp level instructions for texture",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_global_load_bytes","Bytes read from L2 for misses in Unified Cache for global loads",3294208,3294208,3294208
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_local_load_bytes","Bytes read from L2 for misses in Unified Cache for local loads",1810656,1810656,1810656
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_surface_load_bytes","Bytes read from L2 for misses in Unified Cache for surface loads",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_local_global_store_bytes","Bytes written to L2 from Unified Cache for local and global stores.",4490048,4490048,4490048
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_global_reduction_bytes","Bytes written to L2 from Unified cache for global reductions",78848,78848,78848
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_global_atomic_store_bytes","Bytes written to L2 from Unified cache for global atomics",4832192,4832192,4832192
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_surface_store_bytes","Bytes written to L2 from Unified Cache for surface stores.",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_surface_reduction_bytes","Bytes written to L2 from Unified Cache for surface reductions",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_surface_atomic_store_bytes","Bytes transferred between Unified Cache and L2 for surface atomics",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"global_load_requests","Total number of global load requests from Multiprocessor",88029,88029,88029
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"local_load_requests","Total number of local load requests from Multiprocessor",70219,70219,70219
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"surface_load_requests","Total number of surface load requests from Multiprocessor",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"global_store_requests","Total number of global store requests from Multiprocessor",38421,38421,38421
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"local_store_requests","Total number of local store requests from Multiprocessor",98996,98996,98996
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"surface_store_requests","Total number of surface store requests from Multiprocessor",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"global_atomic_requests","Total number of global atomic requests from Multiprocessor",63218,63218,63218
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"global_reduction_requests","Total number of global reduction requests from Multiprocessor",2463,2463,2463
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"surface_atomic_requests","Total number of surface atomic requests from Multiprocessor",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"surface_reduction_requests","Total number of surface reduction requests from Multiprocessor",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"sysmem_read_bytes","System Memory Read Bytes",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"sysmem_write_bytes","System Memory Write Bytes",160,160,160
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_tex_hit_rate","L2 Cache Hit Rate",83.438007%,83.438007%,83.438007%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"texture_load_requests","Total number of texture Load requests from Multiprocessor",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"unique_warps_launched","Number of warps launched",1024,1024,1024
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"sm_efficiency","Multiprocessor Activity",26.690844%,26.690844%,26.690844%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"achieved_occupancy","Achieved Occupancy",0.069032,0.069032,0.069032
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"ipc","Executed IPC",0.259455,0.259455,0.259455
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"issued_ipc","Issued IPC",0.222961,0.222961,0.222961
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"issue_slot_utilization","Issue Slot Utilization",4.652295%,4.652295%,4.652295%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"eligible_warps_per_cycle","Eligible Warps Per Active Cycle",0.191124,0.191124,0.191124
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"tex_utilization","Unified Cache Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"l2_utilization","L2 Cache Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"shared_utilization","Shared Memory Utilization","Idle (0)","Idle (0)","Idle (0)"
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"ldst_fu_utilization","Load/Store Function Unit Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"cf_fu_utilization","Control-Flow Function Unit Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"special_fu_utilization","Special Function Unit Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"tex_fu_utilization","Texture Function Unit Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"single_precision_fu_utilization","Single-Precision Function Unit Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"double_precision_fu_utilization","Double-Precision Function Unit Utilization","Idle (0)","Idle (0)","Idle (0)"
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"flop_hp_efficiency","FLOP Efficiency(Peak Half)",0.000000%,0.000000%,0.000000%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"flop_sp_efficiency","FLOP Efficiency(Peak Single)",0.000000%,0.000000%,0.000000%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"flop_dp_efficiency","FLOP Efficiency(Peak Double)",0.000000%,0.000000%,0.000000%
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"dram_read_transactions","Device Memory Read Transactions",27908,27908,27908
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"dram_write_transactions","Device Memory Write Transactions",76507,76507,76507
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"dram_read_throughput","Device Memory Read Throughput",827.645603MB/s,827.645603MB/s,827.645602MB/s
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"dram_write_throughput","Device Memory Write Throughput",2.215730GB/s,2.215730GB/s,2.215730GB/s
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"dram_utilization","Device Memory Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"half_precision_fu_utilization","Half-Precision Function Unit Utilization","Idle (0)","Idle (0)","Idle (0)"
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"ecc_transactions","ECC Transactions",0,0,0
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"ecc_throughput","ECC Throughput",0.000000B/s,0.000000B/s,0.000000B/s
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"dram_read_bytes","Total bytes read from DRAM to L2 cache",893056,893056,893056
+"TITAN Xp (0)","fps2(char*, unsigned long*)",1,"dram_write_bytes","Total bytes written from L2 cache to DRAM",2448224,2448224,2448224
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_per_warp","Instructions per warp",62.091650,62.091650,62.091650
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"branch_efficiency","Branch Efficiency",97.966947%,97.966947%,97.966947%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"warp_execution_efficiency","Warp Execution Efficiency",89.966934%,89.966934%,89.966934%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"warp_nonpred_execution_efficiency","Warp Non-Predicated Execution Efficiency",84.510132%,84.510132%,84.510132%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_replay_overhead","Instruction Replay Overhead",0.000534,0.000534,0.000534
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"shared_load_transactions_per_request","Shared Memory Load Transactions Per Request",0.000000,0.000000,0.000000
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"shared_store_transactions_per_request","Shared Memory Store Transactions Per Request",0.000000,0.000000,0.000000
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"local_load_transactions_per_request","Local Memory Load Transactions Per Request",0.000000,0.000000,0.000000
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"local_store_transactions_per_request","Local Memory Store Transactions Per Request",0.000000,0.000000,0.000000
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"gld_transactions_per_request","Global Load Transactions Per Request",23.386828,23.386828,23.386828
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"gst_transactions_per_request","Global Store Transactions Per Request",1.000000,1.000000,1.000000
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"shared_store_transactions","Shared Store Transactions",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"shared_load_transactions","Shared Load Transactions",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"local_load_transactions","Local Load Transactions",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"local_store_transactions","Local Store Transactions",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"gld_transactions","Global Load Transactions",3382016,3382016,3382016
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"gst_transactions","Global Store Transactions",102400,102400,102400
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"sysmem_read_transactions","System Memory Read Transactions",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"sysmem_write_transactions","System Memory Write Transactions",5,5,5
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_read_transactions","L2 Read Transactions",1404574,1404574,1404574
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_write_transactions","L2 Write Transactions",102413,102413,102413
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"global_hit_rate","Global Hit Rate in unified l1/tex",0.000000%,0.000000%,0.000000%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"local_hit_rate","Local Hit Rate",0.000000%,0.000000%,0.000000%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"gld_requested_throughput","Requested Global Load Throughput",429.197894GB/s,429.197894GB/s,429.197894GB/s
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"gst_requested_throughput","Requested Global Store Throughput",52.478080GB/s,52.478080GB/s,52.478080GB/s
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"gld_throughput","Global Load Throughput",719.768647GB/s,719.768647GB/s,719.768647GB/s
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"gst_throughput","Global Store Throughput",52.478080GB/s,52.478080GB/s,52.478080GB/s
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"local_memory_overhead","Local Memory Overhead",0.000000%,0.000000%,0.000000%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"tex_cache_hit_rate","Unified Cache Hit Rate",16.934222%,16.934222%,16.934222%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_tex_read_hit_rate","L2 Hit Rate (Texture Reads)",99.164245%,99.164245%,99.164245%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_tex_write_hit_rate","L2 Hit Rate (Texture Writes)",75.066406%,75.066406%,75.066406%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"tex_cache_throughput","Unified Cache Throughput",473.744846GB/s,473.744846GB/s,473.744846GB/s
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_tex_read_throughput","L2 Throughput (Texture Reads)",719.768647GB/s,719.768647GB/s,719.768647GB/s
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_tex_write_throughput","L2 Throughput (Texture Writes)",52.478080GB/s,52.478080GB/s,52.478080GB/s
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_read_throughput","L2 Throughput (Reads)",719.817845GB/s,719.817845GB/s,719.817845GB/s
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_write_throughput","L2 Throughput (Writes)",52.484743GB/s,52.484743GB/s,52.484743GB/s
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"sysmem_read_throughput","System Memory Read Throughput",0.000000B/s,0.000000B/s,0.000000B/s
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"sysmem_write_throughput","System Memory Write Throughput",2.623903MB/s,2.623903MB/s,2.623887MB/s
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"local_load_throughput","Local Memory Load Throughput",0.000000B/s,0.000000B/s,0.000000B/s
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"local_store_throughput","Local Memory Store Throughput",0.000000B/s,0.000000B/s,0.000000B/s
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"shared_load_throughput","Shared Memory Load Throughput",0.000000B/s,0.000000B/s,0.000000B/s
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"shared_store_throughput","Shared Memory Store Throughput",0.000000B/s,0.000000B/s,0.000000B/s
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"gld_efficiency","Global Memory Load Efficiency",59.629979%,59.629979%,59.629979%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"gst_efficiency","Global Memory Store Efficiency",100.000000%,100.000000%,100.000000%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"tex_cache_transactions","Unified Cache Transactions",924414,924414,924414
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"flop_count_dp","Floating Point Operations(Double Precision)",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"flop_count_dp_add","Floating Point Operations(Double Precision Add)",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"flop_count_dp_fma","Floating Point Operations(Double Precision FMA)",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"flop_count_dp_mul","Floating Point Operations(Double Precision Mul)",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"flop_count_sp","Floating Point Operations(Single Precision)",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"flop_count_sp_add","Floating Point Operations(Single Precision Add)",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"flop_count_sp_fma","Floating Point Operations(Single Precision FMA)",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"flop_count_sp_mul","Floating Point Operation(Single Precision Mul)",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"flop_count_sp_special","Floating Point Operations(Single Precision Special)",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_executed","Instructions Executed",6358185,6358185,6358185
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_issued","Instructions Issued",6361342,6361342,6361342
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"sysmem_utilization","System Memory Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"stall_inst_fetch","Issue Stall Reasons (Instructions Fetch)",11.472234%,11.472234%,11.472234%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"stall_exec_dependency","Issue Stall Reasons (Execution Dependency)",21.558843%,21.558843%,21.558843%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"stall_memory_dependency","Issue Stall Reasons (Data Request)",37.994074%,37.994074%,37.994074%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"stall_texture","Issue Stall Reasons (Texture)",0.000000%,0.000000%,0.000000%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"stall_sync","Issue Stall Reasons (Synchronization)",0.000000%,0.000000%,0.000000%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"stall_other","Issue Stall Reasons (Other)",19.981380%,19.981380%,19.981380%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"stall_constant_memory_dependency","Issue Stall Reasons (Immediate constant)",0.436795%,0.436795%,0.436795%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"stall_pipe_busy","Issue Stall Reasons (Pipe Busy)",1.792590%,1.792590%,1.792590%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"shared_efficiency","Shared Memory Efficiency",0.000000%,0.000000%,0.000000%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_fp_32","FP Instructions(Single)",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_fp_64","FP Instructions(Double)",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_integer","Integer Instructions",120952362,120952362,120952362
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_bit_convert","Bit-Convert Instructions",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_control","Control-Flow Instructions",16617078,16617078,16617078
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_compute_ld_st","Load/Store Instructions",7138878,7138878,7138878
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_misc","Misc Instructions",27237630,27237630,27237630
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_inter_thread_communication","Inter-Thread Instructions",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"issue_slots","Issue Slots",6081295,6081295,6081295
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"cf_issued","Issued Control-Flow Instructions",731700,731700,731700
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"cf_executed","Executed Control-Flow Instructions",731700,731700,731700
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"ldst_issued","Issued Load/Store Instructions",1129214,1129214,1129214
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"ldst_executed","Executed Load/Store Instructions",451812,451812,451812
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"atomic_transactions","Atomic Transactions",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"atomic_transactions_per_request","Atomic Transactions Per Request",0.000000,0.000000,0.000000
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_atomic_throughput","L2 Throughput (Atomic requests)",0.000000B/s,0.000000B/s,0.000000B/s
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_atomic_transactions","L2 Transactions (Atomic requests)",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_tex_read_transactions","L2 Transactions (Texture Reads)",1404478,1404478,1404478
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"stall_memory_throttle","Issue Stall Reasons (Memory Throttle)",1.637721%,1.637721%,1.637721%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"stall_not_selected","Issue Stall Reasons (Not Selected)",5.126363%,5.126363%,5.126363%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_tex_write_transactions","L2 Transactions (Texture Writes)",102400,102400,102400
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"flop_count_hp","Floating Point Operations(Half Precision)",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"flop_count_hp_add","Floating Point Operations(Half Precision Add)",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"flop_count_hp_mul","Floating Point Operation(Half Precision Mul)",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"flop_count_hp_fma","Floating Point Operations(Half Precision FMA)",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_fp_16","HP Instructions(Half)",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"sysmem_read_utilization","System Memory Read Utilization","Idle (0)","Idle (0)","Idle (0)"
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"sysmem_write_utilization","System Memory Write Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"pcie_total_data_transmitted","PCIe Total Data Transmitted",512,512,512
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"pcie_total_data_received","PCIe Total Data Received",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_executed_global_loads","Warp level instructions for global loads",144612,144612,144612
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_executed_local_loads","Warp level instructions for local loads",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_executed_shared_loads","Warp level instructions for shared loads",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_executed_surface_loads","Warp level instructions for surface loads",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_executed_global_stores","Warp level instructions for global stores",102400,102400,102400
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_executed_local_stores","Warp level instructions for local stores",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_executed_shared_stores","Warp level instructions for shared stores",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_executed_surface_stores","Warp level instructions for surface stores",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_executed_global_atomics","Warp level instructions for global atom and atom cas",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_executed_global_reductions","Warp level instructions for global reductions",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_executed_surface_atomics","Warp level instructions for surface atom and atom cas",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_executed_surface_reductions","Warp level instructions for surface reductions",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_executed_shared_atomics","Warp level shared instructions for atom and atom CAS",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"inst_executed_tex_ops","Warp level instructions for texture",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_global_load_bytes","Bytes read from L2 for misses in Unified Cache for global loads",44943296,44943296,44943296
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_local_load_bytes","Bytes read from L2 for misses in Unified Cache for local loads",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_surface_load_bytes","Bytes read from L2 for misses in Unified Cache for surface loads",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_local_global_store_bytes","Bytes written to L2 from Unified Cache for local and global stores.",3276800,3276800,3276800
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_global_reduction_bytes","Bytes written to L2 from Unified cache for global reductions",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_global_atomic_store_bytes","Bytes written to L2 from Unified cache for global atomics",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_surface_store_bytes","Bytes written to L2 from Unified Cache for surface stores.",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_surface_reduction_bytes","Bytes written to L2 from Unified Cache for surface reductions",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_surface_atomic_store_bytes","Bytes transferred between Unified Cache and L2 for surface atomics",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"global_load_requests","Total number of global load requests from Multiprocessor",514814,514814,514814
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"local_load_requests","Total number of local load requests from Multiprocessor",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"surface_load_requests","Total number of surface load requests from Multiprocessor",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"global_store_requests","Total number of global store requests from Multiprocessor",409600,409600,409600
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"local_store_requests","Total number of local store requests from Multiprocessor",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"surface_store_requests","Total number of surface store requests from Multiprocessor",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"global_atomic_requests","Total number of global atomic requests from Multiprocessor",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"global_reduction_requests","Total number of global reduction requests from Multiprocessor",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"surface_atomic_requests","Total number of surface atomic requests from Multiprocessor",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"surface_reduction_requests","Total number of surface reduction requests from Multiprocessor",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"sysmem_read_bytes","System Memory Read Bytes",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"sysmem_write_bytes","System Memory Write Bytes",160,160,160
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_tex_hit_rate","L2 Cache Hit Rate",97.526674%,97.526674%,97.526674%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"texture_load_requests","Total number of texture Load requests from Multiprocessor",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"unique_warps_launched","Number of warps launched",102400,102400,102400
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"sm_efficiency","Multiprocessor Activity",94.222490%,94.222490%,94.222490%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"achieved_occupancy","Achieved Occupancy",0.700884,0.700884,0.700884
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"ipc","Executed IPC",2.720918,2.720918,2.720918
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"issued_ipc","Issued IPC",2.748009,2.748009,2.748009
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"issue_slot_utilization","Issue Slot Utilization",65.675612%,65.675612%,65.675612%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"eligible_warps_per_cycle","Eligible Warps Per Active Cycle",4.740923,4.740923,4.740923
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"tex_utilization","Unified Cache Utilization","Low (2)","Low (2)","Low (2)"
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"l2_utilization","L2 Cache Utilization","Mid (4)","Mid (4)","Mid (4)"
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"shared_utilization","Shared Memory Utilization","Idle (0)","Idle (0)","Idle (0)"
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"ldst_fu_utilization","Load/Store Function Unit Utilization","Low (1)","Low (1)","Low (1)"
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"cf_fu_utilization","Control-Flow Function Unit Utilization","Low (2)","Low (2)","Low (2)"
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"special_fu_utilization","Special Function Unit Utilization","Idle (0)","Idle (0)","Idle (0)"
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"tex_fu_utilization","Texture Function Unit Utilization","Low (2)","Low (2)","Low (2)"
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"single_precision_fu_utilization","Single-Precision Function Unit Utilization","Mid (6)","Mid (6)","Mid (6)"
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"double_precision_fu_utilization","Double-Precision Function Unit Utilization","Idle (0)","Idle (0)","Idle (0)"
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"flop_hp_efficiency","FLOP Efficiency(Peak Half)",0.000000%,0.000000%,0.000000%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"flop_sp_efficiency","FLOP Efficiency(Peak Single)",0.000000%,0.000000%,0.000000%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"flop_dp_efficiency","FLOP Efficiency(Peak Double)",0.000000%,0.000000%,0.000000%
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"dram_read_transactions","Device Memory Read Transactions",11740,11740,11740
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"dram_write_transactions","Device Memory Write Transactions",107153,107153,107153
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"dram_read_throughput","Device Memory Read Throughput",6.016530GB/s,6.016530GB/s,6.016530GB/s
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"dram_write_throughput","Device Memory Write Throughput",54.913904GB/s,54.913904GB/s,54.913904GB/s
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"dram_utilization","Device Memory Utilization","Low (2)","Low (2)","Low (2)"
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"half_precision_fu_utilization","Half-Precision Function Unit Utilization","Idle (0)","Idle (0)","Idle (0)"
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"ecc_transactions","ECC Transactions",0,0,0
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"ecc_throughput","ECC Throughput",0.000000B/s,0.000000B/s,0.000000B/s
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"dram_read_bytes","Total bytes read from DRAM to L2 cache",375680,375680,375680
+"TITAN Xp (0)","fps3(char*, unsigned long*, bool*)",1,"dram_write_bytes","Total bytes written from L2 cache to DRAM",3428896,3428896,3428896
