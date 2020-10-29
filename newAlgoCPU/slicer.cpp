@@ -1,71 +1,95 @@
+
 #include "slicer.hpp"
 #include <algorithm>
 #include <iostream>
 #include <map>
 using std::cout;
 using std::endl;
+#include <math.h>
 
-std::multimap<int, triangle> sortTriangle(triangle* triangles, int num_triangles,  std::multimap<int, triangle> bucket) {
-	int zmin, zmax;
+std::multimap<int, triangle> sortTriangle(triangle* triangles, int num_triangles, std::multimap<int, triangle> bucket) {
+	double zmin, zmax;
+	int min, max;
 	for (int i = 0; i < num_triangles; i++) {
 		zmin = std::min(std::min(triangles[i].p1.z, triangles[i].p2.z), triangles[i].p3.z);
 		zmax = std::max(std::max(triangles[i].p1.z, triangles[i].p2.z), triangles[i].p3.z);
-		zmin = std::ceil(zmin / RESOLUTION);
-		zmax = std::ceil(zmax / RESOLUTION);
-		for (int j = zmin; j < zmax; j++) {
+		min = std::ceil(zmin);
+		max = std::ceil(zmax)+1;
+		//std::cout << min << max << std::endl;
+		//std::cout << std::endl;
+		for (int j = min; j < max; j++) {
 			bucket.insert({ j, triangles[i] });
 		}
 	}
 	return bucket;
 }
 
-void outputArray(triangle* triangles, int num_triangles, int* outArray) {
+void outputArray(triangle* triangles, int num_triangles, bool* outArray) {
 	triangle t;
 	int intersectLayer;
-	size_t outIdx, preIdx;
-	std::multimap<int, triangle>::iterator itr;
-	std::multimap<int, triangle> bucket;
-	bucket = sortTriangle(triangles, num_triangles, bucket);
-	//int intersectArray[X_DIM * Y_DIM * NUM_LAYERS];
-	int* intersectArray = (int*)malloc(X_DIM * Y_DIM * NUM_LAYERS * sizeof(int));
-	for (int layer = 0; layer < NUM_LAYERS; layer++) {
+	bool intersect;
+	int x_idx, y_idx;
+	int outIdx, preIdx, flagIdx;
+//	std::multimap<int, triangle>::iterator itr;
+//	std::multimap<int, triangle> bucket;
+//	bucket = sortTriangle(triangles, num_triangles, bucket);
+	//bool intersectArray[X_DIM * Y_DIM * NUM_LAYERS];
+	bool* flagArray = (bool*)malloc(X_DIM * Y_DIM * sizeof(bool));
+	for (int layer = 0; layer < 2; layer++) {
+		std::cout << layer << std::endl;
+		//std::cout << "#intersect triangles:" << bucket.count(layer) << std::endl;
 		for (int y = 0; y < Y_DIM; y++) {
 			for (int x = 0; x < X_DIM; x++) {
 				outIdx = layer * Y_DIM * X_DIM + y * X_DIM + x;
-				
+				flagIdx = y * X_DIM + x;
+				x_idx = x - (X_DIM / 2);
+				y_idx = y - (Y_DIM / 2);
 				//calculate whether this pixel intersected in this layer and stored to intersectArray
-				for (itr = bucket.find(layer); itr != bucket.find(layer + 1); ++itr) {
-					t = itr->second;
-					intersectLayer = pixelRayIntersection(t, x, y);
+//				for (itr = bucket.find(layer); itr != bucket.find(layer + 1); ++itr) {
+//					t = itr->second;
+				for (int i = 0; i < num_triangles; i++){					
+					t = triangles[i];
+					intersectLayer = pixelRayIntersection(t, x_idx, y_idx);
+					
 					if (intersectLayer == layer) {
-						*(intersectArray + outIdx) = 1;
+						//(intersectArray + outIdx) = 1;
+						intersect = true;
+						//std::cout << "Intersect" << std::endl;
+						break;
 					}
 					else {
-						*(intersectArray + outIdx) = 0;
+						//(intersectArray + outIdx) = 0;
+						intersect = false;
 					}
 				}
 				//output array
 				if (layer == 0) {
-					*(outArray+outIdx) = *(intersectArray + outIdx);
+					//(outArray + outIdx) = *(intersectArray + outIdx);
+					outArray[outIdx] = intersect || false;
+					flagArray[flagIdx] = intersect ^ false;
 				}
 				else {
-					preIdx = (layer-1) * Y_DIM * X_DIM + y * X_DIM + x;
-					if (*(intersectArray + outIdx) == 1 && *(intersectArray + preIdx) == 0) {
-						*(outArray + outIdx) = 1;
+					outArray[outIdx] = intersect || flagArray[flagIdx];
+					flagArray[flagIdx] = intersect ^ flagArray[flagIdx];
+					/*
+					preIdx = (layer - 1) * Y_DIM * X_DIM + y * X_DIM + x;
+					if (*(intersectArray + outIdx) == true && *(intersectArray + preIdx) == false) {
+						*(outArray + outIdx) = true;
 					}
-					else if (*(intersectArray + outIdx) == 0) {
+					else if (*(intersectArray + outIdx) == false) {
 						*(outArray + outIdx) = *(outArray + preIdx);
 					}
 					//check later
-					else if (*(intersectArray + outIdx) == 1 && *(intersectArray + preIdx) == 1) {
-
-					}	
+					else if (*(intersectArray + outIdx) == true && *(intersectArray + preIdx) == true) {
+						*(outArray + outIdx) = true;*/
+					}
 				}
+				
 			}
 		}
 
-	}
-	free(intersectArray);
+	
+	//free(flagArray);
 }
 
 
@@ -77,6 +101,13 @@ int pixelRayIntersection(triangle t, int x, int y) {
 	If a >= 0, b >= 0, and a+b <= 1, S is a valid intersection.
 	*/
 	int layer;
+	/*
+	if ((x < t.p1.x && x < t.p2.x && x < t.p3.x)
+		|| (x > t.p1.x && x > t.p2.x && x > t.p3.x)
+		|| (y < t.p1.y && y < t.p2.y && y < t.p3.y)
+		|| (y > t.p1.y && y > t.p2.y && y > t.p3.y)
+		) return -1; */
+
 	double x_d = x * RESOLUTION - t.p1.x;
 	double y_d = y * RESOLUTION - t.p1.y;
 
@@ -93,6 +124,7 @@ int pixelRayIntersection(triangle t, int x, int y) {
 	double intersection = (a * z1 + b * z2) + t.p1.z;
 	// // divide by layer width
 	layer = (intersection / RESOLUTION) * inside - (!inside);
+	//printf("%d \n", layer);
+	//std::cout << layer << std::endl;
 	return layer;
 }
-
