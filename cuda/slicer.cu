@@ -59,33 +59,34 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
 }
 
 __global__
-void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, size_t* trunk_length, int* locks) {
+void mfps(triangle* triangles, size_t num_triangles, char* all_intersections, size_t* trunk_length, int* locks) {
     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
-    size_t tri_idx = idx / (X_DIM * Y_DIM);
+    size_t tri_idx = idx / (X_DIM * Y_DIM / PIXELS_PER_THREAD);
     if (tri_idx >= num_triangles) return;
-    int y_idx = (idx - (tri_idx * X_DIM * Y_DIM)) / X_DIM;
-    int x_idx = (idx - (tri_idx * X_DIM * Y_DIM)) % X_DIM;
+    int y_idx = (idx - (tri_idx * X_DIM * Y_DIM / PIXELS_PER_THREAD)) / (X_DIM / PIXELS_PER_THREAD);
+    int x_group = (idx - (tri_idx * X_DIM * Y_DIM / PIXELS_PER_THREAD)) % (X_DIM / PIXELS_PER_THREAD);
+    int x_idx, x, y;
+    char intersections[PIXELS_PER_THREAD];
+    triangle triangles_shared = triangles[tri_idx];
+    y = y_idx - (Y_DIM / 2);
 
-    int x = x_idx - (X_DIM / 2);
-    int y = y_idx - (Y_DIM / 2);
-
-    // copy 1 triangle to the shared memory -- That's a;; we need on this block
-    __shared__ triangle triangles_shared;
-    if (threadIdx.x == 0) {
-        triangles_shared = triangles[tri_idx];
+    for (x_idx = 0; x_idx < PIXELS_PER_THREAD; x_idx++) {
+        x = x_group * PIXELS_PER_THREAD + x_idx - (X_DIM / 2);
+        intersections[x_idx] = pixelRayIntersection(triangles_shared, x, y);
     }
-    __syncthreads();
-    char* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
-    int* lock = locks + y_idx * X_DIM + x_idx;
-    size_t* length = trunk_length + y_idx * X_DIM + x_idx;
-    char intersection = pixelRayIntersection(triangles_shared, x, y);
-    bool run = (intersection != -1);
+
+    char* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_group * NUM_LAYERS * PIXELS_PER_THREAD;
+    int* lock = locks + y_idx * (X_DIM / PIXELS_PER_THREAD) + x_group;
+    size_t* length = trunk_length + (y_idx * X_DIM) + (x_group * PIXELS_PER_THREAD);
+    bool run = (PIXELS_PER_THREAD + thrust::reduce(thrust::device, intersections, intersections + PIXELS_PER_THREAD) > 0);
     while (run) {
         if(atomicCAS(lock, 0, 1) == 0) {
-            layers[length[0]] = intersection;
-            length[0]++;
-            run = false;
+            for (x_idx = 0; x_idx < PIXELS_PER_THREAD; x_idx++) {
+                layers[x_idx * NUM_LAYERS + length[x_idx]] = intersections[x_idx];
+                length[x_idx] = (intersections[x_idx] == -1) ? length[x_idx] : length[x_idx] + 1;
+            }
             atomicExch(lock, 0);
+            run = false;
         }
     }
 }

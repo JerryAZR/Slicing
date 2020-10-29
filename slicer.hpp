@@ -4,6 +4,8 @@
 #include "triangle.hpp"
 #include <vector>
 
+#define PIXELS_PER_THREAD 8
+
 // in mm
 #define X_LEN 256
 #define Y_LEN 128
