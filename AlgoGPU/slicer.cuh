@@ -4,10 +4,12 @@
 #include "triangle.cuh"
 #include <map>
 
+#define THREADS_PER_BLOCK 256
+
 // in mm
-#define X_LEN 200
-#define Y_LEN 200
-#define HEIGHT 20
+#define X_LEN 256
+#define Y_LEN 128
+#define HEIGHT 100
 #define RESOLUTION 1
 
 // in pixels
@@ -21,9 +23,9 @@
 #define Y_MAX (long)(Y_LEN / 2)
 
 
-std::multimap<int, triangle> sortTriangle(triangle* triangles, int num_triangles, std::multimap<int, triangle> bucket);
-__global__ void outputArray(triangle* d_intersectTriangles, int* d_tMun, int* d_outArray, int* d_intersectArray, int* d_intersectArrayPre);
+
+__global__ void outputArray(triangle* triangles_global, size_t num_triangles, bool* out);
 __device__ int pixelRayIntersection(triangle t, int x, int y);
-__device__ void getIntersectionArray(int x, int y, triangle* triangles, int num_triangles, int layer, triangle* d_intersectArray, int x_idx, int y_idx);
-__device__ void getOutputArray(int x, int y, triangle* triangles, int num_triangles, int layer, int* d_intersectArray, int* d_intersectArrayPre, int* d_outArray, int x_idx, int y_idx);
+__device__ bool getIntersect(int x, int y, triangle* triangles, size_t num_triangles, size_t layer);
+__device__ void getOutarray(int x, int y, triangle* triangles, size_t num_triangles, size_t layer, size_t outIdx, size_t flagIdx, bool* out, bool* flagArray);
 #endif

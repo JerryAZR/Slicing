@@ -17,7 +17,7 @@ using std::vector;
 typedef
 struct v3
 {
-    public:
+public:
     __host__ __device__ v3(char* bin);
     __host__ __device__ v3(double x = 0.0, double y = 0.0, double z = 0.0);
     // ~v3();
@@ -28,13 +28,13 @@ struct v3
 typedef
 struct triangle
 {
-    public:
+public:
     __host__ __device__ triangle(v3 p1 = v3(), v3 p2 = v3(), v3 p3 = v3());
     // ~triangle();
     v3 p1, p2, p3;
 } triangle;
 
 // utils
-__host__ void read_stl(string fname, vector<triangle>&v);
+__host__ void read_stl(string fname, vector<triangle>& v);
 
 #endif
