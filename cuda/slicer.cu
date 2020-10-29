@@ -152,28 +152,11 @@ char pixelRayIntersection(triangle t, int x, int y) {
     return layer;
 }
 
-#define UNROLL 4
 __device__
 int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles, char* layers) {
     int idx = 0;
-    int i;
-    char layers_unrolled[UNROLL];
-    
-    for (i = 0; i <= num_triangles - UNROLL; i += UNROLL) {
-        #pragma unroll
-        for (int j = 0; j < UNROLL; j++) {
-            layers_unrolled[j] = pixelRayIntersection(triangles[i+j],x,y);
-        }
 
-        for (int j = 0; j < UNROLL; j++) {
-            if (layers_unrolled[j] != -1) {
-                layers[idx] = layers_unrolled[j];
-                idx++;
-            }
-        }
-    }
-
-    for (/* nothing here */; i < num_triangles; i++) {
+    for (int i = 0; i < num_triangles; i++) {
         char layer = pixelRayIntersection(triangles[i], x, y);
         if (layer != -1) {
             layers[idx] = layer;
