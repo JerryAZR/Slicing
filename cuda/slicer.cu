@@ -78,7 +78,7 @@ void mfps(triangle* triangles, size_t num_triangles, char* all_intersections, si
     char* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_group * NUM_LAYERS * PIXELS_PER_THREAD;
     int* lock = locks + y_idx * (X_DIM / PIXELS_PER_THREAD) + x_group;
     size_t* length = trunk_length + (y_idx * X_DIM) + (x_group * PIXELS_PER_THREAD);
-    bool run = (PIXELS_PER_THREAD + thrust::reduce(thrust::device, intersections, intersections + PIXELS_PER_THREAD) > 0);
+    bool run = (PIXELS_PER_THREAD + thrust::reduce(thrust::device, &intersections[0], &intersections[0] + PIXELS_PER_THREAD) > 0);
     while (run) {
         if(atomicCAS(lock, 0, 1) == 0) {
             for (x_idx = 0; x_idx < PIXELS_PER_THREAD; x_idx++) {

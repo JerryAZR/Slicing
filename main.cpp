@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
     free(locks);
 #endif
     // Visualize
-    return 0;
+    // return 0;
     for (int y = Y_DIM; y > 0; y--) {
         for (int x = 0; x < X_DIM; x++) {
             if (all[y*X_DIM + x]) std::cout << "x";
@@ -74,4 +74,5 @@ int main(int argc, char* argv[]) {
         }
         std::cout << std::endl;
     }
+    return 0;
 }

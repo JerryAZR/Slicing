@@ -86,7 +86,7 @@ void fps1(triangle* triangles, size_t num_triangles, int* all_intersections, siz
     int* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_group * NUM_LAYERS * PIXELS_PER_THREAD;
     int* lock = locks + y_idx * (X_DIM / PIXELS_PER_THREAD) + x_group;
     size_t* length = trunk_length + (y_idx * X_DIM) + (x_group * PIXELS_PER_THREAD);
-    bool run = (PIXELS_PER_THREAD + std::reduce(intersections, intersections + PIXELS_PER_THREAD) > 0);
+    bool run = (PIXELS_PER_THREAD + std::accumulate(&intersections[0], intersections + PIXELS_PER_THREAD, 0) > 0);
     while (run) {
         if(atomicCAS(lock, 0, 1) == 0) {
             for (x_idx = 0; x_idx < PIXELS_PER_THREAD; x_idx++) {
