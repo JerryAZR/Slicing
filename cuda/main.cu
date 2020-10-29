@@ -6,7 +6,7 @@
 
 
 #define PPS 0
-#define SHOW_LAYER 0
+#define SHOW_LAYER 1
 
 int main(int argc, char* argv[]) {
     std::string stl_file_name;

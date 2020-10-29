@@ -62,8 +62,6 @@ __global__
 void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, size_t* trunk_length, int* locks) {
     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
     size_t tri_idx = idx / (X_DIM * Y_DIM);
-    size_t base_idx = blockDim.x * blockIdx.x / (X_DIM * Y_DIM);
-    size_t shared_idx = tri_idx - base_idx;
     if (tri_idx >= num_triangles) return;
     int y_idx = (idx - (tri_idx * X_DIM * Y_DIM)) / X_DIM;
     int x_idx = (idx - (tri_idx * X_DIM * Y_DIM)) % X_DIM;
@@ -71,16 +69,16 @@ void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, si
     int x = x_idx - (X_DIM / 2);
     int y = y_idx - (Y_DIM / 2);
 
-    // copy 2 triangles to the shared memory -- That's a;; we need on this block
-    __shared__ triangle triangles_shared[2];
-    if (threadIdx.x == 0 || (idx == (tri_idx * X_DIM * Y_DIM))) {
-        triangles_shared[shared_idx] = triangles[tri_idx];
+    // copy 1 triangle to the shared memory -- That's a;; we need on this block
+    __shared__ triangle triangles_shared;
+    if (threadIdx.x == 0) {
+        triangles_shared = triangles[tri_idx];
     }
     __syncthreads();
     char* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
     int* lock = locks + y_idx * X_DIM + x_idx;
     size_t* length = trunk_length + y_idx * X_DIM + x_idx;
-    char intersection = pixelRayIntersection(triangles_shared[shared_idx], x, y);
+    char intersection = pixelRayIntersection(triangles_shared, x, y);
     bool run = (intersection != -1);
     while (run) {
         if(atomicCAS(lock, 0, 1) == 0) {
