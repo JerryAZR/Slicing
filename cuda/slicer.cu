@@ -114,7 +114,7 @@ void fps3(char* sorted_intersections, size_t* trunk_length, bool* out) {
     out[idx] = isInside(z_idx, intersection_trunk, length);
 }
 
-__device__
+__device__ __forceinline__
 char pixelRayIntersection(triangle t, int x, int y) {
     /*
     Let A, B, C be the 3 vertices of the given triangle
@@ -149,13 +149,14 @@ char pixelRayIntersection(triangle t, int x, int y) {
     bool inside = (a >= 0) && (b >= 0) && (a+b <= 1);
     double intersection = (a * z1 + b * z2) + t.p1.z;
     // // divide by layer width
-    char layer = (intersection / RESOLUTION) * inside - (!inside);
+    char layer = inside ? (intersection / RESOLUTION) : -1;
     return layer;
 }
 
 __device__
 int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles, char* layers) {
     int idx = 0;
+
     for (int i = 0; i < num_triangles; i++) {
         char layer = pixelRayIntersection(triangles[i], x, y);
         if (layer != -1) {
