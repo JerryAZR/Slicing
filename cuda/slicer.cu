@@ -70,11 +70,8 @@ void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, si
     int y = y_idx - (Y_DIM / 2);
 
     // copy 1 triangle to the shared memory -- That's a;; we need on this block
-    __shared__ triangle triangles_shared;
-    if (threadIdx.x == 0) {
-        triangles_shared = triangles[tri_idx];
-    }
-    __syncthreads();
+    triangle triangles_shared = triangles[tri_idx];
+
     char* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
     int* lock = locks + y_idx * X_DIM + x_idx;
     size_t* length = trunk_length + y_idx * X_DIM + x_idx;
