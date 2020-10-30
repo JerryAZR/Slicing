@@ -6,55 +6,46 @@
 
 __global__
 void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
-    int idx = blockDim.x * blockIdx.x + threadIdx.x;
-    // printf("starting thread %d\n", idx);
-    int y_idx = idx / X_DIM;
-    // if (y >= Y_DIM) return;
-    int x_idx = idx % X_DIM;
+    unsigned layers_per_thread = NUM_LAYERS / THREADS_PER_BLOCK;
+    unsigned remaining_layers = NUM_LAYERS * THREADS_PER_BLOCK;
+    unsigned prev_layers = threadIdx.x * layers_per_thread 
+        + ((threadIdx.x < remaining_layers) ? threadIdx.x : remaining_layers);
+    unsigned total_layers = layers_per_thread + (threadIdx.x < remaining_layers);
+
+    __shared__ char layers_shared[NUM_LAYERS];
+    char* layers_init = &layers_shared[prev_layers];
+    for (int i = 0; i < total_layers; i++) {
+        layers_init[i] = 0;
+    }
+    __syncthreads();    
+
+    int y_idx = blockIdx.x / X_DIM;
+    int x_idx = blockIdx.x % X_DIM;
     int x = x_idx - (X_DIM / 2);
     int y = y_idx - (Y_DIM / 2);
+    char intersection;
 
-    // Copy triangles to shared memory
+    unsigned triangles_per_thread = num_triangles / THREADS_PER_BLOCK;
+    unsigned remaining_triangles = num_triangles % THREADS_PER_BLOCK;
+    unsigned prev = threadIdx.x * triangles_per_thread;
+    unsigned total = triangles_per_thread + (threadIdx.x < remaining_triangles);
+    prev += (threadIdx.x < remaining_triangles) ? threadIdx.x : remaining_triangles;
+
+    triangle* triangles = triangles_global + prev;
     // Each block has a shared memory storing some triangles.
-    __shared__ triangle tri_base[THREADS_PER_BLOCK];
-    triangle* triangles = (triangle*) tri_base;
-    size_t num_iters = num_triangles / THREADS_PER_BLOCK;
-    int length = 0;
-    __shared__ char layers_shared[THREADS_PER_BLOCK][NUM_LAYERS+1];
-    char* layers = &layers_shared[threadIdx.x][0];
-    for (size_t i = 0; i < num_iters; i++) {
-        triangles[threadIdx.x] = triangles_global[threadIdx.x + (i * THREADS_PER_BLOCK)];
-        // Wait for other threads to complete;
-        __syncthreads();
-        if (y_idx < Y_DIM)
-        length += getIntersectionTrunk(x, y, triangles, THREADS_PER_BLOCK, layers);
-        layers = &layers_shared[threadIdx.x][length]; // update pointer value
-    }
-    size_t remaining = num_triangles - (num_iters * THREADS_PER_BLOCK);
-    if (threadIdx.x < remaining) {
-        triangles[threadIdx.x] = triangles_global[threadIdx.x + (num_iters * THREADS_PER_BLOCK)];
-    }
-    if (remaining) {
-        __syncthreads();
-        if (y_idx < Y_DIM)
-        length += getIntersectionTrunk(x, y, triangles, remaining, layers);
-        layers = &layers_shared[threadIdx.x][length]; // update pointer value
+    // nvcc plz unroll this loop
+    for (size_t i = 0; i < total; i++) {
+        intersection = pixelRayIntersection(triangles[i],x,y)
+        if (intersection != -1) {
+            layers_shared[intersection] = 1;
+        }
     }
 
-    if (y_idx >= Y_DIM) return;
-    layers = &layers_shared[threadIdx.x][0]; // reset to beginning
-
-    thrust::sort(thrust::device, &layers[0], &layers[length]);
-    layers[length] = NUM_LAYERS;
-
-    bool flag = false;
-    int layerIdx = 0;
-    for (char z = 0; z < NUM_LAYERS; z++) {
-        // If intersect
-        bool intersect = (z == layers[layerIdx]);
-        out[z*Y_DIM*X_DIM + y_idx*X_DIM + x_idx] = intersect || flag;
-        flag = intersect ^ flag;
-        layerIdx += intersect;
+    bool flag = (bool)(1 & thrust::count(thrust::device, &layers_shared[0], layers_init, 1));
+    bool* out_begin = out + blockIdx.x * NUM_LAYERS + prev_layers;
+    for (unsigned z = 0; z < total_layers; z++) {
+        out_begin[z] = ((bool) layers_init[i]) || flag;
+        flag = flag ^ ((bool) layers_init[i])
     }
 }
 

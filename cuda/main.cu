@@ -5,7 +5,7 @@
 #include <vector>
 
 
-#define PPS 0
+#define PPS 1
 #define SHOW_LAYER 0
 
 int main(int argc, char* argv[]) {
@@ -21,8 +21,8 @@ int main(int argc, char* argv[]) {
     read_stl(stl_file_name,triangles);
     int num_triangles = triangles.size();
     triangle* triangles_dev;
-    // all[z][y][x]
-    bool all[NUM_LAYERS][Y_DIM][X_DIM];
+    // all[x,y,z]
+    bool all[X_DIM][Y_DIM][NUM_LAYERS];
     bool* all_dev;
     size_t size = NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool);
     cudaMalloc(&all_dev, size);
@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
     int blocksPerGrid;
 
 #if(PPS == 1)
-    blocksPerGrid = (Y_DIM * X_DIM + threadsPerBlock - 1) / threadsPerBlock;
+    blocksPerGrid = Y_DIM * X_DIM;
     pps<<<blocksPerGrid, threadsPerBlock>>>(&triangles_dev[0], num_triangles, all_dev);
     cudaDeviceSynchronize();
     err = cudaGetLastError();  // add
@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
     // Visualize
     for (int y = Y_DIM; y > 0; y--) {
         for (int x = 0; x < X_DIM; x++) {
-            if (all[10][y][x]) std::cout << "x";
+            if (all[x][y][10]) std::cout << "x";
             else std::cout << " ";
         }
         std::cout << std::endl;
