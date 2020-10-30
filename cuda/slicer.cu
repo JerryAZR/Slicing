@@ -7,7 +7,7 @@
 __global__
 void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
     unsigned layers_per_thread = NUM_LAYERS / THREADS_PER_BLOCK;
-    unsigned remaining_layers = NUM_LAYERS * THREADS_PER_BLOCK;
+    unsigned remaining_layers = NUM_LAYERS % THREADS_PER_BLOCK;
     unsigned prev_layers = threadIdx.x * layers_per_thread 
         + ((threadIdx.x < remaining_layers) ? threadIdx.x : remaining_layers);
     unsigned total_layers = layers_per_thread + (threadIdx.x < remaining_layers);
@@ -19,8 +19,8 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
     }
     __syncthreads();    
 
-    int y_idx = blockIdx.x / X_DIM;
-    int x_idx = blockIdx.x % X_DIM;
+    int y_idx = blockIdx.x % Y_DIM;
+    int x_idx = blockIdx.x / Y_DIM;
     int x = x_idx - (X_DIM / 2);
     int y = y_idx - (Y_DIM / 2);
     char intersection;
@@ -31,21 +31,22 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
     unsigned total = triangles_per_thread + (threadIdx.x < remaining_triangles);
     prev += (threadIdx.x < remaining_triangles) ? threadIdx.x : remaining_triangles;
 
-    triangle* triangles = triangles_global + prev;
+    triangle* triangles = triangles_global;
     // Each block has a shared memory storing some triangles.
     // nvcc plz unroll this loop
-    for (size_t i = 0; i < total; i++) {
-        intersection = pixelRayIntersection(triangles[i],x,y)
+    for (size_t i = threadIdx.x; i < num_triangles; i+=THREADS_PER_BLOCK) {
+        intersection = pixelRayIntersection(triangles[i],x,y);
         if (intersection != -1) {
             layers_shared[intersection] = 1;
         }
     }
+    __syncthreads();
 
     bool flag = (bool)(1 & thrust::count(thrust::device, &layers_shared[0], layers_init, 1));
-    bool* out_begin = out + blockIdx.x * NUM_LAYERS + prev_layers;
-    for (unsigned z = 0; z < total_layers; z++) {
-        out_begin[z] = ((bool) layers_init[i]) || flag;
-        flag = flag ^ ((bool) layers_init[i])
+    bool* out_begin = out + blockIdx.x * NUM_LAYERS;
+    for (unsigned z = threadIdx.x; z < NUM_LAYERS; z+=THREADS_PER_BLOCK) {
+        out_begin[z] = ((bool) layers_shared[z]) || flag;
+        flag = flag ^ ((bool) layers_shared[z]);
     }
 }
 
