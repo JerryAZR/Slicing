@@ -29,11 +29,10 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
     }
     __syncthreads();
 
-    bool flag = (bool)(1 & thrust::count(thrust::device, &layers_shared[0], layers_init, 1));
     bool* out_begin = out + blockIdx.x * NUM_LAYERS;
     for (unsigned z = threadIdx.x; z < NUM_LAYERS; z+=THREADS_PER_BLOCK) {
+        bool flag = (bool)(1 & thrust::count(thrust::device, &layers_shared[0], &layers_shared[z], 1));
         out_begin[z] = ((bool) layers_shared[z]) || flag;
-        flag = flag ^ ((bool) layers_shared[z]);
     }
 }
 
