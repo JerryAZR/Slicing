@@ -74,8 +74,8 @@ void mfps1(triangle* triangles, size_t num_triangles, char* all_intersections) {
     for (x_idx = 0; x_idx < PIXELS_PER_THREAD; x_idx++) {
         x = x_group * PIXELS_PER_THREAD + x_idx - (X_DIM / 2);
         intersection = pixelRayIntersection(triangle_shared, x, y);
-        if(-1 == intersection)
-            all_intersections[x_idx * NUM_LAYERS + intersection] = 1;
+        if(-1 != intersection)
+            layers[x_idx * NUM_LAYERS + intersection] = 1;
     }
 }
 
@@ -87,9 +87,8 @@ void mfps2(char* sorted_intersections, bool* out) {
     int y_idx = (idx - (z_idx * X_DIM * Y_DIM)) / X_DIM;
     int x_idx = (idx - (z_idx * X_DIM * Y_DIM)) % X_DIM;
 
-    size_t length = trunk_length[y_idx * X_DIM + x_idx];
     char* intersection_trunk = sorted_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
-    out[idx] = intersection_trunk[z_idx] & thrust::count(thrust::device, intersection_trunk, intersection_trunk + z_idx, 1);
+    out[idx] = intersection_trunk[z_idx] | (1 & thrust::count(thrust::device, intersection_trunk, intersection_trunk + z_idx, 1));
 }
 
 __device__ __forceinline__

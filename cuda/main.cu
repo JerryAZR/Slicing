@@ -6,7 +6,7 @@
 
 
 #define PPS 0
-#define SHOW_LAYER 1
+#define SHOW_LAYER 0
 
 int main(int argc, char* argv[]) {
     std::string stl_file_name;
@@ -55,8 +55,6 @@ int main(int argc, char* argv[]) {
     cudaDeviceSynchronize();
 
     cudaFree(all_intersections);
-    cudaFree(trunk_length);
-    cudaFree(locks);
 #endif
     // Copy result from device memory to host memory
     cudaMemcpy(&all[0][0][0], all_dev, size, cudaMemcpyDeviceToHost);
@@ -71,7 +69,7 @@ int main(int argc, char* argv[]) {
     // Visualize
     for (int y = Y_DIM; y > 0; y--) {
         for (int x = 0; x < X_DIM; x++) {
-            if (all[0][y][x]) std::cout << "x";
+            if (all[10][y][x]) std::cout << "x";
             else std::cout << " ";
         }
         std::cout << std::endl;

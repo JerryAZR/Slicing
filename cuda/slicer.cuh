@@ -4,7 +4,7 @@
 #include "triangle.cuh"
 
 #define THREADS_PER_BLOCK 256
-#define PIXELS_PER_THREAD 8
+#define PIXELS_PER_THREAD 16
 
 // in mm
 #define X_LEN 256
