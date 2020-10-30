@@ -6,16 +6,9 @@
 
 __global__
 void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
-    unsigned layers_per_thread = NUM_LAYERS / THREADS_PER_BLOCK;
-    unsigned remaining_layers = NUM_LAYERS % THREADS_PER_BLOCK;
-    unsigned prev_layers = threadIdx.x * layers_per_thread 
-        + ((threadIdx.x < remaining_layers) ? threadIdx.x : remaining_layers);
-    unsigned total_layers = layers_per_thread + (threadIdx.x < remaining_layers);
-
     __shared__ char layers_shared[NUM_LAYERS];
-    char* layers_init = &layers_shared[prev_layers];
-    for (int i = 0; i < total_layers; i++) {
-        layers_init[i] = 0;
+    for (int i = threadIdx.x; i < NUM_LAYERS; i+=THREADS_PER_BLOCK) {
+        layers_shared[i] = 0;
     }
     __syncthreads();    
 
@@ -24,12 +17,6 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
     int x = x_idx - (X_DIM / 2);
     int y = y_idx - (Y_DIM / 2);
     char intersection;
-
-    unsigned triangles_per_thread = num_triangles / THREADS_PER_BLOCK;
-    unsigned remaining_triangles = num_triangles % THREADS_PER_BLOCK;
-    unsigned prev = threadIdx.x * triangles_per_thread;
-    unsigned total = triangles_per_thread + (threadIdx.x < remaining_triangles);
-    prev += (threadIdx.x < remaining_triangles) ? threadIdx.x : remaining_triangles;
 
     triangle* triangles = triangles_global;
     // Each block has a shared memory storing some triangles.
