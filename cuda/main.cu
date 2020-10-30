@@ -45,21 +45,13 @@ int main(int argc, char* argv[]) {
 #else
     char* all_intersections;
     cudaMalloc(&all_intersections, Y_DIM * X_DIM * NUM_LAYERS * sizeof(char));
-    size_t* trunk_length;
-    cudaMalloc(&trunk_length, Y_DIM * X_DIM * sizeof(size_t));
-    cudaMemset(trunk_length, 0, Y_DIM * X_DIM * sizeof(size_t));
-    int* locks;
-    cudaMalloc(&locks, Y_DIM * X_DIM * sizeof(int) / PIXELS_PER_THREAD);
-    cudaMemset(locks, 0, Y_DIM * X_DIM * sizeof(int) / PIXELS_PER_THREAD);
+    cudaMemset(all_intersections, 0, Y_DIM * X_DIM * NUM_LAYERS * sizeof(char));
 
     blocksPerGrid = (num_triangles * Y_DIM * X_DIM / PIXELS_PER_THREAD + threadsPerBlock - 1) / threadsPerBlock;
-    fps1<<<blocksPerGrid, threadsPerBlock>>>(&triangles_dev[0], num_triangles, all_intersections, trunk_length, locks);
-    cudaDeviceSynchronize();
-    blocksPerGrid = (X_DIM * Y_DIM + threadsPerBlock - 1) / threadsPerBlock;
-    fps2<<<blocksPerGrid, threadsPerBlock>>>(all_intersections, trunk_length);
+    mfps1<<<blocksPerGrid, threadsPerBlock>>>(&triangles_dev[0], num_triangles, all_intersections);
     cudaDeviceSynchronize();
     blocksPerGrid = (X_DIM * Y_DIM * NUM_LAYERS + threadsPerBlock - 1) / threadsPerBlock;
-    fps3<<<blocksPerGrid, threadsPerBlock>>>(all_intersections, trunk_length, all_dev);
+    mfps2<<<blocksPerGrid, threadsPerBlock>>>(all_intersections, all_dev);
     cudaDeviceSynchronize();
 
     cudaFree(all_intersections);

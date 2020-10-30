@@ -28,8 +28,7 @@ __device__ char pixelRayIntersection(triangle t, int x, int y);
 __device__ int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles, char* layers);
 __device__ bool isInside(char current, char* trunk, size_t length);
 
-__global__ void mfps(triangle* triangles, size_t num_triangles, char* all_intersections, size_t* trunk_length, int* locks);
-__global__ void fps2(char* all_intersections, size_t* trunk_length);
-__global__ void fps3(char* sorted_intersections, size_t* trunk_length, bool* out);
+__global__ void mfps1(triangle* triangles, size_t num_triangles, char* all_intersections);
+__global__ void mfps2(char* all_intersections, bool* out);
 
 #endif
