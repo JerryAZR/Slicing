@@ -1,0 +1,60 @@
+==44719== NVPROF is profiling process 44719, command: ./newAlgo ../models/bunny.stl
+==44719== Profiling application: ./newAlgo ../models/bunny.stl
+==44719== Profiling result:
+            Type  Time(%)      Time     Calls       Avg       Min       Max  Name
+ GPU activities:  100.00%  72.0044s         1  72.0044s  72.0044s  72.0044s  outputArray(triangle*, unsigned long, bool*)
+                    0.00%  1.2829ms         1  1.2829ms  1.2829ms  1.2829ms  [CUDA memcpy DtoH]
+                    0.00%  858.42us         1  858.42us  858.42us  858.42us  [CUDA memcpy HtoD]
+      API calls:   99.32%  72.0044s         1  72.0044s  72.0044s  72.0044s  cudaDeviceSynchronize
+                    0.67%  482.50ms         2  241.25ms  99.772us  482.40ms  cudaMalloc
+                    0.01%  4.1060ms         1  4.1060ms  4.1060ms  4.1060ms  cudaLaunchKernel
+                    0.00%  2.7904ms         2  1.3952ms  869.83us  1.9206ms  cudaMemcpy
+                    0.00%  1.1994ms         2  599.69us  593.26us  606.12us  cuDeviceTotalMem
+                    0.00%  714.50us       194  3.6820us     182ns  210.36us  cuDeviceGetAttribute
+                    0.00%  385.08us         2  192.54us  154.84us  230.25us  cudaFree
+                    0.00%  52.487us         2  26.243us  21.065us  31.422us  cuDeviceGetName
+                    0.00%  5.3890us         2  2.6940us  2.2960us  3.0930us  cuDeviceGetPCIBusId
+                    0.00%  1.7700us         4     442ns     290ns     794ns  cudaGetLastError
+                    0.00%  1.4500us         3     483ns     190ns     937ns  cuDeviceGetCount
+                    0.00%  1.4230us         4     355ns     192ns     789ns  cuDeviceGet
+                    0.00%     553ns         2     276ns     236ns     317ns  cuDeviceGetUuid
+==45756== NVPROF is profiling process 45756, command: ./newAlgo ../models/bunny.stl
+==45756== Profiling application: ./newAlgo ../models/bunny.stl
+==45756== Profiling result:
+            Type  Time(%)      Time     Calls       Avg       Min       Max  Name
+ GPU activities:  100.00%  63.5523s         1  63.5523s  63.5523s  63.5523s  outputArray(triangle*, unsigned long, bool*)
+                    0.00%  1.3417ms         1  1.3417ms  1.3417ms  1.3417ms  [CUDA memcpy DtoH]
+                    0.00%  880.66us         1  880.66us  880.66us  880.66us  [CUDA memcpy HtoD]
+      API calls:   99.38%  63.5523s         1  63.5523s  63.5523s  63.5523s  cudaDeviceSynchronize
+                    0.61%  387.51ms         2  193.75ms  112.87us  387.40ms  cudaMalloc
+                    0.01%  4.2377ms         1  4.2377ms  4.2377ms  4.2377ms  cudaLaunchKernel
+                    0.00%  2.7852ms         2  1.3926ms  807.39us  1.9778ms  cudaMemcpy
+                    0.00%  1.2039ms         2  601.97us  596.32us  607.62us  cuDeviceTotalMem
+                    0.00%  705.26us       194  3.6350us     180ns  206.72us  cuDeviceGetAttribute
+                    0.00%  421.65us         2  210.83us  171.01us  250.64us  cudaFree
+                    0.00%  52.408us         2  26.204us  20.190us  32.218us  cuDeviceGetName
+                    0.00%  5.9090us         2  2.9540us  2.2310us  3.6780us  cuDeviceGetPCIBusId
+                    0.00%  1.5830us         4     395ns     180ns     584ns  cudaGetLastError
+                    0.00%  1.5140us         4     378ns     193ns     806ns  cuDeviceGet
+                    0.00%  1.5050us         3     501ns     192ns     966ns  cuDeviceGetCount
+                    0.00%     485ns         2     242ns     205ns     280ns  cuDeviceGetUuid
+==46789== NVPROF is profiling process 46789, command: ./newAlgo ../models/bunny.stl
+==46789== Profiling application: ./newAlgo ../models/bunny.stl
+==46789== Profiling result:
+            Type  Time(%)      Time     Calls       Avg       Min       Max  Name
+ GPU activities:  100.00%  63.5324s         1  63.5324s  63.5324s  63.5324s  outputArray(triangle*, unsigned long, bool*)
+                    0.00%  1.2778ms         1  1.2778ms  1.2778ms  1.2778ms  [CUDA memcpy DtoH]
+                    0.00%  862.33us         1  862.33us  862.33us  862.33us  [CUDA memcpy HtoD]
+      API calls:   99.36%  63.5324s         1  63.5324s  63.5324s  63.5324s  cudaDeviceSynchronize
+                    0.62%  399.39ms         2  199.70ms  118.90us  399.27ms  cudaMalloc
+                    0.01%  4.2703ms         1  4.2703ms  4.2703ms  4.2703ms  cudaLaunchKernel
+                    0.00%  2.7357ms         2  1.3679ms  810.98us  1.9248ms  cudaMemcpy
+                    0.00%  1.1941ms         2  597.03us  588.78us  605.27us  cuDeviceTotalMem
+                    0.00%  701.62us       194  3.6160us     185ns  206.95us  cuDeviceGetAttribute
+                    0.00%  405.99us         2  203.00us  156.14us  249.85us  cudaFree
+                    0.00%  52.300us         2  26.150us  20.562us  31.738us  cuDeviceGetName
+                    0.00%  6.0300us         2  3.0150us  2.9400us  3.0900us  cuDeviceGetPCIBusId
+                    0.00%  1.4450us         3     481ns     194ns     963ns  cuDeviceGetCount
+                    0.00%  1.4250us         4     356ns     232ns     502ns  cudaGetLastError
+                    0.00%  1.2930us         4     323ns     185ns     635ns  cuDeviceGet
+                    0.00%     518ns         2     259ns     225ns     293ns  cuDeviceGetUuid
