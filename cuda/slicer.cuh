@@ -7,8 +7,10 @@
 #define MAX_TRUNK_SIZE	48
 
 // in mm
-#define X_LEN 256
-#define Y_LEN 128
+#define LOG_X 8
+#define LOG_Y 7
+#define X_LEN (1 << LOG_X)
+#define Y_LEN (1 << LOG_Y)
 #define HEIGHT 100
 #define RESOLUTION 1
 

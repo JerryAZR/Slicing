@@ -61,13 +61,13 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
 __global__
 void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, size_t* trunk_length, int* locks) {
     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
-    size_t tri_idx = idx / (X_DIM * Y_DIM);
+    size_t tri_idx = idx >> (LOG_X + LOG_Y);
     if (tri_idx >= num_triangles) return;
-    int y_idx = (idx - (tri_idx * X_DIM * Y_DIM)) / X_DIM;
-    int x_idx = (idx - (tri_idx * X_DIM * Y_DIM)) % X_DIM;
+    int y_idx = (idx - (tri_idx * X_DIM * Y_DIM)) >> LOG_X;
+    int x_idx = (idx - (tri_idx * X_DIM * Y_DIM)) & (X_DIM-1);
 
-    int x = x_idx - (X_DIM / 2);
-    int y = y_idx - (Y_DIM / 2);
+    int x = x_idx - (X_DIM >> 1);
+    int y = y_idx - (Y_DIM >> 1);
 
     // copy 1 triangle to the shared memory -- That's a;; we need on this block
     triangle triangles_shared = triangles[tri_idx];
