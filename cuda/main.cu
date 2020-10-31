@@ -6,7 +6,7 @@
 
 
 #define PPS 0
-#define SHOW_LAYER 1
+#define SHOW_LAYER 0
 
 int main(int argc, char* argv[]) {
     std::string stl_file_name;
@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
     cudaMemset(locks, 0, Y_DIM * X_DIM * sizeof(int) / PIXELS_PER_THREAD);
 
     blocksPerGrid = (num_triangles * Y_DIM * X_DIM / PIXELS_PER_THREAD + threadsPerBlock - 1) / threadsPerBlock;
-    fps1<<<blocksPerGrid, threadsPerBlock>>>(&triangles_dev[0], num_triangles, all_intersections, trunk_length, locks);
+    mfps<<<blocksPerGrid, threadsPerBlock>>>(&triangles_dev[0], num_triangles, all_intersections, trunk_length, locks);
     cudaDeviceSynchronize();
     blocksPerGrid = (X_DIM * Y_DIM + threadsPerBlock - 1) / threadsPerBlock;
     fps2<<<blocksPerGrid, threadsPerBlock>>>(all_intersections, trunk_length);
