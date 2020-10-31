@@ -71,8 +71,22 @@ void mfps(triangle* triangles, size_t num_triangles, char* all_intersections, si
     y = y_idx - (Y_DIM / 2);
 
     for (x_idx = 0; x_idx < PIXELS_PER_THREAD; x_idx++) {
-        x = x_group * PIXELS_PER_THREAD + x_idx - (X_DIM / 2);
-        intersections[x_idx] = pixelRayIntersection(triangles_shared, x, y);
+        x = x_group * PIXELS_PER_THREAD + x_idx - (X_DIM >> 1);
+        double x_d = x * RESOLUTION - t.p1.x;
+        double y_d = y * RESOLUTION - t.p1.y;
+    
+        double x1 = t.p2.x - t.p1.x;
+        double y1 = t.p2.y - t.p1.y;
+        double z1 = t.p2.z - t.p1.z;
+    
+        double x2 = t.p3.x - t.p1.x;
+        double y2 = t.p3.y - t.p1.y;
+        double z2 = t.p3.z - t.p1.z;
+        double a = (x_d * y2 - x2 * y_d) / (x1 * y2 - x2 * y1);
+        double b = (x_d * y1 - x1 * y_d) / (x2 * y1 - x1 * y2);
+        bool inside = (a >= 0) && (b >= 0) && (a+b <= 1);
+        double intersection = (a * z1 + b * z2) + t.p1.z;
+        intersections[x_idx] = inside ? (intersection / RESOLUTION) : -1;
     }
 
     char* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_group * NUM_LAYERS * PIXELS_PER_THREAD;
