@@ -1,7 +1,6 @@
 #include "slicer.cuh"
 #include <thrust/sort.h>
-#include <thrust/binary_search.h>
-#include <thrust/count.h>
+#include <thrust/functional.h>
 #include <stdio.h>
 
 __global__
@@ -66,8 +65,16 @@ void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, si
 
     // copy 1 triangle to the shared memory -- That's all we need on this block
     __shared__  triangle triangles_shared;
-    if (threadIdx.x == 0)
+    __shared__  double x_max, x_min, y_max, y_min;
+    if (threadIdx.x == 0) {
         triangles_shared = triangles[tri_idx];
+        thrust::maximum<double> max;
+        thrust::minimum<double> min;
+        x_max = max(triangles_shared.p1.x, max(triangles_shared.p2.x, triangles_shared.p3.x));
+        x_min = min(triangles_shared.p1.x, min(triangles_shared.p2.x, triangles_shared.p3.x));
+        y_max = max(triangles_shared.p1.y, max(triangles_shared.p2.y, triangles_shared.p3.y));
+        y_min = min(triangles_shared.p1.y, min(triangles_shared.p2.y, triangles_shared.p3.y));
+    }
     __syncthreads();
 
     int y_idx = (idx - (tri_idx << (LOG_X + LOG_Y))) >> LOG_X;
@@ -75,10 +82,14 @@ void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, si
     int x = x_idx - (X_DIM >> 1);
     int y = y_idx - (Y_DIM >> 1);
 
+    double x_pos = x * RESOLUTION;
+    double y_pos = y * RESOLUTION;
+    bool notInRect = (x_pos < x_min) || (x_pos > x_max) || (y_pos < y_min) || (y_pos > y_max);
+
     char* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
     int* lock = locks + y_idx * X_DIM + x_idx;
     size_t* length = trunk_length + y_idx * X_DIM + x_idx;
-    char intersection = pixelRayIntersection(triangles_shared, x, y);
+    char intersection = notInRect ? -1 : pixelRayIntersection(triangles_shared, x, y);
     bool run = (intersection != -1);
     while (run) {
         if(atomicCAS(lock, 0, 1) == 0) {
@@ -122,7 +133,7 @@ char pixelRayIntersection(triangle t, int x, int y) {
 
     return the layer of intersection, or -1 if none
     */
-
+/*
     double x_pos = x * RESOLUTION;
     double y_pos = y * RESOLUTION;
 
@@ -131,7 +142,7 @@ char pixelRayIntersection(triangle t, int x, int y) {
         || ((y_pos < t.p1.y) && (y_pos < t.p2.y) && (y_pos < t.p3.y))
         || ((y_pos > t.p1.y) && (y_pos > t.p2.y) && (y_pos > t.p3.y))
     ) return -1;
-
+*/
     double x_d = x * RESOLUTION - t.p1.x;
     double y_d = y * RESOLUTION - t.p1.y;
 

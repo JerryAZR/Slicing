@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
     // Visualize
     for (int y = Y_DIM; y > 0; y--) {
         for (int x = 0; x < X_DIM; x++) {
-            if (all[0][y][x]) std::cout << "x";
+            if (all[10][y][x]) std::cout << "x";
             else std::cout << " ";
         }
         std::cout << std::endl;
