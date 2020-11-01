@@ -62,15 +62,18 @@ __global__
 void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, size_t* trunk_length, int* locks) {
     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
     size_t tri_idx = idx >> (LOG_X + LOG_Y);
-    if (tri_idx >= num_triangles) return;
-    int y_idx = (idx - (tri_idx * X_DIM * Y_DIM)) >> LOG_X;
-    int x_idx = (idx - (tri_idx * X_DIM * Y_DIM)) & (X_DIM-1);
+    // if (tri_idx >= num_triangles) return;
 
+    // copy 1 triangle to the shared memory -- That's all we need on this block
+    __shared__  triangle triangles_shared;
+    if (threadIdx.x == 0)
+        triangles_shared = triangles[tri_idx];
+    __syncthreads();
+
+    int y_idx = (idx - (tri_idx << (LOG_X + LOG_Y))) >> LOG_X;
+    int x_idx = (idx - (tri_idx << (LOG_X + LOG_Y))) & (X_DIM-1);
     int x = x_idx - (X_DIM >> 1);
     int y = y_idx - (Y_DIM >> 1);
-
-    // copy 1 triangle to the shared memory -- That's a;; we need on this block
-    triangle triangles_shared = triangles[tri_idx];
 
     char* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
     int* lock = locks + y_idx * X_DIM + x_idx;
@@ -119,7 +122,7 @@ char pixelRayIntersection(triangle t, int x, int y) {
 
     return the layer of intersection, or -1 if none
     */
-/*
+
     double x_pos = x * RESOLUTION;
     double y_pos = y * RESOLUTION;
 
@@ -128,7 +131,7 @@ char pixelRayIntersection(triangle t, int x, int y) {
         || ((y_pos < t.p1.y) && (y_pos < t.p2.y) && (y_pos < t.p3.y))
         || ((y_pos > t.p1.y) && (y_pos > t.p2.y) && (y_pos > t.p3.y))
     ) return -1;
-*/
+
     double x_d = x * RESOLUTION - t.p1.x;
     double y_d = y * RESOLUTION - t.p1.y;
 
