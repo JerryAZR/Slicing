@@ -1,6 +1,6 @@
 #include "slicer.cuh"
 #include <thrust/sort.h>
-#include <thrust/binary_search.h>
+#include <thrust/functional.h>
 #include <thrust/count.h>
 #include <stdio.h>
 
@@ -63,16 +63,36 @@ void mfps(triangle* triangles, size_t num_triangles, char* all_intersections, si
     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
     size_t tri_idx = idx / (X_DIM * Y_DIM / PIXELS_PER_THREAD);
     if (tri_idx >= num_triangles) return;
-    int y_idx = (idx - (tri_idx * X_DIM * Y_DIM / PIXELS_PER_THREAD)) / (X_DIM / PIXELS_PER_THREAD);
-    int x_group = (idx - (tri_idx * X_DIM * Y_DIM / PIXELS_PER_THREAD)) % (X_DIM / PIXELS_PER_THREAD);
-    int x_idx, x, y;
-    char intersections[PIXELS_PER_THREAD];
-    triangle triangles_shared = triangles[tri_idx];
-    y = y_idx - (Y_DIM / 2);
 
+    __shared__ double x_max, x_min, y_max, y_min;
+
+    __shared__ triangle triangles_shared;
+    if (threadIdx.x == 0) {
+        triangles_shared = triangles[tri_idx];
+        thrust::maximum<double> max;
+        thrust::minimum<double> min;
+        x_max = max(triangles_shared.p1.x, max(triangles_shared.p2.x, triangles_shared.p3.x));
+        x_min = min(triangles_shared.p1.x, min(triangles_shared.p2.x, triangles_shared.p3.x));
+        y_max = max(triangles_shared.p1.y, max(triangles_shared.p2.y, triangles_shared.p3.y));
+        y_min = min(triangles_shared.p1.y, min(triangles_shared.p2.y, triangles_shared.p3.y));
+    }
+    __syncthreads();
+
+    int y_idx = (idx - (tri_idx * X_DIM * Y_DIM / PIXELS_PER_THREAD)) / (X_DIM / PIXELS_PER_THREAD);
+    int x_idx, x, y;
+    y = y_idx - (Y_DIM / 2);
+    double x_pos, y_pos;
+    int x_base;
+    y_pos = y * RESOLUTION;
+    if (y_pos < y_min || y_pos > y_max) return;
+
+    int x_group = (idx - (tri_idx * X_DIM * Y_DIM / PIXELS_PER_THREAD)) % (X_DIM / PIXELS_PER_THREAD);
+    char intersections[PIXELS_PER_THREAD];
+    x_base = x_group * PIXELS_PER_THREAD - (X_DIM >> 1);
     for (x_idx = 0; x_idx < PIXELS_PER_THREAD; x_idx++) {
-        x = x_group * PIXELS_PER_THREAD + x_idx - (X_DIM / 2);
-        intersections[x_idx] = pixelRayIntersection(triangles_shared, x, y);
+        x = x_base + x_idx;
+        x_pos = x * RESOLUTION;
+        intersections[x_idx] = (x_pos < x_min || x_pos > x_max) ? -1 : pixelRayIntersection(triangles_shared, x, y);
     }
 
     char* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_group * NUM_LAYERS * PIXELS_PER_THREAD;
@@ -123,7 +143,7 @@ char pixelRayIntersection(triangle t, int x, int y) {
 
     return the layer of intersection, or -1 if none
     */
-
+/*
     double x_pos = x * RESOLUTION;
     double y_pos = y * RESOLUTION;
 
@@ -132,7 +152,7 @@ char pixelRayIntersection(triangle t, int x, int y) {
         || ((y_pos < t.p1.y) && (y_pos < t.p2.y) && (y_pos < t.p3.y))
         || ((y_pos > t.p1.y) && (y_pos > t.p2.y) && (y_pos > t.p3.y))
     ) return -1;
-
+*/
 //    return t.p1.z < 0 ? (char)t.p1.z : -1;
 
     double x_d = x * RESOLUTION - t.p1.x;
