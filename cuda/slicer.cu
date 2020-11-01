@@ -123,7 +123,7 @@ char pixelRayIntersection(triangle t, int x, int y) {
 
     return the layer of intersection, or -1 if none
     */
-/*
+
     double x_pos = x * RESOLUTION;
     double y_pos = y * RESOLUTION;
 
@@ -132,7 +132,9 @@ char pixelRayIntersection(triangle t, int x, int y) {
         || ((y_pos < t.p1.y) && (y_pos < t.p2.y) && (y_pos < t.p3.y))
         || ((y_pos > t.p1.y) && (y_pos > t.p2.y) && (y_pos > t.p3.y))
     ) return -1;
-*/
+
+//    return t.p1.z < 0 ? (char)t.p1.z : -1;
+
     double x_d = x * RESOLUTION - t.p1.x;
     double y_d = y * RESOLUTION - t.p1.y;
 
