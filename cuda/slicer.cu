@@ -65,26 +65,32 @@ void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, si
 
     // copy 1 triangle to the shared memory -- That's all we need on this block
     __shared__  triangle triangles_shared;
-    __shared__  double x_max, x_min, y_max, y_min;
+    __shared__  double x_max, x_min;
+    __shared__  bool y_notInside;
+
+    int y_idx = (idx - (tri_idx << (LOG_X + LOG_Y))) >> LOG_X;
+    int y = y_idx - (Y_DIM >> 1);
+    double y_pos = y * RESOLUTION;
+
     if (threadIdx.x == 0) {
         triangles_shared = triangles[tri_idx];
         thrust::maximum<double> max;
         thrust::minimum<double> min;
         x_max = max(triangles_shared.p1.x, max(triangles_shared.p2.x, triangles_shared.p3.x));
         x_min = min(triangles_shared.p1.x, min(triangles_shared.p2.x, triangles_shared.p3.x));
-        y_max = max(triangles_shared.p1.y, max(triangles_shared.p2.y, triangles_shared.p3.y));
-        y_min = min(triangles_shared.p1.y, min(triangles_shared.p2.y, triangles_shared.p3.y));
+        double y_max = max(triangles_shared.p1.y, max(triangles_shared.p2.y, triangles_shared.p3.y));
+        double y_min = min(triangles_shared.p1.y, min(triangles_shared.p2.y, triangles_shared.p3.y));
+        y_notInside = (y_pos < y_min) || (y_pos > y_max);
     }
     __syncthreads();
 
-    int y_idx = (idx - (tri_idx << (LOG_X + LOG_Y))) >> LOG_X;
+    if (y_notInside) return;
+
     int x_idx = (idx - (tri_idx << (LOG_X + LOG_Y))) & (X_DIM-1);
     int x = x_idx - (X_DIM >> 1);
-    int y = y_idx - (Y_DIM >> 1);
-
     double x_pos = x * RESOLUTION;
-    double y_pos = y * RESOLUTION;
-    bool notInRect = (x_pos < x_min) || (x_pos > x_max) || (y_pos < y_min) || (y_pos > y_max);
+
+    bool notInRect = (x_pos < x_min) || (x_pos > x_max);
 
     char* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
     int* lock = locks + y_idx * X_DIM + x_idx;
