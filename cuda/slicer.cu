@@ -67,42 +67,46 @@ void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, si
     __shared__  triangle triangles_shared[THREADS_PER_BLOCK];
     __shared__  double x_max[THREADS_PER_BLOCK];
     __shared__  double x_min[THREADS_PER_BLOCK];
-    __shared__  double y_max[THREADS_PER_BLOCK];
-    __shared__  double y_min[THREADS_PER_BLOCK];
+    // Assumption: X_DIM is divisible by THREADS_PER_BLOCK;
+    // so that all pixels on a block have the same y value.
+    __shared__  bool y_notInside[THREADS_PER_BLOCK];
     __shared__  char layers_shared[THREADS_PER_BLOCK][THREADS_PER_BLOCK];
 
     thrust::maximum<double> max;
     thrust::minimum<double> min;
     thrust::minimum<int> minInt;
 
+    int y_idx = (idx - (tri_group << (LOG_X + LOG_Y))) >> LOG_X;
+    int y = y_idx - (Y_DIM >> 1);
+    double y_pos = y * RESOLUTION;
+
     if (threadIdx.x + tri_idx < num_triangles) {
         triangle t = tri_base[threadIdx.x];
         triangles_shared[threadIdx.x] = t;
         x_max[threadIdx.x] = max(t.p1.x, max(t.p2.x, t.p3.x));
         x_min[threadIdx.x] = min(t.p1.x, min(t.p2.x, t.p3.x));
-        y_max[threadIdx.x] = max(t.p1.y, max(t.p2.y, t.p3.y));
-        y_min[threadIdx.x] = min(t.p1.y, min(t.p2.y, t.p3.y));
+        double y_max = max(t.p1.y, max(t.p2.y, t.p3.y));
+        double y_min = min(t.p1.y, min(t.p2.y, t.p3.y));
+        y_notInside[threadIdx.x] = (y_pos < y_min) || (y_pos > y_max);
     }
     __syncthreads();
 
-    int y_idx = (idx - (tri_group << (LOG_X + LOG_Y))) >> LOG_X;
     int x_idx = (idx - (tri_group << (LOG_X + LOG_Y))) & (X_DIM-1);
     int x = x_idx - (X_DIM >> 1);
-    int y = y_idx - (Y_DIM >> 1);
-
     double x_pos = x * RESOLUTION;
-    double y_pos = y * RESOLUTION;
 
     size_t length_local = 0;
     int total_work = minInt(THREADS_PER_BLOCK, num_triangles - tri_idx);
     char* layers_local = &layers_shared[threadIdx.x][0];
 
-    for (int i = 0; i < total_work; i++) {
-        bool notInRect = (x_pos < x_min[i]) || (x_pos > x_max[i]) || (y_pos < y_min[i]) || (y_pos > y_max[i]);
+    for (int i = 0; i < THREADS_PER_BLOCK; i++) {
+        if (i < total_work) {
+        bool notInRect = (y_notInside[i] || (x_pos < x_min[i]) || (x_pos > x_max[i]));
         char intersection = notInRect ? -1 : pixelRayIntersection(triangles_shared[i], x, y);
         if (intersection != -1) {
             layers_local[length_local] = intersection;
             length_local++;
+        }
         }
     }
     bool run = (length_local > 0);
