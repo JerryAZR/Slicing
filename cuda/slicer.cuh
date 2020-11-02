@@ -3,7 +3,7 @@
 
 #include "triangle.cuh"
 
-#define LOG_THREADS 8
+#define LOG_THREADS 6
 #define THREADS_PER_BLOCK (1 << LOG_THREADS)
 
 // in mm

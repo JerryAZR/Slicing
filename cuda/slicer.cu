@@ -60,7 +60,8 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
 __global__
 void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, size_t* trunk_length, int* locks) {
     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
-    size_t tri_idx = idx >> (LOG_X + LOG_Y - LOG_THREADS);
+    size_t tri_group = idx >> (LOG_X + LOG_Y);
+    size_t tri_idx = tri_group << LOG_THREADS;
     triangle* tri_base = triangles + tri_idx;
 
     __shared__  triangle triangles_shared[THREADS_PER_BLOCK];
@@ -72,6 +73,7 @@ void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, si
 
     thrust::maximum<double> max;
     thrust::minimum<double> min;
+    thrust::minimum<int> minInt;
 
     if (threadIdx.x + tri_idx < num_triangles) {
         triangle t = tri_base[threadIdx.x];
@@ -83,8 +85,8 @@ void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, si
     }
     __syncthreads();
 
-    int y_idx = (idx - (tri_idx << (LOG_X + LOG_Y))) >> LOG_X;
-    int x_idx = (idx - (tri_idx << (LOG_X + LOG_Y))) & (X_DIM-1);
+    int y_idx = (idx - (tri_group << (LOG_X + LOG_Y))) >> LOG_X;
+    int x_idx = (idx - (tri_group << (LOG_X + LOG_Y))) & (X_DIM-1);
     int x = x_idx - (X_DIM >> 1);
     int y = y_idx - (Y_DIM >> 1);
 
@@ -92,7 +94,7 @@ void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, si
     double y_pos = y * RESOLUTION;
 
     size_t length_local = 0;
-    int total_work = min(THREADS_PER_BLOCK, num_triangles - tri_idx);
+    int total_work = minInt(THREADS_PER_BLOCK, num_triangles - tri_idx);
     char* layers_local = &layers_shared[threadIdx.x][0];
 
     for (int i = 0; i < total_work; i++) {
