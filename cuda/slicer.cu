@@ -70,7 +70,7 @@ void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, si
     // Assumption: X_DIM is divisible by THREADS_PER_BLOCK;
     // so that all pixels on a block have the same y value.
     __shared__  bool y_notInside[THREADS_PER_BLOCK];
-    __shared__  char layers_shared[THREADS_PER_BLOCK][THREADS_PER_BLOCK];
+    __shared__  char layers_shared[THREADS_PER_BLOCK][MAX_TRUNK_SIZE];
 
     thrust::maximum<double> max;
     thrust::minimum<double> min;
