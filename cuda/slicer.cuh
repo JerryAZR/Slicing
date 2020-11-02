@@ -3,8 +3,8 @@
 
 #include "triangle.cuh"
 
-#define THREADS_PER_BLOCK 256
-#define MAX_TRUNK_SIZE	48
+#define LOG_THREADS 8
+#define THREADS_PER_BLOCK (1 << LOG_THREADS)
 
 // in mm
 #define LOG_X 8

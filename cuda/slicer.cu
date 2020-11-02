@@ -60,20 +60,26 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
 __global__
 void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, size_t* trunk_length, int* locks) {
     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
-    size_t tri_idx = idx >> (LOG_X + LOG_Y);
-    // if (tri_idx >= num_triangles) return;
+    size_t tri_idx = idx >> (LOG_X + LOG_Y - LOG_THREADS);
+    triangle* tri_base = triangles + tri_idx;
 
-    // copy 1 triangle to the shared memory -- That's all we need on this block
-    __shared__  triangle triangles_shared;
-    __shared__  double x_max, x_min, y_max, y_min;
-    if (threadIdx.x == 0) {
-        triangles_shared = triangles[tri_idx];
-        thrust::maximum<double> max;
-        thrust::minimum<double> min;
-        x_max = max(triangles_shared.p1.x, max(triangles_shared.p2.x, triangles_shared.p3.x));
-        x_min = min(triangles_shared.p1.x, min(triangles_shared.p2.x, triangles_shared.p3.x));
-        y_max = max(triangles_shared.p1.y, max(triangles_shared.p2.y, triangles_shared.p3.y));
-        y_min = min(triangles_shared.p1.y, min(triangles_shared.p2.y, triangles_shared.p3.y));
+    __shared__  triangle triangles_shared[THREADS_PER_BLOCK];
+    __shared__  double x_max[THREADS_PER_BLOCK];
+    __shared__  double x_min[THREADS_PER_BLOCK];
+    __shared__  double y_max[THREADS_PER_BLOCK];
+    __shared__  double y_min[THREADS_PER_BLOCK];
+    __shared__  char layers_shared[THREADS_PER_BLOCK][THREADS_PER_BLOCK];
+
+    thrust::maximum<double> max;
+    thrust::minimum<double> min;
+
+    if (threadIdx.x + tri_idx < num_triangles) {
+        triangle t = tri_base[threadIdx.x];
+        triangles_shared[threadIdx.x] = t;
+        x_max[threadIdx.x] = max(t.p1.x, max(t.p2.x, t.p3.x));
+        x_min[threadIdx.x] = min(t.p1.x, min(t.p2.x, t.p3.x));
+        y_max[threadIdx.x] = max(t.p1.y, max(t.p2.y, t.p3.y));
+        y_min[threadIdx.x] = min(t.p1.y, min(t.p2.y, t.p3.y));
     }
     __syncthreads();
 
@@ -84,17 +90,30 @@ void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, si
 
     double x_pos = x * RESOLUTION;
     double y_pos = y * RESOLUTION;
-    bool notInRect = (x_pos < x_min) || (x_pos > x_max) || (y_pos < y_min) || (y_pos > y_max);
 
-    char* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
-    int* lock = locks + y_idx * X_DIM + x_idx;
+    size_t length_local = 0;
+    int total_work = min(THREADS_PER_BLOCK, num_triangles - tri_idx);
+    char* layers_local = &layers_shared[threadIdx.x][0];
+
+    for (int i = 0; i < total_work; i++) {
+        bool notInRect = (x_pos < x_min[i]) || (x_pos > x_max[i]) || (y_pos < y_min[i]) || (y_pos > y_max[i]);
+        char intersection = notInRect ? -1 : pixelRayIntersection(triangles_shared[i], x, y);
+        if (intersection != -1) {
+            layers_local[length_local] = intersection;
+            length_local++;
+        }
+    }
+    bool run = (length_local > 0);
+
     size_t* length = trunk_length + y_idx * X_DIM + x_idx;
-    char intersection = notInRect ? -1 : pixelRayIntersection(triangles_shared, x, y);
-    bool run = (intersection != -1);
+    int* lock = locks + y_idx * X_DIM + x_idx;
     while (run) {
         if(atomicCAS(lock, 0, 1) == 0) {
-            layers[length[0]] = intersection;
-            length[0]++;
+            char* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS + length[0];
+            for (int i = 0; i < length_local; i++) {
+                layers[i] = layers_local[i];
+            }
+            length[0] += length_local;
             run = false;
             atomicExch(lock, 0);
         }
