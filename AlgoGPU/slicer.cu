@@ -10,9 +10,10 @@
 __global__ 
 void triangle_sort(triangle* triangles_global, size_t num_triangles, double* zmins_global, int* index_global) {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
-    if (idx > num_triangles) return;
-    zmins_global[idx] = fmin(fmin(triangles_global[idx].p1.z, triangles_global[idx].p2.z), triangles_global[idx].p3.z);
-    index_global[idx] = &(triangles_global[idx]) - triangles_global;
+    if (idx >= num_triangles) return;
+        zmins_global[idx] = fmin(fmin(triangles_global[idx].p1.z, triangles_global[idx].p2.z), triangles_global[idx].p3.z);
+        index_global[idx] = &(triangles_global[idx]) - triangles_global;
+
     //thrust::sort_by_key(thrust::device, zmins_global, zmins_global + num_triangles, index_global);
 }
 
@@ -29,6 +30,13 @@ void outputArray(triangle* triangles_global, size_t num_triangles, bool* out, in
     int outIdx, flagIdx;
     bool flagArray[X_DIM * Y_DIM];
 
+    for (int layer = 0; layer < NUM_LAYERS; layer++) {
+        outIdx = layer * X_DIM * Y_DIM + y_idx * X_DIM + x_idx;
+        flagIdx = y_idx * X_DIM + x_idx;
+        getOutarray(x, y, triangles_global, num_triangles, layer, outIdx, flagIdx, out, flagArray, index_global);
+    }
+
+    /*
     __shared__ triangle tri_base[THREADS_PER_BLOCK];
     triangle* triangles = (triangle*)tri_base;
     size_t num_iters = num_triangles / (THREADS_PER_BLOCK);
@@ -39,9 +47,12 @@ void outputArray(triangle* triangles_global, size_t num_triangles, bool* out, in
     for (int layer = 0; layer < NUM_LAYERS; layer++) {
         outIdx = layer * X_DIM * Y_DIM + y_idx * X_DIM + x_idx;
         flagIdx = y_idx * X_DIM + x_idx;
+
+        //getOutarray(x, y, triangles_global, THREADS_PER_BLOCK, layer, outIdx, flagIdx, out, flagArray, index_global);
+        
         for (size_t i = 0; i < num_iters; i++) {
-            triangles[threadIdx.x] = triangles_global[threadIdx.x + (i * THREADS_PER_BLOCK)];
             index[threadIdx.x] = index_global[threadIdx.x + (i * THREADS_PER_BLOCK)];
+            triangles[threadIdx.x] = triangles_global[index[threadIdx.x]];
 
             // Wait for other threads to complete;
             __syncthreads();
@@ -51,8 +62,9 @@ void outputArray(triangle* triangles_global, size_t num_triangles, bool* out, in
         }
         size_t remaining = num_triangles - (num_iters * THREADS_PER_BLOCK);
         if (threadIdx.x < remaining) {
-            triangles[threadIdx.x] = triangles_global[threadIdx.x + (num_iters * THREADS_PER_BLOCK)];
+            //triangles[threadIdx.x] = triangles_global[threadIdx.x + (num_iters * THREADS_PER_BLOCK)];
             index[threadIdx.x] = index_global[threadIdx.x + (num_iters * THREADS_PER_BLOCK)];
+            triangles[threadIdx.x] = triangles_global[index[threadIdx.x]];
         }
         if (remaining) {
             __syncthreads();
@@ -60,8 +72,9 @@ void outputArray(triangle* triangles_global, size_t num_triangles, bool* out, in
                 getOutarray(x, y, triangles, remaining, layer, outIdx, flagIdx, out, flagArray, index);
             }
         }
-    }
-    //*/
+        
+    }*/
+    
     
 }
 
