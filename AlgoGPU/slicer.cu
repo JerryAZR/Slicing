@@ -4,10 +4,22 @@
 #include <thrust/count.h>
 #include <stdio.h>
 #include <map>
+#include <math.h>
+#include <stdio.h>
+
+__global__ 
+void triangle_sort(triangle* triangles_global, size_t num_triangles, double* zmins_global, int* index_global) {
+    int idx = blockDim.x * blockIdx.x + threadIdx.x;
+    if (idx >= num_triangles) return;
+        zmins_global[idx] = fmin(fmin(triangles_global[idx].p1.z, triangles_global[idx].p2.z), triangles_global[idx].p3.z);
+        index_global[idx] = &(triangles_global[idx]) - triangles_global;
+
+    //thrust::sort_by_key(thrust::device, zmins_global, zmins_global + num_triangles, index_global);
+}
 
 //calculate output array of each layer
 __global__
-void outputArray(triangle* triangles_global, size_t num_triangles, bool* out) {
+void outputArray(triangle* triangles_global, size_t num_triangles, bool* out, int* index_global) {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
     int x_idx = idx % X_DIM;
     int y_idx = idx / X_DIM;
@@ -17,68 +29,52 @@ void outputArray(triangle* triangles_global, size_t num_triangles, bool* out) {
 
     int outIdx, flagIdx;
     bool flagArray[X_DIM * Y_DIM];
-    __shared__ triangle tri_base[THREADS_PER_BLOCK];
-    triangle* triangles = (triangle*)tri_base;
-    size_t num_iters = num_triangles / THREADS_PER_BLOCK;
-    /*
-    for (int layer = 0; layer < 2; layer++) {
-        outIdx = layer * X_DIM * Y_DIM + y_idx * X_DIM + x_idx;
-        flagIdx = y_idx * X_DIM + x_idx;
-        bool intersect = false;
 
-        for (int i = 0; i < num_triangles; i++) {
-            int intersectLayer = pixelRayIntersection(triangles_global[i], x, y);
-            if (intersectLayer == layer) {
-                intersect = true;
-                break;
-            }
-            else {
-                intersect = false;
-            }
-        }
-        
-        if (layer == 0) {
-            out[outIdx] = intersect || false;
-            flagArray[flagIdx] = intersect ^ false;
-        }
-        else {
-            out[outIdx] = intersect || flagArray[flagIdx];
-            flagArray[flagIdx] = intersect ^ flagArray[flagIdx];
-        }
-    }
-    */
-    ///*
     for (int layer = 0; layer < NUM_LAYERS; layer++) {
         outIdx = layer * X_DIM * Y_DIM + y_idx * X_DIM + x_idx;
         flagIdx = y_idx * X_DIM + x_idx;
+        getOutarray(x, y, triangles_global, num_triangles, layer, outIdx, flagIdx, out, flagArray, index_global);
+    }
+
+    /*
+    __shared__ triangle tri_base[THREADS_PER_BLOCK];
+    triangle* triangles = (triangle*)tri_base;
+    size_t num_iters = num_triangles / (THREADS_PER_BLOCK);
+
+    __shared__ int index_base[THREADS_PER_BLOCK];
+    int* index = (int*)index_base;
+
+    for (int layer = 0; layer < NUM_LAYERS; layer++) {
+        outIdx = layer * X_DIM * Y_DIM + y_idx * X_DIM + x_idx;
+        flagIdx = y_idx * X_DIM + x_idx;
+
+        //getOutarray(x, y, triangles_global, THREADS_PER_BLOCK, layer, outIdx, flagIdx, out, flagArray, index_global);
+        
         for (size_t i = 0; i < num_iters; i++) {
-            triangles[threadIdx.x] = triangles_global[threadIdx.x + (i * THREADS_PER_BLOCK)];
+            index[threadIdx.x] = index_global[threadIdx.x + (i * THREADS_PER_BLOCK)];
+            triangles[threadIdx.x] = triangles_global[index[threadIdx.x]];
+
             // Wait for other threads to complete;
             __syncthreads();
             if (y_idx < Y_DIM) {
-                //for (int layer = 0; layer < 2; layer++) {
-                //    outIdx = layer * X_DIM * Y_DIM + y_idx * X_DIM + x_idx;
-                //    flagIdx = y_idx * X_DIM + x_idx;
-                    getOutarray(x, y, triangles, THREADS_PER_BLOCK, layer, outIdx, flagIdx, out, flagArray);
-                //}
+                    getOutarray(x, y, triangles, THREADS_PER_BLOCK, layer, outIdx, flagIdx, out, flagArray, index);
             }
         }
         size_t remaining = num_triangles - (num_iters * THREADS_PER_BLOCK);
         if (threadIdx.x < remaining) {
-            triangles[threadIdx.x] = triangles_global[threadIdx.x + (num_iters * THREADS_PER_BLOCK)];
+            //triangles[threadIdx.x] = triangles_global[threadIdx.x + (num_iters * THREADS_PER_BLOCK)];
+            index[threadIdx.x] = index_global[threadIdx.x + (num_iters * THREADS_PER_BLOCK)];
+            triangles[threadIdx.x] = triangles_global[index[threadIdx.x]];
         }
         if (remaining) {
             __syncthreads();
             if (y_idx < Y_DIM) {
-                //for (int layer = 0; layer < 2; layer++) {
-                //    outIdx = layer * X_DIM * Y_DIM + y_idx * X_DIM + x_idx;
-                //    flagIdx = y_idx * X_DIM + x_idx;
-                getOutarray(x, y, triangles, remaining, layer, outIdx, flagIdx, out, flagArray);
-                //}
+                getOutarray(x, y, triangles, remaining, layer, outIdx, flagIdx, out, flagArray, index);
             }
         }
-    }
-    //*/
+        
+    }*/
+    
     
 }
 
@@ -105,17 +101,29 @@ int pixelRayIntersection(triangle t, int x, int y) {
 
 
 __device__ 
-bool getIntersect(int x, int y, triangle* triangles, size_t num_triangles, size_t layer) {
-    bool intersect;
+bool getIntersect(int x, int y, triangle* triangles, size_t num_triangles, size_t layer, int* index) {
+    bool intersect = false;
+    double zmin;
+    int idx;
     for (int i = 0; i < num_triangles; i++) {
-        int intersectLayer = pixelRayIntersection(triangles[i], x, y);
-        if (intersectLayer == layer) {
-            intersect = true;
+        idx = index[i];
+        //if (layer == 0) printf("%d\n", idx);
+        //idx = i;
+        zmin = fmin(fmin(triangles[idx].p1.z, triangles[idx].p2.z), triangles[idx].p3.z);
+        if (zmin > layer) {
             return intersect;
         }
         else {
-            intersect = false;
+            int intersectLayer = pixelRayIntersection(triangles[idx], x, y);
+            if (intersectLayer == layer) {
+                intersect = true;
+                return intersect;
+            }
+            else {
+                intersect = false;
+            }
         }
+        
     }
     return intersect;
 }
@@ -123,9 +131,9 @@ bool getIntersect(int x, int y, triangle* triangles, size_t num_triangles, size_
 
 
 __device__
-void getOutarray(int x, int y, triangle* triangles, size_t num_triangles, size_t layer, size_t outIdx, size_t flagIdx, bool* out, bool* flagArray) {
+void getOutarray(int x, int y, triangle* triangles, size_t num_triangles, size_t layer, size_t outIdx, size_t flagIdx, bool* out, bool* flagArray, int* index) {
     bool intersect;
-    intersect = getIntersect(x, y, triangles, num_triangles, layer);
+    intersect = getIntersect(x, y, triangles, num_triangles, layer, index);
 
     if (layer == 0) {
         out[outIdx] = intersect || false;
