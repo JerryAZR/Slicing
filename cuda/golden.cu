@@ -5,15 +5,18 @@
 #include <stdio.h>
 
 long checkOutput(triangle* triangles_dev, size_t num_triangles, bool* in) {
-    bool expected[NUM_LAYERS * Y_DIM * X_DIM];
+    bool* expected = (bool*) malloc(NUM_LAYERS * X_DIM * Y_DIM * sizeof(bool));
+    std::cout << "executing golden model" << std::endl;
     goldenModel(triangles_dev, num_triangles, &expected[0]);
     long size = NUM_LAYERS * Y_DIM * X_DIM;
     long diff = 0;
     long inside = 0;
+    std::cout << "comparing results" << std::endl;
     for (int i = 0; i < size; i++) {
         inside += expected[i];
         diff += (expected[i] != in[i]);
     }
+    free(expected);
     std::cout << inside << " pixels are inside the model." << std::endl;
     std::cout << diff << " pixels are different in the expected and actual output." << std::endl;
     return diff;
