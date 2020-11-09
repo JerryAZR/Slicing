@@ -2,6 +2,7 @@
 #include <string>
 #include "triangle.cuh"
 #include "slicer.cuh"
+#include "golden.cuh"
 #include <vector>
 
 
@@ -23,6 +24,7 @@ int main(int argc, char* argv[]) {
     triangle* triangles_dev;
     // all[z][y][x]
     bool all[NUM_LAYERS][Y_DIM][X_DIM];
+    bool expected[NUM_LAYERS][Y_DIM][X_DIM];
     bool* all_dev;
     size_t size = NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool);
     cudaMalloc(&all_dev, size);
@@ -70,8 +72,18 @@ int main(int argc, char* argv[]) {
     cudaMemcpy(&all[0][0][0], all_dev, size, cudaMemcpyDeviceToHost);
     err = cudaGetLastError();  // add
     if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
+    goldenModel(triangles_dev, num_triangles, &expected[0][0][0]);
     cudaFree(all_dev);
     cudaFree(triangles_dev);
+    long diff = 0;
+    for (int z = 0; z < NUM_LAYERS; z++) {
+        for (int y = 0; y < Y_DIM; y++) {
+            for (int x = 0; x < X_DIM; x++) {
+                diff += (expected[z][y][x] != all[z][y][x]);
+            }
+        }
+    }
+    std::cout << "Diff: " << diff << " pixel(s)." << std::endl;
 
 #if (SHOW_LAYER==0)
     return 0; // Skip the following code

@@ -1,9 +1,12 @@
+#include "golden.cuh"
 #include "slicer.cuh"
 #include <thrust/sort.h>
 #include <thrust/functional.h>
 #include <stdio.h>
 
 void goldenModel(triangle* triangles_dev, size_t num_triangles, bool* out) {
+    int threadsPerBlock = THREADS_PER_BLOCK;
+    int blocksPerGrid;
     bool* all_dev;
     size_t size = NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool);
     cudaMalloc(&all_dev, size);
