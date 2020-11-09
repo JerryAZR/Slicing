@@ -2,6 +2,7 @@
 #include <string>
 #include "triangle.cuh"
 #include "slicer.cuh"
+#include "golden.cuh"
 #include <vector>
 
 
@@ -71,6 +72,12 @@ int main(int argc, char* argv[]) {
     cudaMemcpy(&all[0][0][0], all_dev, size, cudaMemcpyDeviceToHost);
     err = cudaGetLastError();  // add
     if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
+
+    bool expected[NUM_LAYERS][Y_DIM][X_DIM];
+    goldenModel(triangles_dev, num_triangles, &expected[0][0][0]);
+    long diff = compare(&all[0][0][0], &expected[0][0][0], NUM_LAYERS*Y_DIM*X_DIM);
+    std::cout << "diff: " << diff << std::endl;
+
     cudaFree(all_dev);
     cudaFree(triangles_dev);
 
