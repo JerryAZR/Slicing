@@ -4,6 +4,21 @@
 #include <thrust/functional.h>
 #include <stdio.h>
 
+long checkOutput(triangle* triangles_dev, size_t num_triangles, bool* in) {
+    bool expected[NUM_LAYERS * Y_DIM * X_DIM];
+    goldenModel(triangles_dev, num_triangles, &expected[0]);
+    long size = NUM_LAYERS * Y_DIM * X_DIM;
+    long diff = 0;
+    long inside = 0;
+    for (int i = 0; i < size; i++) {
+        inside += expected[i];
+        diff += (expected[i] != in[i]);
+    }
+    std::cout << inside << " pixels are inside the model." << std::endl;
+    std::cout << diff << " pixels are different in the expected and actual output." << std::endl;
+    return diff;
+}
+
 void goldenModel(triangle* triangles_dev, size_t num_triangles, bool* out) {
     int threadsPerBlock = THREADS_PER_BLOCK;
     int blocksPerGrid;

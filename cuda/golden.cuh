@@ -5,6 +5,7 @@
 #include "slicer.cuh"
 
 // returns the layer of intersection
+__host__ long checkOutput(triangle* triangles_dev, size_t num_triangles, bool* in);
 __host__ void goldenModel(triangle* triangles_dev, size_t num_triangles, bool* out);
 __device__ char _pixelRayIntersection(triangle t, int x, int y);
 __device__ bool _isInside(char current, char* trunk, size_t length);
