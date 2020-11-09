@@ -7,7 +7,7 @@
 
 
 #define PPS 0
-#define SHOW_LAYER 0
+#define SHOW_LAYER 1
 
 int main(int argc, char* argv[]) {
     std::string stl_file_name;
@@ -53,8 +53,9 @@ int main(int argc, char* argv[]) {
     cudaMalloc(&locks, Y_DIM * X_DIM * sizeof(int));
     cudaMemset(locks, 0, Y_DIM * X_DIM * sizeof(int));
 
-    blocksPerGrid = (num_triangles * Y_DIM * X_DIM + threadsPerBlock - 1) / threadsPerBlock;
-    blocksPerGrid = (blocksPerGrid + threadsPerBlock - 1) / threadsPerBlock; // multi triangles per thread;
+    blocksPerGrid = (num_triangles + threadsPerBlock - 1) / threadsPerBlock; // Number of threads per pixel.
+    blocksPerGrid *= (X_DIM * Y_DIM); // Total number of threads
+    blocksPerGrid = (blocksPerGrid + threadsPerBlock - 1) / threadsPerBlock;
     fps1<<<blocksPerGrid, threadsPerBlock>>>(&triangles_dev[0], num_triangles, all_intersections, trunk_length, locks);
     cudaDeviceSynchronize();
     blocksPerGrid = (X_DIM * Y_DIM + threadsPerBlock - 1) / threadsPerBlock;
@@ -87,7 +88,7 @@ int main(int argc, char* argv[]) {
     // Visualize
     for (int y = Y_DIM; y > 0; y--) {
         for (int x = 0; x < X_DIM; x++) {
-            if (all[10][y][x]) std::cout << "x";
+            if (all[20][y][x]) std::cout << "x";
             else std::cout << " ";
         }
         std::cout << std::endl;
