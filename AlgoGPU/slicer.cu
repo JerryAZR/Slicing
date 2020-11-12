@@ -7,12 +7,12 @@
 #include <math.h>
 #include <stdio.h>
 
-__global__ 
+__global__
 void triangle_sort(triangle* triangles_global, size_t num_triangles, double* zmins_global, int* index_global) {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
     if (idx >= num_triangles) return;
-        zmins_global[idx] = fmin(fmin(triangles_global[idx].p1.z, triangles_global[idx].p2.z), triangles_global[idx].p3.z);
-        index_global[idx] = &(triangles_global[idx]) - triangles_global;
+    zmins_global[idx] = fmin(fmin(triangles_global[idx].p1.z, triangles_global[idx].p2.z), triangles_global[idx].p3.z);
+    index_global[idx] = &(triangles_global[idx]) - triangles_global;
 
     //thrust::sort_by_key(thrust::device, zmins_global, zmins_global + num_triangles, index_global);
 }
@@ -40,20 +40,16 @@ void outputArray(triangle* triangles_global, size_t num_triangles, bool* out, in
     __shared__ triangle tri_base[THREADS_PER_BLOCK];
     triangle* triangles = (triangle*)tri_base;
     size_t num_iters = num_triangles / (THREADS_PER_BLOCK);
-
     __shared__ int index_base[THREADS_PER_BLOCK];
     int* index = (int*)index_base;
-
     for (int layer = 0; layer < NUM_LAYERS; layer++) {
         outIdx = layer * X_DIM * Y_DIM + y_idx * X_DIM + x_idx;
         flagIdx = y_idx * X_DIM + x_idx;
-
         //getOutarray(x, y, triangles_global, THREADS_PER_BLOCK, layer, outIdx, flagIdx, out, flagArray, index_global);
-        
+
         for (size_t i = 0; i < num_iters; i++) {
             index[threadIdx.x] = index_global[threadIdx.x + (i * THREADS_PER_BLOCK)];
             triangles[threadIdx.x] = triangles_global[index[threadIdx.x]];
-
             // Wait for other threads to complete;
             __syncthreads();
             if (y_idx < Y_DIM) {
@@ -72,10 +68,10 @@ void outputArray(triangle* triangles_global, size_t num_triangles, bool* out, in
                 getOutarray(x, y, triangles, remaining, layer, outIdx, flagIdx, out, flagArray, index);
             }
         }
-        
+
     }*/
-    
-    
+
+
 }
 
 __device__ __forceinline__
@@ -100,30 +96,32 @@ int pixelRayIntersection(triangle t, int x, int y) {
 }
 
 
-__device__ 
+__device__
 bool getIntersect(int x, int y, triangle* triangles, size_t num_triangles, size_t layer, int* index) {
     bool intersect = false;
-    double zmin;
+    double zmin, zmax;
     int idx;
     for (int i = 0; i < num_triangles; i++) {
         idx = index[i];
         //if (layer == 0) printf("%d\n", idx);
         //idx = i;
         zmin = fmin(fmin(triangles[idx].p1.z, triangles[idx].p2.z), triangles[idx].p3.z);
-        if (zmin > layer) {
-            return intersect;
-        }
-        else {
-            int intersectLayer = pixelRayIntersection(triangles[idx], x, y);
-            if (intersectLayer == layer) {
-                intersect = true;
+        zmax = fmax(fmax(triangles[idx].p1.z, triangles[idx].p2.z), triangles[idx].p3.z);
+        if (zmax >= layer) {
+            if (zmin > layer) {
                 return intersect;
             }
             else {
-                intersect = false;
+                int intersectLayer = pixelRayIntersection(triangles[idx], x, y);
+                if (intersectLayer == layer) {
+                    intersect = true;
+                    return intersect;
+                }
+                else {
+                    intersect = false;
+                }
             }
         }
-        
     }
     return intersect;
 }
