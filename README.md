@@ -12,7 +12,7 @@ To get a summary for kernel/API execution time, run
 
 To get detailed profiling results, run
 
-``sudo nvprof [executable] --events [comma separated list of events, or "all"] --metrics [comma separated list of metrics, or "all"] [path_to_stl_file] 2> [output file]``
+``sudo nvprof --events [comma separated list of events, or "all"] --metrics [comma separated list of metrics, or "all"] [executable] [path_to_stl_file] 2> [output file]``
 
 There is a function in [cuda/golden.cuh](./cuda/golden.cuh) that can be used for testing. The function
 
