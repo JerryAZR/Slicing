@@ -63,15 +63,5 @@ int main(int argc, char* argv[]) {
     checkOutput(triangles_dev, num_triangles, &all[0][0][0]);
     cudaFree(all_dev);
     cudaFree(triangles_dev);
-    long diff = 0;
-    for (int z = 0; z < NUM_LAYERS; z++) {
-        for (int y = 0; y < Y_DIM; y++) {
-            for (int x = 0; x < X_DIM; x++) {
-                diff += (expected[z][y][x] != all[z][y][x]);
-            }
-        }
-    }
-    std::cout << "Diff: " << diff << " pixel(s)." << std::endl;
-
     return 0;
 }
