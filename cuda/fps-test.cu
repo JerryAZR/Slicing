@@ -63,7 +63,6 @@ int main(int argc, char* argv[]) {
     checkOutput(triangles_dev, num_triangles, &all[0][0][0]);
     cudaFree(all_dev);
     cudaFree(triangles_dev);
-<<<<<<< HEAD:cuda/fps-test.cu
     long diff = 0;
     for (int z = 0; z < NUM_LAYERS; z++) {
         for (int y = 0; y < Y_DIM; y++) {
@@ -73,19 +72,6 @@ int main(int argc, char* argv[]) {
         }
     }
     std::cout << "Diff: " << diff << " pixel(s)." << std::endl;
-=======
-#if (SHOW_LAYER==0)
-    return 0; // Skip the following code
-#endif
-    // Visualize
-    for (int y = Y_DIM; y > 0; y--) {
-        for (int x = 0; x < X_DIM; x++) {
-            if (all[10][y][x]) std::cout << "x";
-            else std::cout << " ";
-        }
-        std::cout << std::endl;
-    }
->>>>>>> 56eff6636283a22707ae5bc5cecd85e535e5a230:cuda/main.cu
 
     return 0;
 }
