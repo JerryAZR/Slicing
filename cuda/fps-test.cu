@@ -5,10 +5,6 @@
 #include "golden.cuh"
 #include <vector>
 
-
-#define PPS 0
-#define SHOW_LAYER 0
-
 int main(int argc, char* argv[]) {
     std::string stl_file_name;
     std::vector<triangle> triangles;
@@ -38,13 +34,6 @@ int main(int argc, char* argv[]) {
     int threadsPerBlock = THREADS_PER_BLOCK;
     int blocksPerGrid;
 
-#if(PPS == 1)
-    blocksPerGrid = (Y_DIM * X_DIM + threadsPerBlock - 1) / threadsPerBlock;
-    pps<<<blocksPerGrid, threadsPerBlock>>>(&triangles_dev[0], num_triangles, all_dev);
-    cudaDeviceSynchronize();
-    err = cudaGetLastError();  // add
-    if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
-#else
     char* all_intersections;
     cudaMalloc(&all_intersections, Y_DIM * X_DIM * NUM_LAYERS * sizeof(char));
     size_t* trunk_length;
@@ -67,7 +56,6 @@ int main(int argc, char* argv[]) {
     cudaFree(all_intersections);
     cudaFree(trunk_length);
     cudaFree(locks);
-#endif
     // Copy result from device memory to host memory
     cudaMemcpy(&all[0][0][0], all_dev, size, cudaMemcpyDeviceToHost);
     err = cudaGetLastError();  // add
@@ -84,18 +72,6 @@ int main(int argc, char* argv[]) {
         }
     }
     std::cout << "Diff: " << diff << " pixel(s)." << std::endl;
-
-#if (SHOW_LAYER==0)
-    return 0; // Skip the following code
-#endif
-    // Visualize
-    for (int y = Y_DIM; y > 0; y--) {
-        for (int x = 0; x < X_DIM; x++) {
-            if (all[10][y][x]) std::cout << "x";
-            else std::cout << " ";
-        }
-        std::cout << std::endl;
-    }
 
     return 0;
 }
