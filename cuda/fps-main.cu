@@ -19,7 +19,6 @@ int main(int argc, char* argv[]) {
     triangle* triangles_dev;
     // all[z][y][x]
     bool all[NUM_LAYERS][Y_DIM][X_DIM];
-    bool expected[NUM_LAYERS][Y_DIM][X_DIM];
     bool* all_dev;
     size_t size = NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool);
     cudaMalloc(&all_dev, size);
@@ -33,8 +32,8 @@ int main(int argc, char* argv[]) {
     int threadsPerBlock = THREADS_PER_BLOCK;
     int blocksPerGrid;
 
-    char* all_intersections;
-    cudaMalloc(&all_intersections, Y_DIM * X_DIM * NUM_LAYERS * sizeof(char));
+    layer_t* all_intersections;
+    cudaMalloc(&all_intersections, Y_DIM * X_DIM * NUM_LAYERS * sizeof(layer_t));
     size_t* trunk_length;
     cudaMalloc(&trunk_length, Y_DIM * X_DIM * sizeof(size_t));
     cudaMemset(trunk_length, 0, Y_DIM * X_DIM * sizeof(size_t));

@@ -19,8 +19,8 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
     triangle* triangles = (triangle*) tri_base;
     size_t num_iters = num_triangles / THREADS_PER_BLOCK;
     int length = 0;
-    __shared__ char layers_shared[THREADS_PER_BLOCK][NUM_LAYERS+1];
-    char* layers = &layers_shared[threadIdx.x][0];
+    __shared__ layer_t layers_shared[THREADS_PER_BLOCK][NUM_LAYERS+1];
+    layer_t* layers = &layers_shared[threadIdx.x][0];
     for (size_t i = 0; i < num_iters; i++) {
         triangles[threadIdx.x] = triangles_global[threadIdx.x + (i * THREADS_PER_BLOCK)];
         // Wait for other threads to complete;
@@ -48,7 +48,7 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
 
     bool flag = false;
     int layerIdx = 0;
-    for (char z = 0; z < NUM_LAYERS; z++) {
+    for (layer_t z = 0; z < NUM_LAYERS; z++) {
         // If intersect
         bool intersect = (z == layers[layerIdx]);
         out[z*Y_DIM*X_DIM + y_idx*X_DIM + x_idx] = intersect || flag;
@@ -58,7 +58,7 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
 }
 
 __global__
-void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, size_t* trunk_length, int* locks) {
+void fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections, size_t* trunk_length, int* locks) {
     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
     size_t tri_idx = idx >> (LOG_X + LOG_Y);
     // if (tri_idx >= num_triangles) return;
@@ -92,10 +92,10 @@ void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, si
 
     bool notInRect = (x_pos < x_min) || (x_pos > x_max);
 
-    char* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
+    layer_t* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
     int* lock = locks + y_idx * X_DIM + x_idx;
     size_t* length = trunk_length + y_idx * X_DIM + x_idx;
-    char intersection = notInRect ? -1 : pixelRayIntersection(triangles_shared, x, y);
+    layer_t intersection = notInRect ? -1 : pixelRayIntersection(triangles_shared, x, y);
     bool run = (intersection != -1);
     while (run) {
         if(atomicCAS(lock, 0, 1) == 0) {
@@ -108,16 +108,16 @@ void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, si
 }
 
 __global__
-void fps2(char* all_intersections, size_t* trunk_length) {
+void fps2(layer_t* all_intersections, size_t* trunk_length) {
     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
     if (idx >= X_DIM * Y_DIM) return;
     size_t length = trunk_length[idx];
-    char* curr_trunk = all_intersections + (idx * NUM_LAYERS);
+    layer_t* curr_trunk = all_intersections + (idx * NUM_LAYERS);
     thrust::sort(thrust::device, curr_trunk, curr_trunk + length);
 }
 
 __global__
-void fps3(char* sorted_intersections, size_t* trunk_length, bool* out) {
+void fps3(layer_t* sorted_intersections, size_t* trunk_length, bool* out) {
     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
     int z_idx = idx / (X_DIM * Y_DIM);
     if (z_idx >= NUM_LAYERS) return;
@@ -125,12 +125,12 @@ void fps3(char* sorted_intersections, size_t* trunk_length, bool* out) {
     int x_idx = (idx - (z_idx * X_DIM * Y_DIM)) % X_DIM;
 
     size_t length = trunk_length[y_idx * X_DIM + x_idx];
-    char* intersection_trunk = sorted_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
+    layer_t* intersection_trunk = sorted_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
     out[idx] = isInside(z_idx, intersection_trunk, length);
 }
 
 __device__ __forceinline__
-char pixelRayIntersection(triangle t, int x, int y) {
+layer_t pixelRayIntersection(triangle t, int x, int y) {
     /*
     Let A, B, C be the 3 vertices of the given triangle
     Let S(x,y,z) be the intersection, where x,y are given
@@ -164,16 +164,16 @@ char pixelRayIntersection(triangle t, int x, int y) {
     bool inside = (a >= 0) && (b >= 0) && (a+b <= 1);
     double intersection = (a * z1 + b * z2) + t.p1.z;
     // // divide by layer width
-    char layer = inside ? (intersection / RESOLUTION) : -1;
+    layer_t layer = inside ? (intersection / RESOLUTION) : -1;
     return layer;
 }
 
 __device__
-int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles, char* layers) {
+int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles, layer_t* layers) {
     int idx = 0;
 
     for (int i = 0; i < num_triangles; i++) {
-        char layer = pixelRayIntersection(triangles[i], x, y);
+        layer_t layer = pixelRayIntersection(triangles[i], x, y);
         if (layer != -1) {
             layers[idx] = layer;
             idx++;
@@ -183,7 +183,7 @@ int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles
 }
 
 __device__
-bool isInside(char current, char* trunk, size_t length) {
+bool isInside(layer_t current, layer_t* trunk, size_t length) {
     size_t startIdx = 0;
     size_t endIdx = length;
     size_t mid;
