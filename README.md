@@ -8,10 +8,12 @@ To build, type:
 
 The output binary will be in [out](./out/).
 
-To get a summary for kernel/API execution time, run
+To profile or test the program, type
 
-``sudo nvprof [executable] [path_to_stl_file] 2> [output file]``
+``./run.py [options]``
 
 To get detailed profiling results, run
 
-``sudo nvprof --events [comma separated list of events, or "all"] --metrics [comma separated list of metrics, or "all"] [executable] [path_to_stl_file] 2> [output file]``
+``sudo nvprof --events [comma separated list of events] --metrics [comma separated list of metrics] [executable] [path_to_stl_file] 2> [output file]``
+
+A list of available events and metrics can be found in [events.txt](./performance/events.txt) and [metrics.txt](./performance/metrics.txt)
