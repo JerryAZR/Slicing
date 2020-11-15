@@ -1,35 +1,43 @@
-ODIR=./obj
+OBJDIR=./obj
+SRCDIR=./src
+OUTDIR=.
+CXX=nvcc
 
+all: fps
 
-fps: fps-main.o slicer.o triangle.o
-	nvcc fps-main.cu slicer.cu triangle.cu -o fps
+fps: $(OBJDIR)/fps-main.o $(OBJDIR)/slicer.o $(OBJDIR)/triangle.o
+	$(CXX) $(OBJDIR)/fps-main.o $(OBJDIR)/slicer.o $(OBJDIR)/triangle.o -o $(OUTDIR)/fps
 
-pps: pps-main.o slicer.o triangle.o
-	nvcc pps-main.cu slicer.cu triangle.cu -o pps
+pps: $(OBJDIR)/pps-main.o $(OBJDIR)/slicer.o $(OBJDIR)/triangle.o
+	$(CXX) $(OBJDIR)/pps-main.o $(OBJDIR)/slicer.o $(OBJDIR)/triangle.o -o $(OUTDIR)/pps
 
-fps-test: fps-test.o slicer.o triangle.o golden.o
-	nvcc fps-test.cu slicer.cu triangle.cu golden.cu -o fps-test
+fps-test: $(OBJDIR)/fps-test.o $(OBJDIR)/slicer.o $(OBJDIR)/triangle.o $(OBJDIR)/golden.o
+	$(CXX) fps-test.cu slicer.cu triangle.cu golden.cu -o $(OUTDIR)/fps-test
 
-pps-test: pps-test.o slicer.o triangle.o golden.o
-	nvcc pps-test.o slicer.o triangle.o golden.o -o pps-test
+pps-test: $(OBJDIR)/pps-test.o $(OBJDIR)/slicer.o $(OBJDIR)/triangle.o $(OBJDIR)/golden.o
+	$(CXX) pps-test.o slicer.o triangle.o golden.o -o $(OUTDIR)/pps-test
 
-pps-main.o: pps-main.cu slicer.cuh triangle.cuh
-	nvcc -c pps-main.cu -o pps-main.o
+$(OBJDIR)/pps-main.o: pps-main.cu slicer.cuh triangle.cuh
+	$(CXX) -c pps-main.cu -o $(OBJDIR)/pps-main.o
 
-fps-main.o: fps-main.cu slicer.cuh triangle.cuh
-	nvcc -c fps-main.cu -o fps-main.o
+$(OBJDIR)/fps-main.o: fps-main.cu slicer.cuh triangle.cuh
+	$(CXX) -c fps-main.cu -o $(OBJDIR)/fps-main.o
 
-pps-test.o: pps-test.cu slicer.cuh triangle.cuh golden.cuh
-	nvcc -c pps-test.cu -o pps-test.o
+$(OBJDIR)/pps-test.o: pps-test.cu slicer.cuh triangle.cuh golden.cuh
+	$(CXX) -c pps-test.cu -o $(OBJDIR)/pps-test.o
 
-fps-test.o: fps-test.cu slicer.cuh triangle.cuh golden.cuh
-	nvcc -c fps-test.cu -o fps-test.o
+$(OBJDIR)/fps-test.o: fps-test.cu slicer.cuh triangle.cuh golden.cuh
+	$(CXX) -c fps-test.cu -o $(OBJDIR)/fps-test.o
 
-golden.o: golden.cu golden.cuh slicer.cuh triangle.cuh
-	nvcc -c golden.cu -o golden.o
+$(OBJDIR)/golden.o: golden.cu golden.cuh slicer.cuh triangle.cuh
+	$(CXX) -c golden.cu -o $(OBJDIR)/golden.o
 
-slicer.o: slicer.cu slicer.cuh triangle.cuh
-	nvcc -c slicer.cu -o slicer.o
+$(OBJDIR)/slicer.o: slicer.cu slicer.cuh triangle.cuh
+	$(CXX) -c slicer.cu -o $(OBJDIR)/slicer.o
 
-triangle.o: triangle.cu triangle.cuh
-	nvcc -c triangle.cu -o triangle.o
+$(OBJDIR)/triangle.o: triangle.cu triangle.cuh
+	$(CXX) -c triangle.cu -o $(OBJDIR)/triangle.o
+
+.PHONY: clean
+clean:
+	rm -f $(OBJDIR)/*.o
