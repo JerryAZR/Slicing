@@ -24,6 +24,8 @@
 #define Y_MIN (long)(-1 * Y_LEN / 2)
 #define Y_MAX (long)(Y_LEN / 2)
 
+typedef char layer_t;
+
 __global__ void pps(triangle* triangles, size_t num_triangles, bool* out);
 // returns the layer of intersection
 __device__ char pixelRayIntersection(triangle t, int x, int y);

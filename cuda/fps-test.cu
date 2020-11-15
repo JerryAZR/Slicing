@@ -33,8 +33,8 @@ int main(int argc, char* argv[]) {
     int threadsPerBlock = THREADS_PER_BLOCK;
     int blocksPerGrid;
 
-    char* all_intersections;
-    cudaMalloc(&all_intersections, Y_DIM * X_DIM * NUM_LAYERS * sizeof(char));
+    layer_t* all_intersections;
+    cudaMalloc(&all_intersections, Y_DIM * X_DIM * NUM_LAYERS * sizeof(layer_t));
     size_t* trunk_length;
     cudaMalloc(&trunk_length, Y_DIM * X_DIM * sizeof(size_t));
     cudaMemset(trunk_length, 0, Y_DIM * X_DIM * sizeof(size_t));

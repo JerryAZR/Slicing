@@ -28,8 +28,8 @@ void goldenModel(triangle* triangles_dev, size_t num_triangles, bool* out) {
     bool* all_dev;
     size_t size = NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool);
     cudaMalloc(&all_dev, size);
-    char* all_intersections;
-    cudaMalloc(&all_intersections, Y_DIM * X_DIM * NUM_LAYERS * sizeof(char));
+    layer_t* all_intersections;
+    cudaMalloc(&all_intersections, Y_DIM * X_DIM * NUM_LAYERS * sizeof(layer_t));
     size_t* trunk_length;
     cudaMalloc(&trunk_length, Y_DIM * X_DIM * sizeof(size_t));
     cudaMemset(trunk_length, 0, Y_DIM * X_DIM * sizeof(size_t));
@@ -58,7 +58,7 @@ void goldenModel(triangle* triangles_dev, size_t num_triangles, bool* out) {
 }
 
 __global__
-void _fps1(triangle* triangles, size_t num_triangles, char* all_intersections, size_t* trunk_length, int* locks) {
+void _fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections, size_t* trunk_length, int* locks) {
     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
     size_t tri_idx = idx / (X_DIM * Y_DIM);
     // if (tri_idx >= num_triangles) return;
@@ -86,10 +86,10 @@ void _fps1(triangle* triangles, size_t num_triangles, char* all_intersections, s
     double y_pos = y * RESOLUTION;
     bool notInRect = (x_pos < x_min) || (x_pos > x_max) || (y_pos < y_min) || (y_pos > y_max);
 
-    char* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
+    layer_t* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
     int* lock = locks + y_idx * X_DIM + x_idx;
     size_t* length = trunk_length + y_idx * X_DIM + x_idx;
-    char intersection = notInRect ? -1 : _pixelRayIntersection(triangles_shared, x, y);
+    layer_t intersection = notInRect ? -1 : _pixelRayIntersection(triangles_shared, x, y);
     bool run = (intersection != -1);
     while (run) {
         if(atomicCAS(lock, 0, 1) == 0) {
@@ -102,16 +102,16 @@ void _fps1(triangle* triangles, size_t num_triangles, char* all_intersections, s
 }
 
 __global__
-void _fps2(char* all_intersections, size_t* trunk_length) {
+void _fps2(layer_t* all_intersections, size_t* trunk_length) {
     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
     if (idx >= X_DIM * Y_DIM) return;
     size_t length = trunk_length[idx];
-    char* curr_trunk = all_intersections + (idx * NUM_LAYERS);
+    layer_t* curr_trunk = all_intersections + (idx * NUM_LAYERS);
     thrust::sort(thrust::device, curr_trunk, curr_trunk + length);
 }
 
 __global__
-void _fps3(char* sorted_intersections, size_t* trunk_length, bool* out) {
+void _fps3(layer_t* sorted_intersections, size_t* trunk_length, bool* out) {
     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
     int z_idx = idx / (X_DIM * Y_DIM);
     if (z_idx >= NUM_LAYERS) return;
@@ -119,12 +119,12 @@ void _fps3(char* sorted_intersections, size_t* trunk_length, bool* out) {
     int x_idx = (idx - (z_idx * X_DIM * Y_DIM)) % X_DIM;
 
     size_t length = trunk_length[y_idx * X_DIM + x_idx];
-    char* intersection_trunk = sorted_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
+    layer_t* intersection_trunk = sorted_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
     out[idx] = _isInside(z_idx, intersection_trunk, length);
 }
 
 __device__ __forceinline__
-char _pixelRayIntersection(triangle t, int x, int y) {
+layer_t _pixelRayIntersection(triangle t, int x, int y) {
     /*
     Let A, B, C be the 3 vertices of the given triangle
     Let S(x,y,z) be the intersection, where x,y are given
@@ -148,12 +148,12 @@ char _pixelRayIntersection(triangle t, int x, int y) {
     bool inside = (a >= 0) && (b >= 0) && (a+b <= 1);
     double intersection = (a * z1 + b * z2) + t.p1.z;
     // // divide by layer width
-    char layer = inside ? (intersection / RESOLUTION) : -1;
+    layer_t layer = inside ? (intersection / RESOLUTION) : -1;
     return layer;
 }
 
 __device__
-bool _isInside(char current, char* trunk, size_t length) {
+bool _isInside(layer_t current, layer_t* trunk, size_t length) {
     size_t startIdx = 0;
     size_t endIdx = length;
     size_t mid;

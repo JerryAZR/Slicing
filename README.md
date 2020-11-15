@@ -2,21 +2,18 @@
 
 The cuda codes are in [cuda](./cuda/) and [AlgoGPU](./AlgoGPU/).
 
-In any of the folders, use the following command to compile:
+To build, type:
 
-``nvcc *.cu -o [executable]``
+``make [fps|pps|new|fps-test|pps-test]``
 
-To get a summary for kernel/API execution time, run
+The output binary will be in [out](./out/).
 
-``sudo nvprof [executable] [path_to_stl_file] 2> [output file]``
+To profile or test the program, type
+
+``./run.py [options]``
 
 To get detailed profiling results, run
 
-``sudo nvprof --events [comma separated list of events, or "all"] --metrics [comma separated list of metrics, or "all"] [executable] [path_to_stl_file] 2> [output file]``
+``sudo nvprof --events [comma separated list of events] --metrics [comma separated list of metrics] [executable] [path_to_stl_file] 2> [output file]``
 
-There is a function in [cuda/golden.cuh](./cuda/golden.cuh) that can be used for testing. The function
-
-``checkOutput(triangle* triangles_dev, size_t num_triangles, bool* in)`` 
-
-compares the actual output (bool* in) to the expected output, and returns the number of pixels that are different.
-(More work to be done on this part to make testing easier)
+A list of available events and metrics can be found in [events.txt](./performance/events.txt) and [metrics.txt](./performance/metrics.txt)
