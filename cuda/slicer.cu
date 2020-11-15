@@ -57,6 +57,16 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
     }
 }
 
+/**
+ * fps1: First stage of slicing -- Ray Triangle Intersection
+ * Inputs: 
+ *      triangles -- array of all triangles
+ *      num_triangles -- length of the triangle array
+ *      locks -- array of locks (used in atomic memory access)
+ * Outputs:
+ *      all_intersections -- array of all intersections
+ *      trunk_length -- number of intersections of each pixel ray
+ */
 __global__
 void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, size_t* trunk_length, int* locks) {
     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
@@ -73,11 +83,16 @@ void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, si
     double y_pos = y * RESOLUTION;
 
     if (threadIdx.x == 0) {
+        // copy the triangle to shared memory
         triangles_shared = triangles[tri_idx];
+        // compute x_min, x_max of the triangle, store results in shared memory
         thrust::maximum<double> max;
         thrust::minimum<double> min;
         x_max = max(triangles_shared.p1.x, max(triangles_shared.p2.x, triangles_shared.p3.x));
         x_min = min(triangles_shared.p1.x, min(triangles_shared.p2.x, triangles_shared.p3.x));
+        // check if current y value is inside the triangle
+        // All threads (pixels) on this block have the same y value,
+        // so this condition only needs to be checked once.
         double y_max = max(triangles_shared.p1.y, max(triangles_shared.p2.y, triangles_shared.p3.y));
         double y_min = min(triangles_shared.p1.y, min(triangles_shared.p2.y, triangles_shared.p3.y));
         y_notInside = (y_pos < y_min) || (y_pos > y_max);
@@ -95,6 +110,8 @@ void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, si
     char* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
     int* lock = locks + y_idx * X_DIM + x_idx;
     size_t* length = trunk_length + y_idx * X_DIM + x_idx;
+    // if current pixel is not in the rectangle defined by x_min/max and y_min/max,
+    // there cannot be an intersection
     char intersection = notInRect ? -1 : pixelRayIntersection(triangles_shared, x, y);
     bool run = (intersection != -1);
     while (run) {
@@ -107,6 +124,14 @@ void fps1(triangle* triangles, size_t num_triangles, char* all_intersections, si
     }
 }
 
+/**
+ * fps2: second stage of slicing -- trunk sorting
+ * Inputs:
+ *      all_intersections -- array of intersections computed in fps1
+ *      trunk_length -- number of intersections of each pixel ray
+ * Outputs:
+ *      all_intersections -- sorting will be performed in-place
+ */
 __global__
 void fps2(char* all_intersections, size_t* trunk_length) {
     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
@@ -116,6 +141,15 @@ void fps2(char* all_intersections, size_t* trunk_length) {
     thrust::sort(thrust::device, curr_trunk, curr_trunk + length);
 }
 
+/**
+ * fps3: third stage of slicing: layer extractions
+ * Inputs:
+ *      sorted_intersections -- sorted array of intersections
+ *      trunk_length -- number of intersections of each pixel ray
+ * Outputs:
+ *      out -- Z*X*Y array representing the sliced model. A cell is True
+ *             if it is inside the model, False if not.
+ */
 __global__
 void fps3(char* sorted_intersections, size_t* trunk_length, bool* out) {
     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
@@ -129,6 +163,14 @@ void fps3(char* sorted_intersections, size_t* trunk_length, bool* out) {
     out[idx] = isInside(z_idx, intersection_trunk, length);
 }
 
+/**
+ * pixelRayIntersection: helper function, computes the intersection of given triangle and pixel ray
+ * Inputs:
+ *      t -- input triangle
+ *      x, y -- coordinates of the input pixel ray
+ * Returns:
+ *      The layer on which they intersect, or -1 if no intersection
+ */
 __device__ __forceinline__
 char pixelRayIntersection(triangle t, int x, int y) {
     /*
@@ -136,19 +178,8 @@ char pixelRayIntersection(triangle t, int x, int y) {
     Let S(x,y,z) be the intersection, where x,y are given
     We want to find some a, b such that AS = a*AB + b*AC
     If a >= 0, b >= 0, and a+b <= 1, S is a valid intersection.
-
-    return the layer of intersection, or -1 if none
     */
-/*
-    double x_pos = x * RESOLUTION;
-    double y_pos = y * RESOLUTION;
 
-    if (   ((x_pos < t.p1.x) && (x_pos < t.p2.x) && (x_pos < t.p3.x))
-        || ((x_pos > t.p1.x) && (x_pos > t.p2.x) && (x_pos > t.p3.x))
-        || ((y_pos < t.p1.y) && (y_pos < t.p2.y) && (y_pos < t.p3.y))
-        || ((y_pos > t.p1.y) && (y_pos > t.p2.y) && (y_pos > t.p3.y))
-    ) return -1;
-*/
     double x_d = x * RESOLUTION - t.p1.x;
     double y_d = y * RESOLUTION - t.p1.y;
 
@@ -168,6 +199,10 @@ char pixelRayIntersection(triangle t, int x, int y) {
     return layer;
 }
 
+
+/**
+ * get the array of intersections of a given pixel ray
+ */
 __device__
 int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles, char* layers) {
     int idx = 0;
@@ -182,6 +217,15 @@ int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles
     return idx;
 }
 
+/**
+ * isInside: given an array of intersection, check if the current pixel is inside the model
+ * Inputs:
+ *      current -- z value of current pixel
+ *      trunk -- intersection array of current pixel ray
+ *      length -- length of intersection array (trunk)
+ * Returns:
+ *      True if current pixel is inside the model, False if not
+ */
 __device__
 bool isInside(char current, char* trunk, size_t length) {
     size_t startIdx = 0;
