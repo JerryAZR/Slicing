@@ -75,7 +75,7 @@ void outputArray(triangle* triangles_global, size_t num_triangles, bool* out, in
 }
 
 __device__ __forceinline__
-int pixelRayIntersection(triangle t, int x, int y) {
+int pixelRayIntersectionNew(triangle t, int x, int y) {
     double x_d = x * RESOLUTION - t.p1.x;
     double y_d = y * RESOLUTION - t.p1.y;
 
@@ -112,7 +112,7 @@ bool getIntersect(int x, int y, triangle* triangles, size_t num_triangles, size_
                 return intersect;
             }
             else {
-                int intersectLayer = pixelRayIntersection(triangles[idx], x, y);
+                int intersectLayer = pixelRayIntersectionNew(triangles[idx], x, y);
                 if (intersectLayer == layer) {
                     intersect = true;
                     return intersect;
