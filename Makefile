@@ -7,9 +7,9 @@ DEPS = $(SRCDIR)/slicer.cuh $(SRCDIR)/triangle.cuh $(SRCDIR)/golden.cuh
 
 all: fps
 
-new: $(OBJDIR)/triangle.o $(OBJDIR)/slicer.o $(OBJDIR)/new-main.o
+new: 
 	mkdir -p $(OUTDIR)
-	$(CXX) $(CXX) $(OBJDIR)/new-main.o $(OBJDIR)/slicer.o $(OBJDIR)/triangle.o -o $(OUTDIR)/new
+	nvcc AlgoGPU/new-main.cu AlgoGPU/slicer.cu AlgoGPU/triangle.cu -o $(OUTDIR)/new
 
 fps: $(OBJDIR)/triangle.o $(OBJDIR)/slicer.o $(OBJDIR)/fps-main.o
 	mkdir -p $(OUTDIR)
@@ -19,9 +19,9 @@ pps: $(OBJDIR)/triangle.o $(OBJDIR)/slicer.o $(OBJDIR)/pps-main.o
 	mkdir -p $(OUTDIR)
 	$(CXX) $(OBJDIR)/pps-main.o $(OBJDIR)/slicer.o $(OBJDIR)/triangle.o -o $(OUTDIR)/pps
 
-new-test: $(OBJDIR)/triangle.o $(OBJDIR)/slicer.o $(OBJDIR)/golden.o $(OBJDIR)/new-test.o
+new-test: 
 	mkdir -p $(OUTDIR)
-	$(CXX) $(OBJDIR)/new-test.o $(OBJDIR)/slicer.o $(OBJDIR)/triangle.o $(OBJDIR)/golden.o -o $(OUTDIR)/new-test
+	nvcc AlgoGPU/new-test.cu AlgoGPU/slicer.cu AlgoGPU/triangle.cu AlgoGPU/golden.cu -o $(OUTDIR)/new-test
 	
 fps-test: $(OBJDIR)/triangle.o $(OBJDIR)/slicer.o $(OBJDIR)/golden.o $(OBJDIR)/fps-test.o
 	mkdir -p $(OUTDIR)
