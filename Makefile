@@ -7,7 +7,7 @@ DEPS = $(SRCDIR)/slicer.cuh $(SRCDIR)/triangle.cuh $(SRCDIR)/golden.cuh
 
 all: fps
 
-new: 
+new:
 	mkdir -p $(OUTDIR)
 	nvcc AlgoGPU/new-main.cu AlgoGPU/slicer.cu AlgoGPU/triangle.cu -o $(OUTDIR)/new
 
