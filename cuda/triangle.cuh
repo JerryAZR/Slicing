@@ -2,12 +2,6 @@
 #ifndef TRIANGLE
 #define TRIANGLE
 
-#ifdef __CUDACC__
-#define CUDA_CALLABLE_MEMBER __host__ __device__
-#else
-#define CUDA_CALLABLE_MEMBER
-#endif 
-
 #include <string>
 #include <vector>
 
@@ -18,8 +12,9 @@ typedef
 struct v3
 {
     public:
-    __host__ __device__ v3(char* bin);
-    __host__ __device__ v3(double x = 0.0, double y = 0.0, double z = 0.0);
+    __host__ v3(char* bin);
+    __host__ v3(double x, double y, double z);
+    __host__ __device__ v3() {}
     // ~v3();
 
     double x, y, z;
@@ -29,7 +24,8 @@ typedef
 struct triangle
 {
     public:
-    __host__ __device__ triangle(v3 p1 = v3(), v3 p2 = v3(), v3 p3 = v3());
+    __host__ triangle(v3 p1, v3 p2, v3 p3);
+    __host__ __device__ triangle() {}
     // ~triangle();
     v3 p1, p2, p3;
 } triangle;
