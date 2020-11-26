@@ -2,35 +2,44 @@
 '''Slicer Run Script
 
 Usage:
-    run.py test [--exe EXE] [--stl STL]
-    run.py prof [-a | --all] [--txt | --csv] [--exe EXE] [--stl STL]
-    run.py -h | --help
+    ./run.py test <exe> [--stl STL]
+    ./run.py prof <exe> [-a | --all] [--txt | --csv] [--stl STL]
+    ./run.py list
+    ./run.py -h | --help
 
 Options:
-    --exe EXE   The implemenation to test or profile. 
-                Can be one of (fps|pps|new) [default: fps]
     --stl STL   The stl file to be sliced [default: models/bunny.stl]
     -a --all    Proflie all events and metrics
     --txt       Save output to a text file
     --csv       Save output to a csv file
     -h --help   Show this screen.
+
+Arguments:
+    exe         The implemenation to test or profile. Can be one of (fps|pps|new)
 '''
 
 from docopt import docopt
 from subprocess import run
 import re
+import os
 
 if __name__ == '__main__':
     args = docopt(__doc__)
-    exe = "./out/" + args["--exe"]
-    stl = args["--stl"]
-    model = re.search("/(.*).stl", stl).group(1)
-    outFileName = "performance/" + args["--exe"] + "-" + model
+    if args["<exe>"]:
+        exe = "./out/" + args["<exe>"]
+        stl = args["--stl"]
+        model = re.search("/(.*).stl", stl).group(1)
+        outFileName = "performance/" + args["<exe>"] + "-" + model
 
     if args["test"]:
         # Use test binary instead of original
         exe += "-test"
         run([exe, stl])
+    
+    elif args["list"]:
+        for file in os.listdir("models/"):
+            if file.endswith(".stl"):
+                print(os.path.join("models/", file))
     
     elif args["prof"]:
         cmd = ["nvprof"]

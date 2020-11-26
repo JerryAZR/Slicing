@@ -63,5 +63,17 @@ int main(int argc, char* argv[]) {
     checkOutput(triangles_dev, num_triangles, &all[0][0][0]);
     cudaFree(all_dev);
     cudaFree(triangles_dev);
+
+    // for (int z = 0; z < NUM_LAYERS; z++) {
+    //     for (int y = Y_DIM; y > 0; y--) {
+    //         for (int x = 0; x < X_DIM; x++) {
+    //             if (all[z][y][x]) std::cout << "XX";
+    //             else std::cout << "  ";
+    //         }
+    //         std::cout << std::endl;
+    //     }
+    //     std::cout << std::endl << std::endl;
+    // }
+
     return 0;
 }

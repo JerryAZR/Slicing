@@ -23,8 +23,8 @@ long checkOutput(triangle* triangles_dev, size_t num_triangles, bool* in) {
 }
 
 void goldenModel(triangle* triangles_dev, size_t num_triangles, bool* out) {
-    int threadsPerBlock = THREADS_PER_BLOCK;
-    int blocksPerGrid;
+    size_t threadsPerBlock = THREADS_PER_BLOCK;
+    size_t blocksPerGrid;
     bool* all_dev;
     size_t size = NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool);
     cudaMalloc(&all_dev, size);
@@ -59,7 +59,7 @@ void goldenModel(triangle* triangles_dev, size_t num_triangles, bool* out) {
 
 __global__
 void _fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections, size_t* trunk_length, int* locks) {
-    size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
+    size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
     size_t tri_idx = idx / (X_DIM * Y_DIM);
     // if (tri_idx >= num_triangles) return;
 
@@ -103,7 +103,7 @@ void _fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections
 
 __global__
 void _fps2(layer_t* all_intersections, size_t* trunk_length) {
-    size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
+    size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
     if (idx >= X_DIM * Y_DIM) return;
     size_t length = trunk_length[idx];
     layer_t* curr_trunk = all_intersections + (idx * NUM_LAYERS);
@@ -112,7 +112,7 @@ void _fps2(layer_t* all_intersections, size_t* trunk_length) {
 
 __global__
 void _fps3(layer_t* sorted_intersections, size_t* trunk_length, bool* out) {
-    size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
+    size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
     int z_idx = idx / (X_DIM * Y_DIM);
     if (z_idx >= NUM_LAYERS) return;
     int y_idx = (idx - (z_idx * X_DIM * Y_DIM)) / X_DIM;
@@ -148,7 +148,7 @@ layer_t _pixelRayIntersection(triangle t, int x, int y) {
     bool inside = (a >= 0) && (b >= 0) && (a+b <= 1);
     double intersection = (a * z1 + b * z2) + t.p1.z;
     // // divide by layer width
-    layer_t layer = inside ? (intersection / RESOLUTION) : -1;
+    layer_t layer = inside ? (intersection / RESOLUTION) : (layer_t)(-1);
     return layer;
 }
 

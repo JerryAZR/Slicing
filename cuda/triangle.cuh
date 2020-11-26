@@ -8,6 +8,8 @@
 using std::string;
 using std::vector;
 
+#define TRIANGLE_SIZE 2
+
 typedef
 struct v3
 {
@@ -32,5 +34,6 @@ struct triangle
 
 // utils
 __host__ void read_stl(string fname, vector<triangle>&v);
+__host__ void preprocess_stl(string fname, vector<triangle>&small_tri, vector<triangle>&large_tri, vector<double>&zmins);
 
 #endif

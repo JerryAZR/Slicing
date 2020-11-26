@@ -19,7 +19,6 @@ int main(int argc, char* argv[]) {
     triangle* triangles_dev;
     // all[z][y][x]
     bool all[NUM_LAYERS][Y_DIM][X_DIM];
-    bool expected[NUM_LAYERS][Y_DIM][X_DIM];
     bool* all_dev;
     size_t size = NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool);
     cudaMalloc(&all_dev, size);

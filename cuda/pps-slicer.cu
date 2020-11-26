@@ -50,13 +50,12 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
 
     bool flag = false;
     int layerIdx = 0;
-    for (layer_t z = 0; z < NUM_LAYERS; /*z++*/) {
+    for (layer_t z = 0; z < NUM_LAYERS; z++) {
         // If intersect
+        while (layers[layerIdx] < z) layerIdx++;
         bool intersect = (z == layers[layerIdx]);
+        flag = (bool) (layerIdx & 1);
         out[z*Y_DIM*X_DIM + y_idx*X_DIM + x_idx] = intersect || flag;
-        flag = intersect ^ flag;
-        if (intersect) layerIdx ++;
-        else z++;
     }
 }
 
@@ -99,17 +98,17 @@ layer_t pixelRayIntersection(triangle t, int x, int y) {
 /**
  * get the array of intersections of a given pixel ray
  */
- __device__
- int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles, layer_t* layers) {
-     int idx = 0;
- 
-     for (int i = 0; i < num_triangles; i++) {
-         layer_t layer = pixelRayIntersection(triangles[i], x, y);
-         if (layer != -1) {
-             layers[idx] = layer;
-             idx++;
-         }
-     }
-     return idx;
- }
+__device__
+int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles, layer_t* layers) {
+    int idx = 0;
+
+    for (int i = 0; i < num_triangles; i++) {
+        layer_t layer = pixelRayIntersection(triangles[i], x, y);
+        if (layer != -1) {
+            layers[idx] = layer;
+            idx++;
+        }
+    }
+    return idx;
+}
 

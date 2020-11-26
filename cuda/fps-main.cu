@@ -29,8 +29,8 @@ int main(int argc, char* argv[]) {
     cudaError_t err = cudaGetLastError();  // add
     if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
 
-    int threadsPerBlock = THREADS_PER_BLOCK;
-    int blocksPerGrid;
+    size_t threadsPerBlock = THREADS_PER_BLOCK;
+    size_t blocksPerGrid;
 
     layer_t* all_intersections;
     cudaMalloc(&all_intersections, Y_DIM * X_DIM * NUM_LAYERS * sizeof(layer_t));
@@ -44,9 +44,11 @@ int main(int argc, char* argv[]) {
     blocksPerGrid = (num_triangles * Y_DIM * X_DIM + threadsPerBlock - 1) / threadsPerBlock;
     fps1<<<blocksPerGrid, threadsPerBlock>>>(&triangles_dev[0], num_triangles, all_intersections, trunk_length, locks);
     cudaDeviceSynchronize();
+
     blocksPerGrid = (X_DIM * Y_DIM + threadsPerBlock - 1) / threadsPerBlock;
     fps2<<<blocksPerGrid, threadsPerBlock>>>(all_intersections, trunk_length);
     cudaDeviceSynchronize();
+
     blocksPerGrid = (X_DIM * Y_DIM * NUM_LAYERS + threadsPerBlock - 1) / threadsPerBlock;
     fps3<<<blocksPerGrid, threadsPerBlock>>>(all_intersections, trunk_length, all_dev);
     cudaDeviceSynchronize();
