@@ -3,7 +3,7 @@
 
 Usage:
     ./run.py test <exe> [--stl STL]
-    ./run.py prof <exe> [-a | --all] [--txt | --csv] [--stl STL]
+    ./run.py prof <exe> [--stl STL] [-a | --all] [--txt | --csv]
     ./run.py list
     ./run.py -h | --help
 
@@ -37,9 +37,19 @@ if __name__ == '__main__':
         run([exe, stl])
     
     elif args["list"]:
+        dash = "+" + "-"*30 + "+" + "-"*10 + "+" 
+        table = "|{:<30}|{:>10}|"
+        print(dash)
+        print(table.format("File Name", "Tri. Count"))
+        print(dash)
         for file in os.listdir("models/"):
             if file.endswith(".stl"):
-                print(os.path.join("models/", file))
+                fname = "models/" + file
+                with open(fname, "rb") as f:
+                    header = str(f.read(80), "utf-8")
+                    numtri = int.from_bytes(f.read(4), "little")
+                    print(table.format(fname, numtri))
+        print(dash)
     
     elif args["prof"]:
         cmd = ["nvprof"]
