@@ -2,9 +2,14 @@
 #include "triangle.cuh"
 #include <thrust/sort.h>
 #include <thrust/count.h>
+#include <thrust/functional.h>
 
-__device__ __forceinline__
-void toNextLayer(layer_t* intersections_large_local, size_t trunk_length_local, layer_t & curr_layer, bool & isInside, char* out_local);
+// Declare local helper functions
+__device__ __forceinline__ void toNextLayer(layer_t* intersections_large_local, 
+    size_t trunk_length_local, layer_t & curr_layer, bool & isInside, char* out_local);
+
+__device__ __forceinline__ double min3(double a, double b, double c);
+__device__ __forceinline__ double max3(double a, double b, double c);
 
 __global__ 
 void largeTriIntersection(triangle* tri_large, size_t num_large, layer_t* intersections, size_t* trunk_length) {
@@ -69,6 +74,9 @@ void smallTriIntersection(triangle* tri_small, double* zMins,
 
     __shared__ triangle tri_base[THREADS_PER_BLOCK];
     __shared__ double zMins_base[THREADS_PER_BLOCK];
+    __shared__ double xMin[THREADS_PER_BLOCK];
+    __shared__ double xMax[THREADS_PER_BLOCK];
+    __shared__ bool yNotInside[THREADS_PER_BLOCK];
 
     // Write output to global memory directly.
     // May switch to shared memory if necessary.
@@ -82,8 +90,12 @@ void smallTriIntersection(triangle* tri_small, double* zMins,
     size_t num_iters = num_small / THREADS_PER_BLOCK;
 
     for (size_t i = 0; i < num_iters; i++) {
-        tri_base[threadIdx.x] = tri_small[threadIdx.x + (i * THREADS_PER_BLOCK)];
+        triangle t = tri_small[threadIdx.x + (i * THREADS_PER_BLOCK)];
+        tri_base[threadIdx.x] = t;
         zMins_base[threadIdx.x] = zMins[threadIdx.x + (i * THREADS_PER_BLOCK)];
+        double yMin = min3(t.p1.y, t.p2.y, t.p3.y);
+        double yMax = max3(t.p1.y, t.p2.y, t.p3.y);
+        yNotInside[threadIdx.x] = (y < yMin) || (y > yMax);
         // Wait for other threads to complete;
         __syncthreads();
         if (y_idx < Y_DIM) {
@@ -91,10 +103,9 @@ void smallTriIntersection(triangle* tri_small, double* zMins,
                 // Move to the next triangle-layer pair that intersects
                 // Add 1 to curr_layer when comparing to avoid rounding issues.
                 while (curr_layer+1 < zMins_base[tri_idx] && curr_layer < NUM_LAYERS) {
-                    // Count the number of intersections with large triangles in this pixel
                     toNextLayer(intersections_large_local, trunk_length_local, curr_layer, isInside, out_local);
                 }
-                layer_t curr_intersection = pixelRayIntersection(tri_base[tri_idx], x, y);
+                layer_t curr_intersection = yNotInside[tri_idx] ? NONE : pixelRayIntersection(tri_base[tri_idx], x, y);
                 if (curr_intersection >= 0 && curr_intersection < NUM_LAYERS) out_local[curr_intersection]++;
 
             }
@@ -105,8 +116,12 @@ void smallTriIntersection(triangle* tri_small, double* zMins,
     size_t remaining = num_small - (num_iters * THREADS_PER_BLOCK);
 
     if (threadIdx.x < remaining) {
-        tri_base[threadIdx.x] = tri_small[threadIdx.x + (num_iters * THREADS_PER_BLOCK)];
+        triangle t = tri_small[threadIdx.x + (num_iters * THREADS_PER_BLOCK)];
+        tri_base[threadIdx.x] = t;
         zMins_base[threadIdx.x] = zMins[threadIdx.x + (num_iters * THREADS_PER_BLOCK)];
+        double yMin = min3(t.p1.y, t.p2.y, t.p3.y);
+        double yMax = max3(t.p1.y, t.p2.y, t.p3.y);
+        yNotInside[threadIdx.x] = (y < yMin) || (y > yMax);
     }
     __syncthreads();
     if (remaining) {
@@ -118,7 +133,7 @@ void smallTriIntersection(triangle* tri_small, double* zMins,
                     // Add 1 to curr_layer when comparing to avoid rounding issues.
                     toNextLayer(intersections_large_local, trunk_length_local, curr_layer, isInside, out_local);
                 }
-                layer_t curr_intersection = pixelRayIntersection(tri_base[tri_idx], x, y);
+                layer_t curr_intersection = yNotInside[tri_idx] ? NONE : pixelRayIntersection(tri_base[tri_idx], x, y);
                 if (curr_intersection >= 0 && curr_intersection < NUM_LAYERS) out_local[curr_intersection]++;
             }
         }
@@ -191,4 +206,16 @@ void toNextLayer(layer_t* intersections_large_local, size_t trunk_length_local, 
     out_local[curr_layer] = (char) (isInside || intersect);
     isInside = isInside ^ flip;
     curr_layer++;
+}
+
+__device__ __forceinline__
+double min3(double a, double b, double c) {
+    thrust::minimum<double> min;
+    return min(a, min(b, c));
+}
+
+__device__ __forceinline__
+double max3(double a, double b, double c) {
+    thrust::maximum<double> max;
+    return max(a, max(b, c));
 }
