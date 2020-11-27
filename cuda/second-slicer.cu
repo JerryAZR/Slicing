@@ -3,6 +3,8 @@
 #include <thrust/sort.h>
 #include <thrust/count.h>
 
+__device__ __forceinline__
+void toNextLayer(layer_t* intersections_large_local, size_t trunk_length_local, layer_t & curr_layer, bool & isInside, char* out_local);
 
 __global__ 
 void largeTriIntersection(triangle* tri_large, size_t num_large, layer_t* intersections, size_t* trunk_length) {
@@ -90,13 +92,7 @@ void smallTriIntersection(triangle* tri_small, double* zMins,
                 // Add 1 to curr_layer when comparing to avoid rounding issues.
                 while (curr_layer+1 < zMins_base[tri_idx] && curr_layer < NUM_LAYERS) {
                     // Count the number of intersections with large triangles in this pixel
-                    char large_intersections = thrust::count(thrust::device, intersections_large_local, intersections_large_local + trunk_length_local, curr_layer);
-                    char total_intersections = large_intersections + out_local[curr_layer];
-                    bool flip = (bool) (total_intersections & 1);
-                    bool intersect = (total_intersections > 0);
-                    out_local[curr_layer] = (char) (isInside || intersect);
-                    isInside = isInside ^ flip;
-                    curr_layer++;
+                    toNextLayer(intersections_large_local, trunk_length_local, curr_layer, isInside, out_local);
                 }
                 layer_t curr_intersection = pixelRayIntersection(tri_base[tri_idx], x, y);
                 if (curr_intersection >= 0 && curr_intersection < NUM_LAYERS) out_local[curr_intersection]++;
@@ -120,13 +116,7 @@ void smallTriIntersection(triangle* tri_small, double* zMins,
                 while (curr_layer+1 < zMins_base[tri_idx] && curr_layer < NUM_LAYERS) {
                     // Count the number of intersections with large triangles in this pixel
                     // Add 1 to curr_layer when comparing to avoid rounding issues.
-                    char large_intersections = thrust::count(thrust::device, intersections_large_local, intersections_large_local + trunk_length_local, curr_layer);
-                    char total_intersections = large_intersections + out_local[curr_layer];
-                    bool flip = (bool) (total_intersections & 1);
-                    bool intersect = (total_intersections > 0);
-                    out_local[curr_layer] = (char) (isInside || intersect);
-                    isInside = isInside ^ flip;
-                    curr_layer++;
+                    toNextLayer(intersections_large_local, trunk_length_local, curr_layer, isInside, out_local);
                 }
                 layer_t curr_intersection = pixelRayIntersection(tri_base[tri_idx], x, y);
                 if (curr_intersection >= 0 && curr_intersection < NUM_LAYERS) out_local[curr_intersection]++;
@@ -135,18 +125,7 @@ void smallTriIntersection(triangle* tri_small, double* zMins,
     }
 
     while (curr_layer < NUM_LAYERS) {
-        // Count the number of intersections with large triangles in this pixel
-        char large_intersections = thrust::count(thrust::device, intersections_large_local, intersections_large_local + trunk_length_local, curr_layer);
-        char total_intersections = large_intersections + out_local[curr_layer];
-        // if (x_idx == 185 && y_idx == 73) {
-        //     printf("%d: %d\n", curr_layer, total_intersections);
-        // }
-        bool flip = (bool) (total_intersections & 1);
-        bool intersect = (total_intersections > 0);
-        out_local[curr_layer] = (char) (isInside || intersect);
-        isInside = isInside ^ flip;
-        // isInside = isInside ^ intersect;
-        curr_layer++;
+        toNextLayer(intersections_large_local, trunk_length_local, curr_layer, isInside, out_local);
     }
 }
 
@@ -201,4 +180,15 @@ int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles
         }
     }
     return idx;
+}
+
+__device__ __forceinline__
+void toNextLayer(layer_t* intersections_large_local, size_t trunk_length_local, layer_t & curr_layer, bool & isInside, char* out_local) {
+    char large_intersections = thrust::count(thrust::device, intersections_large_local, intersections_large_local + trunk_length_local, curr_layer);
+    char total_intersections = large_intersections + out_local[curr_layer];
+    bool flip = (bool) (total_intersections & 1);
+    bool intersect = (total_intersections > 0);
+    out_local[curr_layer] = (char) (isInside || intersect);
+    isInside = isInside ^ flip;
+    curr_layer++;
 }
