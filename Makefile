@@ -8,8 +8,8 @@ NEW_DEPS = AlgoGPU/slicer.cu AlgoGPU/triangle.cu AlgoGPU/slicer.cuh AlgoGPU/tria
 
 all: fps
 
-second: $(SRCDIR)/triangle.cu $(SRCDIR)/sort.cu $(SRCDIR)/second-test.cu
-	$(CXX) $(SRCDIR)/triangle.cu $(SRCDIR)/sort.cu $(SRCDIR)/second-test.cu -o second
+second: $(OBJDIR)/triangle.o $(OBJDIR)/second-slicer.o $(OBJDIR)/second-test.o $(OBJDIR)/golden.o
+	$(CXX) $^ -o $(OUTDIR)/second-test
 
 new: AlgoGPU/new-main.cu $(NEW_DEPS)
 	mkdir -p $(OUTDIR)

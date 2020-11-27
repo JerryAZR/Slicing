@@ -2,6 +2,7 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+#include <thrust/functional.h>
 
 using namespace std;
 
@@ -143,4 +144,9 @@ __host__ void preprocess_stl(string fname, vector<triangle>&small_tri, vector<tr
     cout <<"Number of large triangles added: " << large_count << endl;
 
     return;
+}
+
+__host__
+double triangle::zmin() {
+    return min({p1.z, p2.z, p3.z});
 }

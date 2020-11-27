@@ -29,6 +29,7 @@ struct triangle
     __host__ triangle(v3 p1, v3 p2, v3 p3);
     __host__ __device__ triangle() {}
     // ~triangle();
+    __host__ double zmin();
     v3 p1, p2, p3;
 } triangle;
 

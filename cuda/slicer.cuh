@@ -2,6 +2,7 @@
 #define SLICER
 
 #include "triangle.cuh"
+#include <thrust/device_vector.h>
 
 #define THREADS_PER_BLOCK 256
 #define MAX_TRUNK_SIZE	24
@@ -26,6 +27,8 @@
 
 typedef int layer_t;
 
+#define NONE ((layer_t)(-1))
+
 __global__ void pps(triangle* triangles, size_t num_triangles, bool* out);
 // returns the layer of intersection
 __device__ layer_t pixelRayIntersection(triangle t, int x, int y);
@@ -41,4 +44,8 @@ __global__ void outputArray(triangle* triangles_global, size_t num_triangles, bo
 __device__ int pixelRayIntersectionNew(triangle t, int x, int y);
 __device__ bool getIntersect(int x, int y, triangle* triangles, size_t num_triangles, size_t layer, int* index);
 __device__ void getOutarray(int x, int y, triangle* triangles, size_t num_triangles, size_t layer, size_t outIdx, size_t flagIdx, bool* out, bool* flagArray, int* index);
+
+__global__ void largeTriIntersection(triangle* tri_large, size_t num_large, layer_t* intersections, size_t* trunk_length);
+__global__ void smallTriIntersection(triangle* tri_small, double* zMins, 
+    size_t num_small, layer_t* intersections_large, size_t* trunk_length, bool* out);
 #endif
