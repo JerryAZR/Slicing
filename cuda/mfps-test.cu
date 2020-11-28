@@ -63,7 +63,9 @@ int main(int argc, char* argv[]) {
     timer_checkpoint(start);
     std::cout << "Stage 1: Ray Triangle Intersection    ";
 
-    blocksPerGrid = (num_triangles * Y_DIM * X_DIM + threadsPerBlock - 1) / threadsPerBlock;
+    blocksPerGrid = (num_triangles + threadsPerBlock - 1) >> LOG_THREADS; // Number of threads per pixel.
+    blocksPerGrid = blocksPerGrid << (LOG_X + LOG_Y); // Total number of threads
+    blocksPerGrid = (blocksPerGrid + threadsPerBlock - 1) >> LOG_THREADS;
     fps1<<<blocksPerGrid, threadsPerBlock>>>(&triangles_dev[0], num_triangles, all_intersections, trunk_length, locks);
     cudaDeviceSynchronize();
 

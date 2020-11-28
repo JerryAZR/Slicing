@@ -4,7 +4,8 @@
 #include "triangle.cuh"
 #include <thrust/device_vector.h>
 
-#define THREADS_PER_BLOCK 256
+#define LOG_THREADS 8
+#define THREADS_PER_BLOCK (1 << LOG_THREADS)
 #define MAX_TRUNK_SIZE	24
 
 // in mm
