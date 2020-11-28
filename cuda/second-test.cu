@@ -11,14 +11,23 @@
 #include "slicer.cuh"
 #include "golden.cuh"
 
-using std::pair;
+#define NOW (std::chrono::system_clock::now())
+
+typedef std::chrono::time_point<std::chrono::system_clock> chrono_t;
+
+void timer_checkpoint(chrono_t & checkpoint) {
+    chrono_t end = NOW;
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - checkpoint);
+    std::cout << duration.count() << "ms" << std::endl;
+    checkpoint = end;
+}
 
 int main(int argc, char* argv[]) {
     std::string stl_file_name;
     std::vector<triangle> small_tri;
     std::vector<triangle> large_tri;
     std::vector<double> z_mins_vect;
-    // std::chrono::time_point<std::chrono::system_clock> mid, end;
+    chrono_t start;
 
     if (argc == 2) {
         stl_file_name = argv[1];
@@ -30,9 +39,15 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+    start = NOW;
+    
     preprocess_stl(stl_file_name, small_tri, large_tri, z_mins_vect);
     size_t num_small = small_tri.size();
     size_t num_large = large_tri.size();
+
+    std::cout << "Reading STL file...           ";
+    timer_checkpoint(start);
+    std::cout << "Allocating device memory...   ";
 
     triangle* small_tri_dev;
     cudaMalloc(&small_tri_dev, num_small * sizeof(triangle));
@@ -57,6 +72,9 @@ int main(int argc, char* argv[]) {
     cudaMalloc(&z_mins_dev, num_small * sizeof(double));
     cudaMemcpy(z_mins_dev, z_mins_vect.data(), num_small * sizeof(double), cudaMemcpyHostToDevice);
 
+    timer_checkpoint(start);
+    std::cout << "Sorting triangles...          ";
+
     // start = std::chrono::system_clock::now();
 
     // mid = std::chrono::system_clock::now();
@@ -70,21 +88,19 @@ int main(int argc, char* argv[]) {
     thrust::sort_by_key(thrust::device, z_mins_dev, z_mins_dev + num_small, small_tri_dev);
 
     cudaDeviceSynchronize();
+    timer_checkpoint(start);
+    std::cout << "Processing sorted triangles...";
 
     smallTriIntersection<<<numBlocks, threadsPerBlock>>>(small_tri_dev, z_mins_dev, num_small, intersections_large, trunk_length, out_dev);
 
     cudaDeviceSynchronize();
+    timer_checkpoint(start);
+    std::cout << "Copying memory contents...    ";
 
     cudaMemcpy(&out[0][0][0], out_dev, Y_DIM * X_DIM * NUM_LAYERS * sizeof(bool), cudaMemcpyDeviceToHost);
 
-    // timer end
-    // end = std::chrono::system_clock::now();
-
-    // std::chrono::duration<double> std_seconds = mid - start;
-    // std::chrono::duration<double> thrust_seconds = end - mid;
-
-    // std::cout << "std algo: " << std_seconds.count() << "s" << std::endl;
-    // std::cout << "thrust algo: " << thrust_seconds.count() << "s" << std::endl;
+    timer_checkpoint(start);
+    std::cout << "Reshape output array...       ";
 
     bool out_reshaped[NUM_LAYERS][Y_DIM][X_DIM];
 
@@ -100,6 +116,8 @@ int main(int argc, char* argv[]) {
         }
         // std::cout << std::endl << std::endl;
     }
+
+    timer_checkpoint(start);
 
     small_tri.insert(small_tri.end(), large_tri.begin(), large_tri.end());
     size_t num_triangles = small_tri.size();
