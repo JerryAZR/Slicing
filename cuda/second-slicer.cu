@@ -100,14 +100,13 @@ void smallTriIntersection(triangle* tri_small, double* zMins,
         __syncthreads();
         if (y_idx < Y_DIM) {
             for (size_t tri_idx = 0; tri_idx < THREADS_PER_BLOCK; tri_idx++) {
-                // Move to the next triangle-layer pair that intersects
-                // Add 1 to curr_layer when comparing to avoid rounding issues.
-                while (curr_layer+1 < zMins_base[tri_idx] && curr_layer < NUM_LAYERS) {
-                    toNextLayer(intersections_large_local, trunk_length_local, curr_layer, isInside, out_local);
-                }
                 layer_t curr_intersection = yNotInside[tri_idx] ? NONE : pixelRayIntersection(tri_base[tri_idx], x, y);
                 if (curr_intersection >= 0 && curr_intersection < NUM_LAYERS) out_local[curr_intersection]++;
-
+            }
+            // Move to the next triangle-layer pair that intersects
+            // Add 1 to curr_layer when comparing to avoid rounding issues.
+            while (curr_layer+1 < zMins_base[THREADS_PER_BLOCK-1] && curr_layer < NUM_LAYERS) {
+                toNextLayer(intersections_large_local, trunk_length_local, curr_layer, isInside, out_local);
             }
         }
         __syncthreads();
@@ -127,18 +126,13 @@ void smallTriIntersection(triangle* tri_small, double* zMins,
     if (remaining) {
         if (y_idx < Y_DIM) {
             for (size_t tri_idx = 0; tri_idx < remaining; tri_idx++) {
-                // Move to the next triangle-layer pair that intersects
-                while (curr_layer+1 < zMins_base[tri_idx] && curr_layer < NUM_LAYERS) {
-                    // Count the number of intersections with large triangles in this pixel
-                    // Add 1 to curr_layer when comparing to avoid rounding issues.
-                    toNextLayer(intersections_large_local, trunk_length_local, curr_layer, isInside, out_local);
-                }
                 layer_t curr_intersection = yNotInside[tri_idx] ? NONE : pixelRayIntersection(tri_base[tri_idx], x, y);
                 if (curr_intersection >= 0 && curr_intersection < NUM_LAYERS) out_local[curr_intersection]++;
             }
         }
     }
 
+    // Process the remaining layers
     while (curr_layer < NUM_LAYERS) {
         toNextLayer(intersections_large_local, trunk_length_local, curr_layer, isInside, out_local);
     }

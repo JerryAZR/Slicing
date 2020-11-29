@@ -16,7 +16,7 @@ mfps: mfps-main mfps-test
 
 second-main: $(OBJDIR)/triangle.o $(OBJDIR)/second-slicer.o $(OBJDIR)/second-main.o
 	mkdir -p $(OUTDIR)
-	$(CXX) $^ -o $(OUTDIR)/second-main
+	$(CXX) $^ -o $(OUTDIR)/second
 
 second-test: $(OBJDIR)/triangle.o $(OBJDIR)/second-slicer.o $(OBJDIR)/second-test.o $(OBJDIR)/golden.o
 	mkdir -p $(OUTDIR)

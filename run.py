@@ -15,7 +15,7 @@ Options:
     -h --help   Show this screen.
 
 Arguments:
-    exe         The implemenation to test or profile. Can be one of (fps|pps|new)
+    exe         The implemenation to test or profile. Can be one of (fps|pps|new|second|mfps)
 '''
 
 from docopt import docopt
