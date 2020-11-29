@@ -54,7 +54,6 @@ void goldenModel(triangle* triangles_dev, size_t num_triangles, bool* out) {
     cudaMemcpy(out, all_dev, size, cudaMemcpyDeviceToHost);
 
     cudaFree(all_dev);
-    cudaFree(triangles_dev);
 }
 
 __global__
