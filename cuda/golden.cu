@@ -3,6 +3,7 @@
 #include <thrust/sort.h>
 #include <thrust/functional.h>
 #include <stdio.h>
+#include <fstream>
 
 long checkOutput(triangle* triangles_dev, size_t num_triangles, bool* in) {
     bool* expected = (bool*) malloc(NUM_LAYERS * X_DIM * Y_DIM * sizeof(bool));
@@ -16,6 +17,21 @@ long checkOutput(triangle* triangles_dev, size_t num_triangles, bool* in) {
         inside += expected[i];
         diff += (expected[i] != in[i]);
     }
+
+    std::ofstream outfile;
+    outfile.open("expected.txt");
+    for (int z = 0; z < NUM_LAYERS; z++) {
+        for (int y = Y_DIM-1; y >= 0; y--) {
+            for (int x = 0; x < X_DIM; x++) {
+                if (expected[z*X_DIM*Y_DIM + y*X_DIM + x]) outfile << "XX";
+                else outfile << "  ";
+            }
+            outfile << "\n";
+        }
+        outfile << "\n\n";
+    }
+    outfile.close();
+
     free(expected);
     std::cout << inside << " pixels are inside the model." << std::endl;
     std::cout << diff << " pixels are different in the expected and actual output." << std::endl;

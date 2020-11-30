@@ -5,6 +5,8 @@
 #include "golden.cuh"
 #include <vector>
 #include <chrono>
+#include <fstream>
+
 #define NOW (std::chrono::high_resolution_clock::now())
 
 typedef std::chrono::time_point<std::chrono::high_resolution_clock> chrono_t;
@@ -37,7 +39,7 @@ int main(int argc, char* argv[]) {
 
     triangle* triangles_dev;
     // all[z][y][x]
-    bool all[NUM_LAYERS][Y_DIM][X_DIM];
+    bool* all = (bool*)malloc(NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool));
     bool* all_dev;
     size_t size = NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool);
     cudaMalloc(&all_dev, size);
@@ -64,7 +66,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Stage 1: Ray Triangle Intersection    ";
 
     blocksPerGrid = (num_triangles + threadsPerBlock - 1) >> LOG_THREADS; // Number of threads per pixel.
-    blocksPerGrid = blocksPerGrid << (LOG_X + LOG_Y); // Total number of threads
+    blocksPerGrid = blocksPerGrid * X_DIM * Y_DIM; // Total number of threads
     blocksPerGrid = (blocksPerGrid + threadsPerBlock - 1) >> LOG_THREADS;
     fps1<<<blocksPerGrid, threadsPerBlock>>>(&triangles_dev[0], num_triangles, all_intersections, trunk_length, locks);
     cudaDeviceSynchronize();
@@ -90,26 +92,31 @@ int main(int argc, char* argv[]) {
     cudaFree(trunk_length);
     cudaFree(locks);
     // Copy result from device memory to host memory
-    cudaMemcpy(&all[0][0][0], all_dev, size, cudaMemcpyDeviceToHost);
+    cudaMemcpy(all, all_dev, size, cudaMemcpyDeviceToHost);
     timer_checkpoint(start);
 
     err = cudaGetLastError();  // add
     if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
     std::cout << "begin verification" << std::endl;
-    checkOutput(triangles_dev, num_triangles, &all[0][0][0]);
+    checkOutput(triangles_dev, num_triangles, all);
     cudaFree(all_dev);
     cudaFree(triangles_dev);
 
-    // for (int z = 0; z < NUM_LAYERS; z++) {
-    //     for (int y = Y_DIM; y > 0; y--) {
-    //         for (int x = 0; x < X_DIM; x++) {
-    //             if (all[z][y][x]) std::cout << "XX";
-    //             else std::cout << "  ";
-    //         }
-    //         std::cout << std::endl;
-    //     }
-    //     std::cout << std::endl << std::endl;
-    // }
+    std::ofstream outfile;
+    outfile.open("layers.txt");
+    for (int z = 0; z < NUM_LAYERS; z++) {
+        for (int y = Y_DIM-1; y >= 0; y--) {
+            for (int x = 0; x < X_DIM; x++) {
+                if (all[z*Y_DIM*X_DIM + y*X_DIM + x]) outfile << "XX";
+                else outfile << "  ";
+            }
+            outfile << "\n";
+        }
+        outfile << "\n\n";
+    }
+    outfile.close();
+
+    free(all);
 
     return 0;
 }

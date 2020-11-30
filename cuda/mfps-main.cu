@@ -18,7 +18,7 @@ int main(int argc, char* argv[]) {
     int num_triangles = triangles.size();
     triangle* triangles_dev;
     // all[z][y][x]
-    bool all[NUM_LAYERS][Y_DIM][X_DIM];
+    bool* all = (bool*)malloc(NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool));
     bool* all_dev;
     size_t size = NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool);
     cudaMalloc(&all_dev, size);
@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
     cudaMemset(locks, 0, Y_DIM * X_DIM * sizeof(int));
 
     blocksPerGrid = (num_triangles + threadsPerBlock - 1) >> LOG_THREADS; // Number of threads per pixel.
-    blocksPerGrid = blocksPerGrid << (LOG_X + LOG_Y); // Total number of threads
+    blocksPerGrid = blocksPerGrid * X_DIM * Y_DIM; // Total number of threads
     blocksPerGrid = (blocksPerGrid + threadsPerBlock - 1) >> LOG_THREADS;
     fps1<<<blocksPerGrid, threadsPerBlock>>>(&triangles_dev[0], num_triangles, all_intersections, trunk_length, locks);
     cudaDeviceSynchronize();
@@ -59,9 +59,11 @@ int main(int argc, char* argv[]) {
     cudaFree(trunk_length);
     cudaFree(locks);
     // Copy result from device memory to host memory
-    cudaMemcpy(&all[0][0][0], all_dev, size, cudaMemcpyDeviceToHost);
+    cudaMemcpy(all, all_dev, size, cudaMemcpyDeviceToHost);
     err = cudaGetLastError();  // add
     if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
 
     return 0;
+
+    free(all);
 }

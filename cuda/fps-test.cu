@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include "triangle.cuh"
 #include "slicer.cuh"
@@ -37,12 +38,11 @@ int main(int argc, char* argv[]) {
 
     triangle* triangles_dev;
     // all[z][y][x]
-    bool all[NUM_LAYERS][Y_DIM][X_DIM];
+    bool* all = (bool*)malloc(NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool));
     bool* all_dev;
     size_t size = NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool);
     cudaMalloc(&all_dev, size);
     cudaMalloc(&triangles_dev, num_triangles * sizeof(triangle));
-    //cudaMemcpy(all_dev, &all[0][0][0], size, cudaMemcpyHostToDevice); // unnecessary
     cudaMemcpy(triangles_dev, triangles.data(), num_triangles * sizeof(triangle), cudaMemcpyHostToDevice);
 
     cudaError_t err = cudaGetLastError();  // add
@@ -88,26 +88,32 @@ int main(int argc, char* argv[]) {
     cudaFree(trunk_length);
     cudaFree(locks);
     // Copy result from device memory to host memory
-    cudaMemcpy(&all[0][0][0], all_dev, size, cudaMemcpyDeviceToHost);
+    cudaMemcpy(all, all_dev, size, cudaMemcpyDeviceToHost);
     timer_checkpoint(start);
 
     err = cudaGetLastError();  // add
     if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
     std::cout << "begin verification" << std::endl;
-    checkOutput(triangles_dev, num_triangles, &all[0][0][0]);
+    checkOutput(triangles_dev, num_triangles, all);
+    // checkOutput(triangles_dev, num_triangles, all);
     cudaFree(all_dev);
     cudaFree(triangles_dev);
 
-    // for (int z = 0; z < NUM_LAYERS; z++) {
-    //     for (int y = Y_DIM; y > 0; y--) {
-    //         for (int x = 0; x < X_DIM; x++) {
-    //             if (all[z][y][x]) std::cout << "XX";
-    //             else std::cout << "  ";
-    //         }
-    //         std::cout << std::endl;
-    //     }
-    //     std::cout << std::endl << std::endl;
-    // }
+    std::ofstream outfile;
+    outfile.open("layers.txt");
+    for (int z = 0; z < NUM_LAYERS; z++) {
+        for (int y = Y_DIM-1; y >= 0; y--) {
+            for (int x = 0; x < X_DIM; x++) {
+                if (all[z*Y_DIM*X_DIM + y*X_DIM + x]) outfile << "XX";
+                else outfile << "  ";
+            }
+            outfile << "\n";
+        }
+        outfile << "\n\n";
+    }
+    outfile.close();
+
+    free(all);
 
     return 0;
 }

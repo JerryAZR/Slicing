@@ -19,12 +19,11 @@ int main(int argc, char* argv[]) {
     int num_triangles = triangles.size();
     triangle* triangles_dev;
     // all[z][y][x]
-    bool all[NUM_LAYERS][Y_DIM][X_DIM];
+    bool* all = (bool*)malloc(NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool));
     bool* all_dev;
     size_t size = NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool);
     cudaMalloc(&all_dev, size);
     cudaMalloc(&triangles_dev, num_triangles * sizeof(triangle));
-    //cudaMemcpy(all_dev, &all[0][0][0], size, cudaMemcpyHostToDevice); // unnecessary
     cudaMemcpy(triangles_dev, triangles.data(), num_triangles * sizeof(triangle), cudaMemcpyHostToDevice);
 
     cudaError_t err = cudaGetLastError();  // add
@@ -40,10 +39,10 @@ int main(int argc, char* argv[]) {
     if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
 
     // Copy result from device memory to host memory
-    cudaMemcpy(&all[0][0][0], all_dev, size, cudaMemcpyDeviceToHost);
+    cudaMemcpy(all, all_dev, size, cudaMemcpyDeviceToHost);
     err = cudaGetLastError();  // add
     if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
-    checkOutput(triangles_dev, num_triangles, &all[0][0][0]);
+    checkOutput(triangles_dev, num_triangles, all);
     cudaFree(all_dev);
     cudaFree(triangles_dev);
 
@@ -57,6 +56,8 @@ int main(int argc, char* argv[]) {
     //     }
     //     std::cout << std::endl << std::endl;
     // }
+
+    free(all);
 
     return 0;
 }

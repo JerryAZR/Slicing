@@ -46,7 +46,8 @@ int main(int argc, char* argv[]) {
     size_t* trunk_length;
     cudaMalloc(&trunk_length, Y_DIM * X_DIM * sizeof(size_t));
 
-    bool out[Y_DIM][X_DIM][NUM_LAYERS];
+    // out[y][x][z]
+    bool* out = (bool*)malloc(NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool));
     bool* out_dev;
     cudaMalloc(&out_dev, Y_DIM * X_DIM * NUM_LAYERS * sizeof(bool));
     cudaMemset(out_dev, 0, Y_DIM * X_DIM * NUM_LAYERS * sizeof(bool));
@@ -69,9 +70,9 @@ int main(int argc, char* argv[]) {
 
     cudaDeviceSynchronize();
 
-    cudaMemcpy(&out[0][0][0], out_dev, Y_DIM * X_DIM * NUM_LAYERS * sizeof(bool), cudaMemcpyDeviceToHost);
+    cudaMemcpy(out, out_dev, Y_DIM * X_DIM * NUM_LAYERS * sizeof(bool), cudaMemcpyDeviceToHost);
 
-    bool out_reshaped[NUM_LAYERS][Y_DIM][X_DIM];
+    bool* out_reshaped = (bool*)malloc(NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool));
 
     for (int z = 0; z < NUM_LAYERS; z++) {
         for (int y = Y_DIM-1; y >= 0; y--) {
@@ -79,13 +80,17 @@ int main(int argc, char* argv[]) {
                 // if (out[y][x][z]) std::cout << "XX";
                 // else std::cout << "  ";
 
-                out_reshaped[z][y][x] = out[y][x][z];
+                // out_reshaped[z][y][x] = out[y][x][z];
+                out_reshaped[z * X_DIM * Y_DIM + y * X_DIM + x] =
+                    out[y * X_DIM * NUM_LAYERS + x * NUM_LAYERS + z]; 
             }
             // std::cout << std::endl;
         }
         // std::cout << std::endl << std::endl;
     }
 
+    free(out);
+    free(out_reshaped);
     cudaFree(large_tri_dev);
     cudaFree(small_tri_dev);
     cudaFree(intersections_large);

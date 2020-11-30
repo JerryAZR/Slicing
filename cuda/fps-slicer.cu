@@ -16,7 +16,7 @@
 __global__
 void fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections, size_t* trunk_length, int* locks) {
     size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
-    size_t tri_idx = idx >> (LOG_X + LOG_Y);
+    size_t tri_idx = idx / (X_DIM * Y_DIM);
     // if (tri_idx >= num_triangles) return;
 
     // copy 1 triangle to the shared memory -- That's all we need on this block
@@ -24,7 +24,7 @@ void fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections,
     __shared__  double x_max, x_min;
     __shared__  bool y_notInside;
 
-    int y_idx = (idx >> LOG_X) & (Y_DIM-1);
+    int y_idx = (idx / X_DIM) & (Y_DIM-1);
     int y = y_idx - (Y_DIM >> 1);
     double y_pos = y * RESOLUTION;
 
@@ -103,7 +103,7 @@ void fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections,
      int z_idx = idx / (X_DIM * Y_DIM);
      if (z_idx >= NUM_LAYERS) return;
      int y_idx = (idx - (z_idx * X_DIM * Y_DIM)) / X_DIM;
-     int x_idx = (idx - (z_idx * X_DIM * Y_DIM)) % X_DIM;
+     int x_idx = (idx - (z_idx * X_DIM * Y_DIM)) & (X_DIM - 1);
  
      size_t length = trunk_length[y_idx * X_DIM + x_idx];
      layer_t* intersection_trunk = sorted_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;

@@ -5,7 +5,7 @@
 __global__
 void fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections, size_t* trunk_length, int* locks) {
     size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
-    size_t tri_group = idx >> (LOG_X + LOG_Y);
+    size_t tri_group = idx / (X_DIM * Y_DIM);
     size_t tri_idx = tri_group << LOG_THREADS;
     triangle* tri_base = triangles + tri_idx;
 
@@ -21,7 +21,7 @@ void fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections,
     thrust::minimum<double> min;
     thrust::minimum<int> minInt;
 
-    int y_idx = (idx - (tri_group << (LOG_X + LOG_Y))) >> LOG_X;
+    int y_idx = (idx / X_DIM) & (Y_DIM-1);
     int y = y_idx - (Y_DIM >> 1);
     double y_pos = y * RESOLUTION;
 
@@ -36,7 +36,7 @@ void fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections,
     }
     __syncthreads();
 
-    int x_idx = (idx - (tri_group << (LOG_X + LOG_Y))) & (X_DIM-1);
+    int x_idx = idx & (X_DIM-1);
     int x = x_idx - (X_DIM >> 1);
     double x_pos = x * RESOLUTION;
 
@@ -46,12 +46,12 @@ void fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections,
 
     for (int i = 0; i < THREADS_PER_BLOCK; i++) {
         if (i < total_work) {
-        bool notInRect = (y_notInside[i] || (x_pos < x_min[i]) || (x_pos > x_max[i]));
-        layer_t intersection = notInRect ? NONE : pixelRayIntersection(triangles_shared[i], x, y);
-        if (intersection != NONE) {
-            layers_local[length_local] = intersection;
-            length_local++;
-        }
+            bool notInRect = (y_notInside[i] || (x_pos < x_min[i]) || (x_pos > x_max[i]));
+            layer_t intersection = notInRect ? NONE : pixelRayIntersection(triangles_shared[i], x, y);
+            if (intersection != NONE) {
+                layers_local[length_local] = intersection;
+                length_local++;
+            }
         }
     }
     bool run = (length_local > 0);

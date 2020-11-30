@@ -3,6 +3,7 @@
 #include <thrust/sort.h>
 #include <thrust/count.h>
 #include <thrust/functional.h>
+#include <thrust/copy.h>
 
 // Declare local helper functions
 __device__ __forceinline__ void toNextLayer(layer_t* intersections_large_local, 
@@ -15,7 +16,7 @@ __global__
 void largeTriIntersection(triangle* tri_large, size_t num_large, layer_t* intersections, size_t* trunk_length) {
     size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
     int x_idx = idx & (X_DIM-1);
-    int y_idx = idx >> LOG_X;
+    int y_idx = idx / X_DIM;
     int x = x_idx - (X_DIM >> 1);
     int y = y_idx - (Y_DIM >> 1);
 
@@ -68,19 +69,19 @@ void smallTriIntersection(triangle* tri_small, double* zMins,
     // out[y][x][z]
     size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
     int x_idx = idx & (X_DIM-1);
-    int y_idx = idx >> LOG_X;
+    int y_idx = idx / X_DIM;
     int x = x_idx - (X_DIM >> 1);
     int y = y_idx - (Y_DIM >> 1);
 
     __shared__ triangle tri_base[THREADS_PER_BLOCK];
     __shared__ double zMins_base[THREADS_PER_BLOCK];
-    __shared__ double xMin[THREADS_PER_BLOCK];
-    __shared__ double xMax[THREADS_PER_BLOCK];
+    // __shared__ double xMin[THREADS_PER_BLOCK];
+    // __shared__ double xMax[THREADS_PER_BLOCK];
     __shared__ bool yNotInside[THREADS_PER_BLOCK];
 
-    // Write output to global memory directly.
-    // May switch to shared memory if necessary.
-    char* out_local = (char*)(out + idx * NUM_LAYERS);
+    // Use local array. Mapped to registers if NUM_LAYERS is small
+    char out_local[NUM_LAYERS] = {0};
+    char* out_ptr = (char*)(out + idx * NUM_LAYERS);
     layer_t curr_layer = 0;
     layer_t* intersections_large_local = intersections_large + idx * NUM_LAYERS;
     size_t trunk_length_local = trunk_length[idx];
@@ -89,13 +90,16 @@ void smallTriIntersection(triangle* tri_small, double* zMins,
 
     size_t num_iters = num_small / THREADS_PER_BLOCK;
 
+    double y_pos = y * RESOLUTION;
+    // double x_pos = x * RESOLUTION;
+
     for (size_t i = 0; i < num_iters; i++) {
         triangle t = tri_small[threadIdx.x + (i * THREADS_PER_BLOCK)];
         tri_base[threadIdx.x] = t;
         zMins_base[threadIdx.x] = zMins[threadIdx.x + (i * THREADS_PER_BLOCK)];
         double yMin = min3(t.p1.y, t.p2.y, t.p3.y);
         double yMax = max3(t.p1.y, t.p2.y, t.p3.y);
-        yNotInside[threadIdx.x] = (y < yMin) || (y > yMax);
+        yNotInside[threadIdx.x] = (y_pos < yMin) || (y_pos > yMax);
         // Wait for other threads to complete;
         __syncthreads();
         if (y_idx < Y_DIM) {
@@ -105,7 +109,7 @@ void smallTriIntersection(triangle* tri_small, double* zMins,
             }
             // Move to the next triangle-layer pair that intersects
             // Add 1 to curr_layer when comparing to avoid rounding issues.
-            while (curr_layer+1 < zMins_base[THREADS_PER_BLOCK-1] && curr_layer < NUM_LAYERS) {
+            while ((curr_layer+1)*RESOLUTION < zMins_base[THREADS_PER_BLOCK-1] && curr_layer < NUM_LAYERS) {
                 toNextLayer(intersections_large_local, trunk_length_local, curr_layer, isInside, out_local);
             }
         }
@@ -120,7 +124,7 @@ void smallTriIntersection(triangle* tri_small, double* zMins,
         zMins_base[threadIdx.x] = zMins[threadIdx.x + (num_iters * THREADS_PER_BLOCK)];
         double yMin = min3(t.p1.y, t.p2.y, t.p3.y);
         double yMax = max3(t.p1.y, t.p2.y, t.p3.y);
-        yNotInside[threadIdx.x] = (y < yMin) || (y > yMax);
+        yNotInside[threadIdx.x] = (y_pos < yMin) || (y_pos > yMax);
     }
     __syncthreads();
     if (remaining) {
@@ -136,6 +140,7 @@ void smallTriIntersection(triangle* tri_small, double* zMins,
     while (curr_layer < NUM_LAYERS) {
         toNextLayer(intersections_large_local, trunk_length_local, curr_layer, isInside, out_local);
     }
+    thrust::copy(thrust::device, &out_local[0], &out_local[0] + NUM_LAYERS, out_ptr);
 }
 
 /**

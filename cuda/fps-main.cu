@@ -14,16 +14,27 @@ int main(int argc, char* argv[]) {
         std::cout << "ERROR: Too many command line arguments" << std::endl;
     }
 
+    // switch (sanityCheck()) {
+    //     case 1:
+    //         std::cerr << "THREADS_PER_BLOCK may not be larger than X_DIM" << std::endl;
+    //         std::cerr << "Current THREADS_PER_BLOCK: " << THREADS_PER_BLOCK;
+    //         std::cerr << "X_DIM: " << X_DIM << std::endl; 
+    //         return 0;
+    //     case 2:
+    //         std::cerr << "RESOLUTION must be some (positive/negative) power of 2" << std::endl;
+    //         std::cerr << "Current RESOULTION: " << RESOLUTION << std::endl;
+    //         return 0;
+    // }
+
     read_stl(stl_file_name,triangles);
     int num_triangles = triangles.size();
     triangle* triangles_dev;
     // all[z][y][x]
-    bool all[NUM_LAYERS][Y_DIM][X_DIM];
+    bool* all = (bool*)malloc(NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool));
     bool* all_dev;
     size_t size = NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool);
     cudaMalloc(&all_dev, size);
     cudaMalloc(&triangles_dev, num_triangles * sizeof(triangle));
-    //cudaMemcpy(all_dev, &all[0][0][0], size, cudaMemcpyHostToDevice); // unnecessary
     cudaMemcpy(triangles_dev, triangles.data(), num_triangles * sizeof(triangle), cudaMemcpyHostToDevice);
 
     cudaError_t err = cudaGetLastError();  // add
@@ -53,11 +64,12 @@ int main(int argc, char* argv[]) {
     fps3<<<blocksPerGrid, threadsPerBlock>>>(all_intersections, trunk_length, all_dev);
     cudaDeviceSynchronize();
 
+    free(all);
     cudaFree(all_intersections);
     cudaFree(trunk_length);
     cudaFree(locks);
     // Copy result from device memory to host memory
-    cudaMemcpy(&all[0][0][0], all_dev, size, cudaMemcpyDeviceToHost);
+    cudaMemcpy(all, all_dev, size, cudaMemcpyDeviceToHost);
     err = cudaGetLastError();  // add
     if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
 
