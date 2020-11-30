@@ -15,7 +15,7 @@
 #define X_LEN (1 << LOG_X)
 #define Y_LEN (1 << LOG_Y)
 #define HEIGHT 100
-#define RESOLUTION 0.5 // Must be (negative) power of 2
+#define RESOLUTION 1 // Must be (negative) power of 2
 
 // in pixels
 #define NUM_LAYERS ((size_t)(HEIGHT / RESOLUTION))

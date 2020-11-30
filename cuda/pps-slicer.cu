@@ -76,8 +76,17 @@ layer_t pixelRayIntersection(triangle t, int x, int y) {
     If a >= 0, b >= 0, and a+b <= 1, S is a valid intersection.
     */
 
-    double x_d = x * RESOLUTION - t.p1.x;
-    double y_d = y * RESOLUTION - t.p1.y;
+    double x_max = max(t.p1.x, max(t.p2.x, t.p3.x));
+    double x_min = min(t.p1.x, min(t.p2.x, t.p3.x));
+    double y_max = max(t.p1.y, max(t.p2.y, t.p3.y));
+    double y_min = min(t.p1.y, min(t.p2.y, t.p3.y));
+
+    double x_pos = x * RESOLUTION;
+    double y_pos = y * RESOLUTION;
+    if ((x_pos < x_min) || (x_pos > x_max) || (y_pos < y_min) || (y_pos > y_max)) return NONE;
+
+    double x_d = x_pos - t.p1.x;
+    double y_d = y_pos - t.p1.y;
 
     double x1 = t.p2.x - t.p1.x;
     double y1 = t.p2.y - t.p1.y;
@@ -91,7 +100,7 @@ layer_t pixelRayIntersection(triangle t, int x, int y) {
     bool inside = (a >= 0) && (b >= 0) && (a+b <= 1);
     double intersection = (a * z1 + b * z2) + t.p1.z;
     // // divide by layer width
-    layer_t layer = inside ? (intersection / RESOLUTION) : -1;
+    layer_t layer = inside ? (intersection / RESOLUTION) : NONE;
     return layer;
 }
 
@@ -104,7 +113,7 @@ int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles
 
     for (int i = 0; i < num_triangles; i++) {
         layer_t layer = pixelRayIntersection(triangles[i], x, y);
-        if (layer != -1) {
+        if (layer != NONE) {
             layers[idx] = layer;
             idx++;
         }
