@@ -27,7 +27,7 @@ new-main: AlgoGPU/new-main.cu $(NEW_DEPS)
 	mkdir -p $(OUTDIR)
 	nvcc AlgoGPU/new-main.cu AlgoGPU/slicer.cu AlgoGPU/triangle.cu -o $(OUTDIR)/new
 
-fps-main: $(OBJDIR)/triangle.o $(OBJDIR)/ofps-slicer.o $(OBJDIR)/fps-main.o
+fps-main: $(OBJDIR)/triangle.o $(OBJDIR)/fps-slicer.o $(OBJDIR)/fps-main.o
 	mkdir -p $(OUTDIR)
 	$(CXX) $^ -o $(OUTDIR)/fps
 

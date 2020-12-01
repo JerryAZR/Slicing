@@ -64,7 +64,6 @@ int main(int argc, char* argv[]) {
     fps3<<<blocksPerGrid, threadsPerBlock>>>(all_intersections, trunk_length, all_dev);
     cudaDeviceSynchronize();
 
-    free(all);
     cudaFree(all_intersections);
     cudaFree(trunk_length);
     cudaFree(locks);
@@ -72,6 +71,8 @@ int main(int argc, char* argv[]) {
     cudaMemcpy(all, all_dev, size, cudaMemcpyDeviceToHost);
     err = cudaGetLastError();  // add
     if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
+
+    free(all);
 
     return 0;
 }

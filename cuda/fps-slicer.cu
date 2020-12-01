@@ -20,13 +20,15 @@ void fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections,
     // if (tri_idx >= num_triangles) return;
 
     // copy 1 triangle to the shared memory -- That's all we need on this block
-    triangle triangle_shared;
+    __shared__ triangle triangle_shared;
 
     int y_idx = (idx / X_DIM) & (Y_DIM-1);
     int y = y_idx - (Y_DIM >> 1);
     double y_pos = y * RESOLUTION;
 
-    triangle_shared = triangles[tri_idx];
+    if (threadIdx.x == 0)
+        triangle_shared = triangles[tri_idx];
+    __syncthreads();
 
     int x_idx = idx & (X_DIM-1);
     int x = x_idx - (X_DIM >> 1);
