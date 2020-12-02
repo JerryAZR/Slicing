@@ -101,35 +101,27 @@ int main(int argc, char* argv[]) {
     cudaMemcpy(out, out_dev, Y_DIM * X_DIM * NUM_LAYERS * sizeof(bool), cudaMemcpyDeviceToHost);
 
     timer_checkpoint(start);
-    std::cout << "Reshape output array...       ";
 
-    bool* out_reshaped = (bool*)malloc(NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool));
-
-    for (int z = 0; z < NUM_LAYERS; z++) {
-        for (int y = Y_DIM-1; y >= 0; y--) {
-            for (int x = 0; x < X_DIM; x++) {
-                // if (out[y][x][z]) std::cout << "XX";
-                // else std::cout << "  ";
-
-                out_reshaped[z * X_DIM * Y_DIM + y * X_DIM + x] =
-                    out[y * X_DIM * NUM_LAYERS + x * NUM_LAYERS + z]; 
-            }
-            // std::cout << std::endl;
-        }
-        // std::cout << std::endl << std::endl;
-    }
-
-    timer_checkpoint(start);
+    // for (int z = 0; z < NUM_LAYERS; z++) {
+    //     for (int y = Y_DIM-1; y >= 0; y--) {
+    //         for (int x = 0; x < X_DIM; x++) {
+    //             if (out[z][x][y]) std::cout << "XX";
+    //             else std::cout << "  ";
+    //         }
+    //         std::cout << std::endl;
+    //     }
+    //     std::cout << std::endl << std::endl;
+    // }
 
     small_tri.insert(small_tri.end(), large_tri.begin(), large_tri.end());
     size_t num_triangles = small_tri.size();
     triangle* triangles_dev;
     cudaMalloc(&triangles_dev, num_triangles * sizeof(triangle));
     cudaMemcpy(triangles_dev, small_tri.data(), num_triangles * sizeof(triangle), cudaMemcpyHostToDevice);
-    checkOutput(triangles_dev, num_triangles, out_reshaped);
+    // checkOutput(triangles_dev, num_triangles, out_reshaped);
+    checkOutput(triangles_dev, num_triangles, out);
 
     free(out);
-    free(out_reshaped);
     cudaFree(large_tri_dev);
     cudaFree(small_tri_dev);
     cudaFree(intersections_large);

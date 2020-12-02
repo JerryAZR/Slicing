@@ -4,6 +4,17 @@
 #include "slicer.cuh"
 #include "golden.cuh"
 #include <vector>
+#include <chrono>
+#define NOW (std::chrono::high_resolution_clock::now())
+
+typedef std::chrono::time_point<std::chrono::high_resolution_clock> chrono_t;
+
+void timer_checkpoint(chrono_t & checkpoint) {
+    chrono_t end = NOW;
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - checkpoint);
+    std::cout << duration.count() << "ms" << std::endl;
+    checkpoint = end;
+}
 
 int main(int argc, char* argv[]) {
     std::string stl_file_name;
@@ -15,7 +26,14 @@ int main(int argc, char* argv[]) {
         std::cout << "ERROR: Too many command line arguments" << std::endl;
     }
 
+    chrono_t start = NOW;
+
     read_stl(stl_file_name,triangles);
+
+    std::cout << "Reading STL file...                   ";
+    timer_checkpoint(start);
+    std::cout << "Allocating device memory...           ";
+
     int num_triangles = triangles.size();
     triangle* triangles_dev;
     // all[z][y][x]
@@ -33,8 +51,12 @@ int main(int argc, char* argv[]) {
     int blocksPerGrid;
 
     blocksPerGrid = (Y_DIM * X_DIM + threadsPerBlock - 1) / threadsPerBlock;
+    timer_checkpoint(start);
+    std::cout << "Running pps kernel...                 ";
     pps<<<blocksPerGrid, threadsPerBlock>>>(&triangles_dev[0], num_triangles, all_dev);
     cudaDeviceSynchronize();
+    timer_checkpoint(start);
+    std::cout << "Copying memory contents...            ";
     err = cudaGetLastError();  // add
     if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
 
@@ -42,6 +64,7 @@ int main(int argc, char* argv[]) {
     cudaMemcpy(all, all_dev, size, cudaMemcpyDeviceToHost);
     err = cudaGetLastError();  // add
     if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
+    timer_checkpoint(start);
     checkOutput(triangles_dev, num_triangles, all);
     cudaFree(all_dev);
     cudaFree(triangles_dev);

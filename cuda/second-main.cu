@@ -72,25 +72,7 @@ int main(int argc, char* argv[]) {
 
     cudaMemcpy(out, out_dev, Y_DIM * X_DIM * NUM_LAYERS * sizeof(bool), cudaMemcpyDeviceToHost);
 
-    bool* out_reshaped = (bool*)malloc(NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool));
-
-    for (int z = 0; z < NUM_LAYERS; z++) {
-        for (int y = Y_DIM-1; y >= 0; y--) {
-            for (int x = 0; x < X_DIM; x++) {
-                // if (out[y][x][z]) std::cout << "XX";
-                // else std::cout << "  ";
-
-                // out_reshaped[z][y][x] = out[y][x][z];
-                out_reshaped[z * X_DIM * Y_DIM + y * X_DIM + x] =
-                    out[y * X_DIM * NUM_LAYERS + x * NUM_LAYERS + z]; 
-            }
-            // std::cout << std::endl;
-        }
-        // std::cout << std::endl << std::endl;
-    }
-
     free(out);
-    free(out_reshaped);
     cudaFree(large_tri_dev);
     cudaFree(small_tri_dev);
     cudaFree(intersections_large);

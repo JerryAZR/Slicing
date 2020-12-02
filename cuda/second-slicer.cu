@@ -81,7 +81,7 @@ void smallTriIntersection(triangle* tri_small, double* zMins,
 
     // Use local array. Mapped to registers if NUM_LAYERS is small
     char out_local[NUM_LAYERS] = {0};
-    char* out_ptr = (char*)(out + idx * NUM_LAYERS);
+    char* out_ptr = (char*)(out + idx);
     layer_t curr_layer = 0;
     layer_t* intersections_large_local = intersections_large + idx * NUM_LAYERS;
     size_t trunk_length_local = trunk_length[idx];
@@ -140,7 +140,11 @@ void smallTriIntersection(triangle* tri_small, double* zMins,
     while (curr_layer < NUM_LAYERS) {
         toNextLayer(intersections_large_local, trunk_length_local, curr_layer, isInside, out_local);
     }
-    thrust::copy(thrust::device, &out_local[0], &out_local[0] + NUM_LAYERS, out_ptr);
+    // thrust::copy(thrust::device, &out_local[0], &out_local[0] + NUM_LAYERS, out_ptr);
+
+    for (size_t i = 0; i < NUM_LAYERS; i++) {
+        out_ptr[i*X_DIM*Y_DIM] = out_local[i];
+    }
 }
 
 /**
