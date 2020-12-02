@@ -7,7 +7,7 @@
 
 #define LOG_THREADS 8
 #define THREADS_PER_BLOCK (1 << LOG_THREADS)
-#define MAX_TRUNK_SIZE	24
+#define MAX_TRUNK_SIZE	16
 
 // in mm
 #define LOG_X 8
@@ -55,4 +55,5 @@ __device__ void getOutarray(int x, int y, triangle* triangles, size_t num_triang
 __global__ void largeTriIntersection(triangle* tri_large, size_t num_large, layer_t* intersections, size_t* trunk_length);
 __global__ void smallTriIntersection(triangle* tri_small, double* zMins, 
     size_t num_small, layer_t* intersections_large, size_t* trunk_length, bool* out);
+__global__ void layerExtraction(bool* out);
 #endif

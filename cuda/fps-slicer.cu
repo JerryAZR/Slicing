@@ -44,7 +44,7 @@ void fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections,
 
     bool notInRect = (x_pos < x_min) || (x_pos > x_max) || (y_pos < y_min) || (y_pos > y_max);
 
-    layer_t* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
+    layer_t* layers = all_intersections + y_idx * X_DIM * MAX_TRUNK_SIZE + x_idx * MAX_TRUNK_SIZE;
     int* lock = locks + y_idx * X_DIM + x_idx;
     size_t* length = trunk_length + y_idx * X_DIM + x_idx;
     // if current pixel is not in the rectangle defined by x_min/max and y_min/max,
@@ -75,7 +75,7 @@ void fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections,
      size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
      if (idx >= X_DIM * Y_DIM) return;
      size_t length = trunk_length[idx];
-     layer_t* curr_trunk = all_intersections + (idx * NUM_LAYERS);
+     layer_t* curr_trunk = all_intersections + (idx * MAX_TRUNK_SIZE);
      thrust::sort(thrust::device, curr_trunk, curr_trunk + length);
  }
  
@@ -97,7 +97,7 @@ void fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections,
      int x_idx = (idx - (z_idx * X_DIM * Y_DIM)) & (X_DIM - 1);
  
      size_t length = trunk_length[y_idx * X_DIM + x_idx];
-     layer_t* intersection_trunk = sorted_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
+     layer_t* intersection_trunk = sorted_intersections + y_idx * X_DIM * MAX_TRUNK_SIZE + x_idx * MAX_TRUNK_SIZE;
      out[idx] = isInside(z_idx, intersection_trunk, length);
  }
 
