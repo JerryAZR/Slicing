@@ -38,6 +38,6 @@ __host__ void read_stl(string fname, vector<triangle>&v);
 __host__ void preprocess_stl(string fname, vector<triangle>&small_tri, vector<triangle>&large_tri, vector<double>&zmins);
 
 typedef double copy_unit_t;
-const int unit_per_tri {sizeof(triangle)/sizeof(copy_unit_t)};
+#define unit_per_tri (sizeof(triangle)/sizeof(copy_unit_t))
 
 #endif

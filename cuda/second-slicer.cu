@@ -103,6 +103,7 @@ void smallTriIntersection(triangle* tri_small, double* zMins,
 
         size_t global_offset = i * THREADS_PER_BLOCK * unit_per_tri;
         // copy triangles as an array of doubles
+        #pragma unroll
         for (int d = 0; d < unit_per_tri; d++) {
             size_t local_offset = d * THREADS_PER_BLOCK;
             shared_tri_as_double[threadIdx.x + local_offset] = global_tri_as_double[threadIdx.x + local_offset + global_offset];
