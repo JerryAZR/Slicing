@@ -12,7 +12,7 @@ __device__ __forceinline__ void toNextLayer(layer_t* intersections_large_local,
 __device__ __forceinline__ double min3(double a, double b, double c);
 __device__ __forceinline__ double max3(double a, double b, double c);
 
-__global__ 
+__global__
 void largeTriIntersection(triangle* tri_large, size_t num_large, layer_t* intersections, size_t* trunk_length) {
     size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
     int x_idx = idx & (X_DIM-1);
@@ -54,7 +54,7 @@ void largeTriIntersection(triangle* tri_large, size_t num_large, layer_t* inters
             layers = intersections + idx * NUM_LAYERS + length; // update pointer value
         }
     }
-    
+
     if (y_idx >= Y_DIM) return;
     layers = intersections + idx * NUM_LAYERS; // reset to beginning
 
@@ -62,7 +62,7 @@ void largeTriIntersection(triangle* tri_large, size_t num_large, layer_t* inters
     trunk_length[idx] = length;
 }
 
-__global__ 
+__global__
 void smallTriIntersection(triangle* tri_small, double* zMins, 
     size_t num_small, layer_t* intersections_large, size_t* trunk_length, bool* out) {
 
@@ -88,14 +88,29 @@ void smallTriIntersection(triangle* tri_small, double* zMins,
     // This flag only applies to pixels that are not intersections.
     bool isInside = false;
 
+    // Since triangles are big (72B each), cast to smaller datatypes for better mem  coalescing
+    copy_unit_t* shared_tri_as_double = (copy_unit_t*) tri_base;
+    copy_unit_t* global_tri_as_double = (copy_unit_t*) tri_small;
+
     size_t num_iters = num_small / THREADS_PER_BLOCK;
 
     double y_pos = y * RESOLUTION;
     // double x_pos = x * RESOLUTION;
 
     for (size_t i = 0; i < num_iters; i++) {
-        triangle t = tri_small[threadIdx.x + (i * THREADS_PER_BLOCK)];
-        tri_base[threadIdx.x] = t;
+        //triangle t = tri_small[threadIdx.x + (i * THREADS_PER_BLOCK)];
+        //tri_base[threadIdx.x] = t;
+
+        size_t global_offset = i * THREADS_PER_BLOCK * unit_per_tri;
+        // copy triangles as an array of doubles
+        #pragma unroll
+        for (int d = 0; d < unit_per_tri; d++) {
+            size_t local_offset = d * THREADS_PER_BLOCK;
+            shared_tri_as_double[threadIdx.x + local_offset] = global_tri_as_double[threadIdx.x + local_offset + global_offset];
+        }
+        __syncthreads();
+        triangle t = tri_base[threadIdx.x];
+
         zMins_base[threadIdx.x] = zMins[threadIdx.x + (i * THREADS_PER_BLOCK)];
         double yMin = min3(t.p1.y, t.p2.y, t.p3.y);
         double yMax = max3(t.p1.y, t.p2.y, t.p3.y);
@@ -121,6 +136,14 @@ void smallTriIntersection(triangle* tri_small, double* zMins,
     if (threadIdx.x < remaining) {
         triangle t = tri_small[threadIdx.x + (num_iters * THREADS_PER_BLOCK)];
         tri_base[threadIdx.x] = t;
+        //size_t global_offset = num_iters * THREADS_PER_BLOCK * unit_per_tri;
+        //for (int d = 0; d < unit_per_tri; d++) {
+        //    size_t local_offset = d * THREADS_PER_BLOCK;
+        //    shared_tri_as_double[threadIdx.x + local_offset] = global_tri_as_double[threadIdx.x + local_offset + global_offset];
+        //}
+        //__syncthreads();
+        //triangle t = tri_base[threadIdx.x];
+
         zMins_base[threadIdx.x] = zMins[threadIdx.x + (num_iters * THREADS_PER_BLOCK)];
         double yMin = min3(t.p1.y, t.p2.y, t.p3.y);
         double yMax = max3(t.p1.y, t.p2.y, t.p3.y);
