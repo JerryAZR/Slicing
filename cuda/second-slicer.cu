@@ -9,6 +9,7 @@
 __device__ __forceinline__ void toNextLayer(layer_t* intersections_large_local, 
     size_t trunk_length_local, layer_t & curr_layer, bool & isInside, char* out_local);
 
+__device__ __forceinline__ void triangleCopy(void* src, void* dest, int id);
 __device__ __forceinline__ double min3(double a, double b, double c);
 __device__ __forceinline__ double max3(double a, double b, double c);
 
@@ -23,6 +24,9 @@ void largeTriIntersection(triangle* tri_large, size_t num_large, layer_t* inters
     // Copy triangles to shared memory
     // Each block has a shared memory storing some triangles.
     __shared__ triangle tri_base[THREADS_PER_BLOCK];
+    __shared__ layer_t layers_shared[THREADS_PER_BLOCK][MAX_TRUNK_SIZE];
+    __shared__ bool yNotInside[THREADS_PER_BLOCK];
+
     triangle* triangles = (triangle*) tri_base;
 
     size_t num_iters = num_large / THREADS_PER_BLOCK;
@@ -89,8 +93,8 @@ void smallTriIntersection(triangle* tri_small, double* zMins,
     bool isInside = false;
 
     // Since triangles are big (72B each), cast to smaller datatypes for better mem  coalescing
-    copy_unit_t* shared_tri_as_double = (copy_unit_t*) tri_base;
-    copy_unit_t* global_tri_as_double = (copy_unit_t*) tri_small;
+    // copy_unit_t* shared_tri_as_double = (copy_unit_t*) tri_base;
+    // copy_unit_t* global_tri_as_double = (copy_unit_t*) tri_small;
 
     size_t num_iters = num_small / THREADS_PER_BLOCK;
 
@@ -101,13 +105,14 @@ void smallTriIntersection(triangle* tri_small, double* zMins,
         //triangle t = tri_small[threadIdx.x + (i * THREADS_PER_BLOCK)];
         //tri_base[threadIdx.x] = t;
 
-        size_t global_offset = i * THREADS_PER_BLOCK * unit_per_tri;
+        size_t global_offset = i * THREADS_PER_BLOCK;// * unit_per_tri;
         // copy triangles as an array of doubles
-        #pragma unroll
-        for (int d = 0; d < unit_per_tri; d++) {
-            size_t local_offset = d * THREADS_PER_BLOCK;
-            shared_tri_as_double[threadIdx.x + local_offset] = global_tri_as_double[threadIdx.x + local_offset + global_offset];
-        }
+        // #pragma unroll
+        // for (int d = 0; d < unit_per_tri; d++) {
+        //     size_t local_offset = d * THREADS_PER_BLOCK;
+        //     shared_tri_as_double[threadIdx.x + local_offset] = global_tri_as_double[threadIdx.x + local_offset + global_offset];
+        // }
+        triangleCopy(tri_small + global_offset, tri_base, threadIdx.x);
         __syncthreads();
         triangle t = tri_base[threadIdx.x];
 
@@ -221,6 +226,20 @@ int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles
         }
     }
     return idx;
+}
+
+// Copy (THREADS_PER_BLOCK) triangles from src to dest
+// Achieves 100% memory efficiency
+__device__ __forceinline__
+void triangleCopy(void* src, void* dest, int id) {
+    copy_unit_t* src_ptr = (copy_unit_t*) src;
+    copy_unit_t* dest_ptr = (copy_unit_t*) dest;
+
+    #pragma unroll
+    for (int d = 0; d < unit_per_tri; d++) {
+        size_t offset = d * THREADS_PER_BLOCK;
+        dest_ptr[id + offset] = src_ptr[id + offset];
+    }
 }
 
 __device__ __forceinline__
