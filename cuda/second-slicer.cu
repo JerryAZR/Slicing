@@ -31,16 +31,25 @@ void largeTriIntersection(triangle* tri_large, size_t num_large, layer_t* inters
 
     size_t num_iters = num_large / THREADS_PER_BLOCK;
     int length = 0;
-
+    double y_pos = y * RESOLUTION;
     layer_t* layers = intersections + idx * NUM_LAYERS;
 
     for (size_t i = 0; i < num_iters; i++) {
         triangles[threadIdx.x] = tri_large[threadIdx.x + (i * THREADS_PER_BLOCK)];
         // Wait for other threads to complete;
         __syncthreads();
+        triangle t = triangles[threadIdx.x];
+        double yMin = min3(t.p1.y, t.p2.y, t.p3.y);
+        double yMax = max3(t.p1.y, t.p2.y, t.p3.y);
+        yNotInside[threadIdx.x] = (y_pos < yMin) || (y_pos > yMax);
         if (y_idx < Y_DIM) {
-            length += getIntersectionTrunk(x, y, triangles, THREADS_PER_BLOCK, layers);
-            layers = intersections + idx * NUM_LAYERS + length; // update pointer value
+            for (size_t tri_idx = 0; tri_idx < THREADS_PER_BLOCK; tri_idx++) {
+                layer_t curr_intersection = yNotInside[tri_idx] ? NONE : pixelRayIntersection(tri_base[tri_idx], x, y);
+                if (curr_intersection >= 0 && curr_intersection < NUM_LAYERS) {
+                    layers[length] = curr_intersection;
+                    length++;
+                }
+            }
         }
         __syncthreads();
     }
@@ -49,18 +58,26 @@ void largeTriIntersection(triangle* tri_large, size_t num_large, layer_t* inters
     // Copy the remaining triangles to shared memory
     if (threadIdx.x < remaining) {
         triangles[threadIdx.x] = tri_large[threadIdx.x + (num_iters * THREADS_PER_BLOCK)];
+        triangle t = triangles[threadIdx.x];
+        double yMin = min3(t.p1.y, t.p2.y, t.p3.y);
+        double yMax = max3(t.p1.y, t.p2.y, t.p3.y);
+        yNotInside[threadIdx.x] = (y_pos < yMin) || (y_pos > yMax);
     }
 
     __syncthreads();
     if (remaining) {
         if (y_idx < Y_DIM) {
-            length += getIntersectionTrunk(x, y, triangles, remaining, layers);
-            layers = intersections + idx * NUM_LAYERS + length; // update pointer value
+            for (size_t tri_idx = 0; tri_idx < remaining; tri_idx++) {
+                layer_t curr_intersection = yNotInside[tri_idx] ? NONE : pixelRayIntersection(tri_base[tri_idx], x, y);
+                if (curr_intersection >= 0 && curr_intersection < NUM_LAYERS) {
+                    layers[length] = curr_intersection;
+                    length++;
+                }
+            }
         }
     }
 
     if (y_idx >= Y_DIM) return;
-    layers = intersections + idx * NUM_LAYERS; // reset to beginning
 
     thrust::sort(thrust::device, &layers[0], &layers[length]);
     trunk_length[idx] = length;
