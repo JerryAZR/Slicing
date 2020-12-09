@@ -32,7 +32,7 @@ void largeTriIntersection(triangle* tri_large, size_t num_large, layer_t* inters
     size_t num_iters = num_large / THREADS_PER_BLOCK;
     int length = 0;
     double y_pos = y * RESOLUTION;
-    layer_t* layers = intersections + idx * MAX_TRUNK_SIZE;
+    layer_t* layers = &layers_shared[threadIdx.x][0];
 
     for (size_t i = 0; i < num_iters; i++) {
         triangleCopy(tri_large + i*THREADS_PER_BLOCK, triangles, threadIdx.x);
@@ -81,6 +81,11 @@ void largeTriIntersection(triangle* tri_large, size_t num_large, layer_t* inters
 
     thrust::sort(thrust::device, &layers[0], &layers[length]);
     trunk_length[idx] = length;
+    layer_t* intersections_src = (layer_t*) layers_shared + threadIdx.x;
+    layer_t* intersections_dest = (layer_t*) intersections + blockIdx.x * blockDim.x * MAX_TRUNK_SIZE + threadIdx.x;
+    for (int i = 0; i < MAX_TRUNK_SIZE; i++) {
+        intersections_dest[i*THREADS_PER_BLOCK] = intersections_src[i*THREADS_PER_BLOCK];
+    }
 }
 
 __global__
