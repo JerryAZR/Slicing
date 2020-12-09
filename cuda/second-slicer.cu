@@ -32,10 +32,10 @@ void largeTriIntersection(triangle* tri_large, size_t num_large, layer_t* inters
     size_t num_iters = num_large / THREADS_PER_BLOCK;
     int length = 0;
     double y_pos = y * RESOLUTION;
-    layer_t* layers = intersections + idx * NUM_LAYERS;
+    layer_t* layers = intersections + idx * MAX_TRUNK_SIZE;
 
     for (size_t i = 0; i < num_iters; i++) {
-        triangles[threadIdx.x] = tri_large[threadIdx.x + (i * THREADS_PER_BLOCK)];
+        triangleCopy(tri_large + i*THREADS_PER_BLOCK, triangles, threadIdx.x);
         // Wait for other threads to complete;
         __syncthreads();
         triangle t = triangles[threadIdx.x];
@@ -104,7 +104,7 @@ void smallTriIntersection(triangle* tri_small, double* zMins,
     char out_local[NUM_LAYERS] = {0};
     char* out_ptr = (char*)(out + idx);
     layer_t curr_layer = 0;
-    layer_t* intersections_large_local = intersections_large + idx * NUM_LAYERS;
+    layer_t* intersections_large_local = intersections_large + idx * MAX_TRUNK_SIZE;
     size_t trunk_length_local = trunk_length[idx];
     // This flag only applies to pixels that are not intersections.
     bool isInside = false;
