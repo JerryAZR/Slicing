@@ -12,9 +12,11 @@ long checkOutput(triangle* triangles_dev, size_t num_triangles, bool* in) {
     long size = NUM_LAYERS * Y_DIM * X_DIM;
     long diff = 0;
     long inside = 0;
+    long real = 0;
     std::cout << "comparing results" << std::endl;
     for (int i = 0; i < size; i++) {
         inside += expected[i];
+        real += in[i];
         diff += (expected[i] != in[i]);
     }
 
@@ -34,6 +36,7 @@ long checkOutput(triangle* triangles_dev, size_t num_triangles, bool* in) {
 
     free(expected);
     std::cout << inside << " pixels are inside the model." << std::endl;
+    std::cout << real << " pixels are inside the actual output model." << std::endl;
     std::cout << diff << " pixels are different in the expected and actual output." << std::endl;
     return diff;
 }
@@ -46,15 +49,12 @@ void goldenModel(triangle* triangles_dev, size_t num_triangles, bool* out) {
     cudaMalloc(&all_dev, size);
     layer_t* all_intersections;
     cudaMalloc(&all_intersections, Y_DIM * X_DIM * NUM_LAYERS * sizeof(layer_t));
-    size_t* trunk_length;
+    unsigned* trunk_length;
     cudaMalloc(&trunk_length, Y_DIM * X_DIM * sizeof(size_t));
     cudaMemset(trunk_length, 0, Y_DIM * X_DIM * sizeof(size_t));
-    int* locks;
-    cudaMalloc(&locks, Y_DIM * X_DIM * sizeof(int));
-    cudaMemset(locks, 0, Y_DIM * X_DIM * sizeof(int));
 
     blocksPerGrid = (num_triangles * Y_DIM * X_DIM + threadsPerBlock - 1) / threadsPerBlock;
-    _fps1<<<blocksPerGrid, threadsPerBlock>>>(&triangles_dev[0], num_triangles, all_intersections, trunk_length, locks);
+    _fps1<<<blocksPerGrid, threadsPerBlock>>>(&triangles_dev[0], num_triangles, all_intersections, trunk_length);
     cudaDeviceSynchronize();
     blocksPerGrid = (X_DIM * Y_DIM + threadsPerBlock - 1) / threadsPerBlock;
     _fps2<<<blocksPerGrid, threadsPerBlock>>>(all_intersections, trunk_length);
@@ -65,7 +65,6 @@ void goldenModel(triangle* triangles_dev, size_t num_triangles, bool* out) {
 
     cudaFree(all_intersections);
     cudaFree(trunk_length);
-    cudaFree(locks);
 
     cudaMemcpy(out, all_dev, size, cudaMemcpyDeviceToHost);
 
@@ -73,7 +72,7 @@ void goldenModel(triangle* triangles_dev, size_t num_triangles, bool* out) {
 }
 
 __global__
-void _fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections, size_t* trunk_length, int* locks) {
+void _fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections, unsigned* trunk_length) {
     size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
     size_t tri_idx = idx / (X_DIM * Y_DIM);
     // if (tri_idx >= num_triangles) return;
@@ -102,38 +101,34 @@ void _fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections
     bool notInRect = (x_pos < x_min) || (x_pos > x_max) || (y_pos < y_min) || (y_pos > y_max);
 
     layer_t* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
-    int* lock = locks + y_idx * X_DIM + x_idx;
-    size_t* length = trunk_length + y_idx * X_DIM + x_idx;
+    unsigned* length = trunk_length + y_idx * X_DIM + x_idx;
     layer_t intersection = notInRect ? -1 : _pixelRayIntersection(triangles_shared, x, y);
     bool run = (intersection != -1);
-    while (run) {
-        if(atomicCAS(lock, 0, 1) == 0) {
-            layers[length[0]] = intersection;
-            length[0]++;
-            run = false;
-            atomicExch(lock, 0);
-        }
+    unsigned layerArrayIdx;
+    if (run) {
+        layerArrayIdx = atomicAdd(length, 1);
+        layers[layerArrayIdx] = intersection;
     }
 }
 
 __global__
-void _fps2(layer_t* all_intersections, size_t* trunk_length) {
+void _fps2(layer_t* all_intersections, unsigned* trunk_length) {
     size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
     if (idx >= X_DIM * Y_DIM) return;
-    size_t length = trunk_length[idx];
+    unsigned length = trunk_length[idx];
     layer_t* curr_trunk = all_intersections + (idx * NUM_LAYERS);
     thrust::sort(thrust::device, curr_trunk, curr_trunk + length);
 }
 
 __global__
-void _fps3(layer_t* sorted_intersections, size_t* trunk_length, bool* out) {
+void _fps3(layer_t* sorted_intersections, unsigned* trunk_length, bool* out) {
     size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
     int z_idx = idx / (X_DIM * Y_DIM);
     if (z_idx >= NUM_LAYERS) return;
     int y_idx = (idx - (z_idx * X_DIM * Y_DIM)) / X_DIM;
     int x_idx = (idx - (z_idx * X_DIM * Y_DIM)) % X_DIM;
 
-    size_t length = trunk_length[y_idx * X_DIM + x_idx];
+    unsigned length = trunk_length[y_idx * X_DIM + x_idx];
     layer_t* intersection_trunk = sorted_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
     out[idx] = _isInside(z_idx, intersection_trunk, length);
 }
