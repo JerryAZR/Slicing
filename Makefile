@@ -32,6 +32,7 @@ ofps-test: $(OBJDIR)/triangle.o $(OBJDIR)/ofps-slicer.o $(OBJDIR)/golden.o $(OBJ
 	$(CXX) $^ -o $(OUTDIR)/ofps-test
 
 %-main: $(OBJDIR)/triangle.o $(OBJDIR)/%-slicer.o $(OBJDIR)/%-main.o
+	mkdir -p $(OUTDIR)
 	$(CXX) $^ -o $(OUTDIR)/$@
 
 %-test: $(OBJDIR)/triangle.o $(OBJDIR)/%-slicer.o $(OBJDIR)/golden.o $(OBJDIR)/%-test.o
@@ -41,6 +42,7 @@ ofps-test: $(OBJDIR)/triangle.o $(OBJDIR)/ofps-slicer.o $(OBJDIR)/golden.o $(OBJ
 $(OBJDIR)/triangle.o: $(SRCDIR)/triangle.cu $(SRCDIR)/triangle.cuh
 	$(CXX) -c -o $@ $<
 
+.PRECIOUS: $(OBJDIR)/%.o
 $(OBJDIR)/%.o: $(SRCDIR)/%.cu $(DEPS)
 	$(CXX) -c -o $@ $<
 

@@ -52,6 +52,7 @@ if __name__ == '__main__':
         print(dash)
     
     elif args["prof"]:
+        exe += "-main"
         cmd = ["nvprof"]
         if args["--all"]:
             cmd += ["--events", "all", "--metrics", "all"]

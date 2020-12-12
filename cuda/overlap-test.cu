@@ -41,8 +41,10 @@ int main(int argc, char* argv[]) {
     bool* all = (bool*)malloc(NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool));
     bool* all_dev;
     size_t size = NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool);
+    double* zMins;
     cudaMalloc(&all_dev, size);
     cudaMalloc(&triangles_dev, BATCH_SIZE * sizeof(triangle));
+    cudaMalloc(&zMins, BATCH_SIZE * sizeof(double));
 
     size_t num_iters = num_triangles / BATCH_SIZE;
     size_t remaining = num_triangles % BATCH_SIZE;
@@ -57,8 +59,9 @@ int main(int argc, char* argv[]) {
     timer_checkpoint(start);
     std::cout << "Running kernel...                     ";
     for (size_t i = 0; i < num_iters; i++) {
+        GPUsort(triangles_dev, BATCH_SIZE, zMins);
         cudaMemcpy(triangles_dev, triangles_host + i * BATCH_SIZE, BATCH_SIZE * sizeof(triangle), cudaMemcpyHostToDevice);
-        overlapSlicer<<<blocksPerGrid, threadsPerBlock>>>(triangles_dev, nullptr, BATCH_SIZE, all_dev);
+        overlapSlicer<<<blocksPerGrid, threadsPerBlock>>>(triangles_dev, zMins, BATCH_SIZE, all_dev);
         // cudaDeviceSynchronize();
     }
     if (remaining) {

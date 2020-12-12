@@ -115,6 +115,24 @@ void layerExtraction(bool* out, layer_t start) {
     }
 }
 
+__global__
+void getZMin(triangle* tris, size_t size, double* zMins) {
+    size_t i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= size) return;
+    thrust::minimum<double> min;
+    zMins[i] = min(tris[i].p1.z, min(tris[i].p2.z, tris[i].p3.z));
+}
+
+__host__
+void GPUsort(triangle* tris_dev, size_t size, double* zMins) {    
+    int num_blocks = (size + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+
+    getZMin<<<num_blocks, THREADS_PER_BLOCK>>>(tris_dev, size, zMins);
+    cudaDeviceSynchronize();
+
+    thrust::sort_by_key(thrust::device, zMins, zMins + size, tris_dev);
+}
+
 /**
  * pixelRayIntersection: helper function, computes the intersection of given triangle and pixel ray
  * Inputs:
