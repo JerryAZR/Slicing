@@ -42,6 +42,7 @@ void largeTriIntersection(triangle* tri_large, size_t num_large, layer_t* inters
         double yMin = min3(t.p1.y, t.p2.y, t.p3.y);
         double yMax = max3(t.p1.y, t.p2.y, t.p3.y);
         yNotInside[threadIdx.x] = (y_pos < yMin) || (y_pos > yMax);
+        __syncthreads();
         if (y_idx < Y_DIM) {
             for (size_t tri_idx = 0; tri_idx < THREADS_PER_BLOCK; tri_idx++) {
                 layer_t curr_intersection = yNotInside[tri_idx] ? NONE : pixelRayIntersection(tri_base[tri_idx], x, y);
