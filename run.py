@@ -4,15 +4,22 @@
 Usage:
     ./run.py test <exe> [--stl STL]
     ./run.py prof <exe> [--stl STL] [-a | --all] [--txt | --csv]
+    ./run.py nsight <exe> [--stl STL] [-a | --all] [--txt | --csv] [-k KERNEL]
     ./run.py list
     ./run.py -h | --help
 
 Options:
+    test        Run the test binary
+    prof        Run nvprof profiler
+    nsight      Run Nsight profiler
+    list        List all available STL models
     --stl STL   The stl file to be sliced [default: models/bunny.stl]
     -a --all    Proflie all events and metrics
     --txt       Save output to a text file
     --csv       Save output to a csv file
-    -h --help   Show this screen.
+    -k KERNEL   Select which kernel(s) to profile.
+                Use regex to match kernel name(s) [default: ]
+    -h --help   Show this screen
 
 Arguments:
     exe         The implemenation to test or profile. Can be one of (fps|pps|new|second|mfps)
@@ -64,9 +71,34 @@ if __name__ == '__main__':
             outFileName += ".txt"
         cmd += [exe, stl]
 
+        print("Running:\n" + " ".join(cmd))
+
         if args["--csv"] or args["--txt"]:
             with open(outFileName, "w") as outFile:
                 run(cmd, stderr=outFile)
         else:
             run(cmd)
 
+    elif args["nsight"]:
+        exe += "-main"
+        cmd = ["ncu"]
+        if args["-k"]:
+            cmd += ["-k", args["-k"]]
+        outFileName += "-nsight"
+        if args["--all"]:
+            cmd += ["--set", "full"]
+            outFileName += "-full"
+        if args["--csv"]:
+            cmd += ["--csv"]
+            outFileName += ".csv"
+        else:
+            outFileName += ".txt"
+        cmd += [exe, stl]
+
+        print("Running:\n" + " ".join(cmd))
+
+        if args["--csv"] or args["--txt"]:
+            with open(outFileName, "w") as outFile:
+                run(cmd, stderr=outFile)
+        else:
+            run(cmd)
