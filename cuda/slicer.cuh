@@ -7,7 +7,7 @@
 
 #define LOG_THREADS 8
 #define THREADS_PER_BLOCK (1 << LOG_THREADS)
-#define MAX_TRUNK_SIZE	16
+#define MAX_TRUNK_SIZE	28
 #define BATCH_SIZE  (4 * THREADS_PER_BLOCK)
 
 // in mm
@@ -16,7 +16,7 @@
 #define X_LEN (1 << LOG_X)
 #define Y_LEN (1 << LOG_Y)
 #define HEIGHT 100
-#define RESOLUTION 1 // Must be (negative) power of 2
+#define RESOLUTION 0.5 // Must be (negative) power of 2
 
 // in pixels
 #define NUM_LAYERS ((size_t)(HEIGHT / RESOLUTION))
@@ -53,9 +53,7 @@ __device__ int pixelRayIntersectionNew(triangle t, int x, int y);
 __device__ bool getIntersect(int x, int y, triangle* triangles, size_t num_triangles, size_t layer, int* index);
 __device__ void getOutarray(int x, int y, triangle* triangles, size_t num_triangles, size_t layer, size_t outIdx, size_t flagIdx, bool* out, bool* flagArray, int* index);
 
-__global__ void largeTriIntersection(triangle* tri_large, size_t num_large, layer_t* intersections, size_t* trunk_length);
-__global__ void smallTriIntersection(triangle* tri_small, double* zMins, 
-    size_t num_small, layer_t* intersections_large, size_t* trunk_length, bool* out);
+__global__ void smallTriIntersection(triangle* tri_small, double* zMins, size_t num_small, bool* out);
 
 __global__ void overlapSlicer(triangle* tri_small, double* zMins, size_t num_small, bool* out);
 __global__ void layerExtraction(bool* out, layer_t start);

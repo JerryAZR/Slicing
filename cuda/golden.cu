@@ -53,20 +53,31 @@ void goldenModel(triangle* triangles_dev, size_t num_triangles, bool* out) {
     cudaMalloc(&trunk_length, Y_DIM * X_DIM * sizeof(size_t));
     cudaMemset(trunk_length, 0, Y_DIM * X_DIM * sizeof(size_t));
 
+    cudaError_t err = cudaGetLastError();  // add
+    if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
+
     blocksPerGrid = (num_triangles * Y_DIM * X_DIM + threadsPerBlock - 1) / threadsPerBlock;
     _fps1<<<blocksPerGrid, threadsPerBlock>>>(&triangles_dev[0], num_triangles, all_intersections, trunk_length);
     cudaDeviceSynchronize();
+    err = cudaGetLastError();  // add
+    if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
     blocksPerGrid = (X_DIM * Y_DIM + threadsPerBlock - 1) / threadsPerBlock;
     _fps2<<<blocksPerGrid, threadsPerBlock>>>(all_intersections, trunk_length);
     cudaDeviceSynchronize();
+    err = cudaGetLastError();  // add
+    if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
     blocksPerGrid = (X_DIM * Y_DIM * NUM_LAYERS + threadsPerBlock - 1) / threadsPerBlock;
     _fps3<<<blocksPerGrid, threadsPerBlock>>>(all_intersections, trunk_length, all_dev);
     cudaDeviceSynchronize();
+    err = cudaGetLastError();  // add
+    if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
 
     cudaFree(all_intersections);
     cudaFree(trunk_length);
 
     cudaMemcpy(out, all_dev, size, cudaMemcpyDeviceToHost);
+    err = cudaGetLastError();  // add
+    if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
 
     cudaFree(all_dev);
 }
