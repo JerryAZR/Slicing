@@ -11,7 +11,7 @@ To build, type:
 | pps       | Pixelwise parallel slicing                           |
 | fps       | Fully parallel slicing                               |
 | new       | Map-based triangle sorting and slicing               |
-| second    | Processing large and small triangles separately      |
+| second    | Processing large and small triangles separately ([details](./docs/doc.txt))     |
 | mfps      | Modified fps. Each thread handles multiple triangles |
 
 The output binary will be in [out](./out/).

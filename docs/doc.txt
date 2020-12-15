@@ -1,0 +1,56 @@
+New Algo:
+1. Read triangles from STL file
+2. Get the minimum z value of each triangle
+3. Sort the triangles w.r.t the z values obtained in step 2
+4. Pixelwise slicing & layer extraction:
+    4.1. Load some triangles to shared memory. 
+        Also checks if that triangle intersects with the current row.
+        All pixels on a block have the same y value, so this only needs to be checked by one thread.
+    4.2. Iterate over all triangles loaded in step 4.1. 
+        Check if the triangle intersects with the current pixel ray.
+        If it does, Add 1 to the corresponding cell in the output array.
+    4.3. Compute the output value (inside/outside the model) for the layers that are below the current triangle.
+    4.4. Go to 4.1 if there are triangles remaining.
+    4.5. Process all the remaining layers using the same method as 4.3
+
+Pseudo Code for step 4:
+
+current_layer = 0;
+inside_model = false;
+num_remaining_triangles = num_all_triangles;
+while (num_remaining_triangles > 0) {
+    // 4.1
+    shared_triangle_array[thread_id] = global_triangle_array[thread_id + offset];
+    min_y = minimum y value of shared_triangle_array[thread_id];
+    max_y = maximum y value of shared_triangle_array[thread_id];
+    shared_intersection_check[thread_id] = (current_y inside the range [min_y:max_y]);
+
+    Wait for all other threads on the same block to complete;
+
+    // 4.2
+    for tri in shared_triangle_array {
+        if not shared_intersection_check[tri], start next iteration;
+        intersection_layer = compute_intersection(tri, current_x, current_y);
+        if intersects, output_array[(current_x, current_y, intersection_layer)]++;
+    }
+
+    // 4.3
+    while (current_layer < minimum_z_of_last_triangle) {
+        // If there's at least 1 intersection in the current pixel, 
+        // mark the current pixel as inside the layer.
+        // Otherwise, check the flag inside_model to see if we are already inside model:
+        output_array[(current_x, current_y, current_layer)] = 
+            (output_array[(current_x, current_y, current_layer)] > 0) || inside_model;
+        // Update the flag if there are odd number of intersections in the current layer
+        inside_model = inside_model ^(xor) (output_array[(current_x, current_y, current_layer)] is odd);
+        // Go to next layer
+        current_layer++;
+    }
+
+    num_remaining_triangles = num_remaining_triangles - (size of shared_triangle_array);
+}
+
+// 4.5
+while (current_layer < max_height) {
+    same code as 4.3
+}
