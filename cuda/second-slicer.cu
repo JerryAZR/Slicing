@@ -56,7 +56,8 @@ void smallTriIntersection(triangle* tri_small, double* zMins, size_t num_small, 
         __syncthreads();
         if (y_idx < Y_DIM) {
             for (size_t tri_idx = 0; tri_idx < THREADS_PER_BLOCK; tri_idx++) {
-                layer_t curr_intersection = yNotInside[tri_idx] ? NONE : pixelRayIntersection(tri_base[tri_idx], x, y);
+                if (yNotInside[tri_idx]) continue;
+                layer_t curr_intersection = pixelRayIntersection(tri_base[tri_idx], x, y);
                 if (curr_intersection >= 0 && curr_intersection < NUM_LAYERS) out_local[curr_intersection]++;
             }
             // Move to the next triangle-layer pair that intersects
@@ -116,9 +117,15 @@ layer_t pixelRayIntersection(triangle t, int x, int y) {
     We want to find some a, b such that AS = a*AB + b*AC
     If a >= 0, b >= 0, and a+b <= 1, S is a valid intersection.
     */
+    double x_max = max3(t.p1.x, t.p2.x, t.p3.x);
+    double x_min = min3(t.p1.x, t.p2.x, t.p3.x);
+    double x_pos = x * RESOLUTION;
+    double y_pos = y * RESOLUTION;
 
-    double x_d = x * RESOLUTION - t.p1.x;
-    double y_d = y * RESOLUTION - t.p1.y;
+    if (x_pos < x_min || x_pos > x_max) return NONE;
+
+    double x_d = x_pos - t.p1.x;
+    double y_d = y_pos - t.p1.y;
 
     double x1 = t.p2.x - t.p1.x;
     double y1 = t.p2.y - t.p1.y;
