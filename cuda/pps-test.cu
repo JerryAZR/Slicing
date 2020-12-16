@@ -45,7 +45,10 @@ int main(int argc, char* argv[]) {
     cudaMemcpy(triangles_dev, triangles.data(), num_triangles * sizeof(triangle), cudaMemcpyHostToDevice);
 
     cudaError_t err = cudaGetLastError();  // add
-    if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
+    if (err != cudaSuccess) {
+        std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
+        return 1;
+    }
 
     int threadsPerBlock = THREADS_PER_BLOCK;
     int blocksPerGrid;
@@ -58,12 +61,18 @@ int main(int argc, char* argv[]) {
     timer_checkpoint(start);
     std::cout << "Copying memory contents...            ";
     err = cudaGetLastError();  // add
-    if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
+    if (err != cudaSuccess) {
+        std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
+        return 1;
+    }
 
     // Copy result from device memory to host memory
     cudaMemcpy(all, all_dev, size, cudaMemcpyDeviceToHost);
     err = cudaGetLastError();  // add
-    if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
+    if (err != cudaSuccess) {
+        std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
+        return 1;
+    }
     timer_checkpoint(start);
     checkOutput(triangles_dev, num_triangles, all);
     cudaFree(all_dev);

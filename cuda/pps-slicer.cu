@@ -1,6 +1,7 @@
 #include "slicer.cuh"
 #include <thrust/sort.h>
 #include <thrust/functional.h>
+#include <stdio.h>
 
 __global__
 void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
@@ -18,15 +19,20 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
     triangle* triangles = (triangle*) tri_base;
     size_t num_iters = num_triangles / THREADS_PER_BLOCK;
     int length = 0;
-    __shared__ layer_t layers_shared[THREADS_PER_BLOCK][MAX_TRUNK_SIZE];
+    __shared__ layer_t layers_shared[THREADS_PER_BLOCK][MAX_TRUNK_SIZE+1];
     layer_t* layers = &layers_shared[threadIdx.x][0];
     for (size_t i = 0; i < num_iters; i++) {
         triangles[threadIdx.x] = triangles_global[threadIdx.x + (i * THREADS_PER_BLOCK)];
         // Wait for other threads to complete;
         __syncthreads();
         if (y_idx < Y_DIM) {
-            length += getIntersectionTrunk(x, y, triangles, THREADS_PER_BLOCK, layers);
-            layers = &layers_shared[threadIdx.x][length]; // update pointer value
+            for (size_t tri_idx = 0; tri_idx < THREADS_PER_BLOCK; tri_idx++) {
+                layer_t intersection = pixelRayIntersection(triangles[tri_idx], x, y);
+                if (intersection != NONE) {
+                    layers[length] = intersection;
+                    length++;
+                }
+            }
         }
         __syncthreads();
     }
@@ -35,18 +41,23 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
         triangles[threadIdx.x] = triangles_global[threadIdx.x + (num_iters * THREADS_PER_BLOCK)];
     }
     __syncthreads();
-    if (remaining) {
-        if (y_idx < Y_DIM) {
-            length += getIntersectionTrunk(x, y, triangles, remaining, layers);
-            layers = &layers_shared[threadIdx.x][length]; // update pointer value
+    if (remaining && y_idx < Y_DIM) {
+        for (size_t tri_idx = 0; tri_idx < remaining; tri_idx++) {
+            layer_t intersection = pixelRayIntersection(triangles[tri_idx], x, y);
+            if (intersection != NONE) {
+                layers[length] = intersection;
+                length++;
+            }
         }
     }
 
     if (y_idx >= Y_DIM) return;
-    layers = &layers_shared[threadIdx.x][0]; // reset to beginning
 
     thrust::sort(thrust::device, &layers[0], &layers[length]);
     layers[length] = NUM_LAYERS;
+    if (length > MAX_TRUNK_SIZE) 
+        printf("Error: Too many intersections.\n
+                Please increase MAX_TRUNK_SIZE in slicer.cuh and recompile.\n");
 
     bool flag = false;
     int layerIdx = 0;
@@ -103,21 +114,3 @@ layer_t pixelRayIntersection(triangle t, int x, int y) {
     layer_t layer = inside ? (intersection / RESOLUTION) : NONE;
     return layer;
 }
-
-/**
- * get the array of intersections of a given pixel ray
- */
-__device__
-int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles, layer_t* layers) {
-    int idx = 0;
-
-    for (int i = 0; i < num_triangles; i++) {
-        layer_t layer = pixelRayIntersection(triangles[i], x, y);
-        if (layer != NONE) {
-            layers[idx] = layer;
-            idx++;
-        }
-    }
-    return idx;
-}
-
