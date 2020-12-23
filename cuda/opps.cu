@@ -10,11 +10,16 @@
 typedef std::chrono::time_point<std::chrono::high_resolution_clock> chrono_t;
 
 void timer_checkpoint(chrono_t & checkpoint) {
+#ifdef TEST
     chrono_t end = NOW;
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - checkpoint);
     std::cout << duration.count() << "ms" << std::endl;
     checkpoint = end;
+#else
+    std::cout << std::endl;
+#endif
 }
+ 
 
 int main(int argc, char* argv[]) {
     std::string stl_file_name;
@@ -74,10 +79,8 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     timer_checkpoint(start);
+#ifdef TEST
     checkOutput(triangles_dev, num_triangles, all);
-    cudaFree(all_dev);
-    cudaFree(triangles_dev);
-
     // for (int z = 0; z < NUM_LAYERS; z++) {
     //     for (int y = Y_DIM; y > 0; y--) {
     //         for (int x = 0; x < X_DIM; x++) {
@@ -88,7 +91,9 @@ int main(int argc, char* argv[]) {
     //     }
     //     std::cout << std::endl << std::endl;
     // }
-
+#endif
+    cudaFree(all_dev);
+    cudaFree(triangles_dev);
     free(all);
 
     return 0;

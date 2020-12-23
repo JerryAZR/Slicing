@@ -1,52 +1,71 @@
 #include "slicer.cuh"
 #include <thrust/sort.h>
 #include <thrust/functional.h>
-#include <stdio.h>
+
+__device__ __forceinline__ void triangleCopy(void* src, void* dest, int id);
+__device__ __forceinline__ double min3(double a, double b, double c);
+__device__ __forceinline__ double max3(double a, double b, double c);
 
 __global__
 void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
-    int idx = blockDim.x * blockIdx.x + threadIdx.x;
-    // printf("starting thread %d\n", idx);
+    size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
+    int x_idx = idx & (X_DIM-1);
     int y_idx = idx / X_DIM;
-    // if (y >= Y_DIM) return;
-    int x_idx = idx % X_DIM;
-    int x = x_idx - (X_DIM / 2);
-    int y = y_idx - (Y_DIM / 2);
+    int x = x_idx - (X_DIM >> 1);
+    int y = y_idx - (Y_DIM >> 1);
 
     // Copy triangles to shared memory
     // Each block has a shared memory storing some triangles.
     __shared__ triangle tri_base[THREADS_PER_BLOCK];
+    __shared__ layer_t layers_shared[THREADS_PER_BLOCK][MAX_TRUNK_SIZE];
+    __shared__ bool yNotInside[THREADS_PER_BLOCK];
+
     triangle* triangles = (triangle*) tri_base;
+
     size_t num_iters = num_triangles / THREADS_PER_BLOCK;
     int length = 0;
-    __shared__ layer_t layers_shared[THREADS_PER_BLOCK][MAX_TRUNK_SIZE+1];
+    double y_pos = y * RESOLUTION;
     layer_t* layers = &layers_shared[threadIdx.x][0];
+
     for (size_t i = 0; i < num_iters; i++) {
-        triangles[threadIdx.x] = triangles_global[threadIdx.x + (i * THREADS_PER_BLOCK)];
-        // Wait for other threads to complete;
+        triangle t = triangles_global[i*THREADS_PER_BLOCK + threadIdx.x];
+        triangles[threadIdx.x] = t;
+        double yMin = min3(t.p1.y, t.p2.y, t.p3.y);
+        double yMax = max3(t.p1.y, t.p2.y, t.p3.y);
+        yNotInside[threadIdx.x] = (y_pos < yMin) || (y_pos > yMax);
         __syncthreads();
         if (y_idx < Y_DIM) {
             for (size_t tri_idx = 0; tri_idx < THREADS_PER_BLOCK; tri_idx++) {
-                layer_t intersection = pixelRayIntersection(triangles[tri_idx], x, y);
-                if (intersection != NONE) {
-                    layers[length] = intersection;
+                layer_t curr_intersection = yNotInside[tri_idx] ? NONE : pixelRayIntersection(tri_base[tri_idx], x, y);
+                if (curr_intersection >= 0 && curr_intersection < NUM_LAYERS) {
+                    layers[length] = curr_intersection;
                     length++;
                 }
             }
         }
         __syncthreads();
     }
+    __syncthreads();
     size_t remaining = num_triangles - (num_iters * THREADS_PER_BLOCK);
+
+    // Copy the remaining triangles to shared memory
     if (threadIdx.x < remaining) {
         triangles[threadIdx.x] = triangles_global[threadIdx.x + (num_iters * THREADS_PER_BLOCK)];
+        triangle t = triangles[threadIdx.x];
+        double yMin = min3(t.p1.y, t.p2.y, t.p3.y);
+        double yMax = max3(t.p1.y, t.p2.y, t.p3.y);
+        yNotInside[threadIdx.x] = (y_pos < yMin) || (y_pos > yMax);
     }
+
     __syncthreads();
-    if (remaining && y_idx < Y_DIM) {
-        for (size_t tri_idx = 0; tri_idx < remaining; tri_idx++) {
-            layer_t intersection = pixelRayIntersection(triangles[tri_idx], x, y);
-            if (intersection != NONE) {
-                layers[length] = intersection;
-                length++;
+    if (remaining) {
+        if (y_idx < Y_DIM) {
+            for (size_t tri_idx = 0; tri_idx < remaining; tri_idx++) {
+                layer_t curr_intersection = yNotInside[tri_idx] ? NONE : pixelRayIntersection(tri_base[tri_idx], x, y);
+                if (curr_intersection >= 0 && curr_intersection < NUM_LAYERS) {
+                    layers[length] = curr_intersection;
+                    length++;
+                }
             }
         }
     }
@@ -55,9 +74,6 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
 
     thrust::sort(thrust::device, &layers[0], &layers[length]);
     layers[length] = NUM_LAYERS;
-    if (length > MAX_TRUNK_SIZE) 
-        printf("Error: Too many intersections.\n \
-                Please increase MAX_TRUNK_SIZE in slicer.cuh and recompile.\n");
 
     bool flag = false;
     int layerIdx = 0;
@@ -114,3 +130,31 @@ layer_t pixelRayIntersection(triangle t, int x, int y) {
     layer_t layer = inside ? (intersection / RESOLUTION) : NONE;
     return layer;
 }
+
+// Copy (THREADS_PER_BLOCK) triangles from src to dest
+// Achieves 100% memory efficiency
+__device__ __forceinline__
+void triangleCopy(void* src, void* dest, int id) {
+    copy_unit_t* src_ptr = (copy_unit_t*) src;
+    copy_unit_t* dest_ptr = (copy_unit_t*) dest;
+
+    #pragma unroll
+    for (int d = 0; d < unit_per_tri; d++) {
+        size_t offset = d * THREADS_PER_BLOCK;
+        dest_ptr[id + offset] = src_ptr[id + offset];
+    }
+}
+
+__device__ __forceinline__
+double min3(double a, double b, double c) {
+    thrust::minimum<double> min;
+    return min(a, min(b, c));
+}
+
+__device__ __forceinline__
+double max3(double a, double b, double c) {
+    thrust::maximum<double> max;
+    return max(a, max(b, c));
+}
+
+

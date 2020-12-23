@@ -1,21 +1,24 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include "triangle.cuh"
 #include "slicer.cuh"
 #include "golden.cuh"
 #include <vector>
 #include <chrono>
-#include <fstream>
-
 #define NOW (std::chrono::high_resolution_clock::now())
 
 typedef std::chrono::time_point<std::chrono::high_resolution_clock> chrono_t;
 
 void timer_checkpoint(chrono_t & checkpoint) {
+#ifdef TEST
     chrono_t end = NOW;
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - checkpoint);
     std::cout << duration.count() << "ms" << std::endl;
     checkpoint = end;
+#else
+    std::cout << std::endl;
+#endif
 }
 
 int main(int argc, char* argv[]) {
@@ -44,7 +47,6 @@ int main(int argc, char* argv[]) {
     size_t size = NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool);
     cudaMalloc(&all_dev, size);
     cudaMalloc(&triangles_dev, num_triangles * sizeof(triangle));
-    //cudaMemcpy(all_dev, &all[0][0][0], size, cudaMemcpyHostToDevice); // unnecessary
     cudaMemcpy(triangles_dev, triangles.data(), num_triangles * sizeof(triangle), cudaMemcpyHostToDevice);
 
     cudaError_t err = cudaGetLastError();  // add
@@ -54,7 +56,7 @@ int main(int argc, char* argv[]) {
     int blocksPerGrid;
 
     layer_t* all_intersections;
-    cudaMalloc(&all_intersections, Y_DIM * X_DIM * NUM_LAYERS * sizeof(layer_t));
+    cudaMalloc(&all_intersections, Y_DIM * X_DIM * MAX_TRUNK_SIZE * sizeof(layer_t));
     size_t* trunk_length;
     cudaMalloc(&trunk_length, Y_DIM * X_DIM * sizeof(size_t));
     cudaMemset(trunk_length, 0, Y_DIM * X_DIM * sizeof(size_t));
@@ -65,9 +67,7 @@ int main(int argc, char* argv[]) {
     timer_checkpoint(start);
     std::cout << "Stage 1: Ray Triangle Intersection    ";
 
-    blocksPerGrid = (num_triangles + threadsPerBlock - 1) >> LOG_THREADS; // Number of threads per pixel.
-    blocksPerGrid = blocksPerGrid * X_DIM * Y_DIM; // Total number of threads
-    blocksPerGrid = (blocksPerGrid + threadsPerBlock - 1) >> LOG_THREADS;
+    blocksPerGrid = (num_triangles * Y_DIM * X_DIM + threadsPerBlock - 1) / threadsPerBlock;
     fps1<<<blocksPerGrid, threadsPerBlock>>>(&triangles_dev[0], num_triangles, all_intersections, trunk_length, locks);
     cudaDeviceSynchronize();
 
@@ -98,24 +98,24 @@ int main(int argc, char* argv[]) {
     err = cudaGetLastError();  // add
     if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
     std::cout << "begin verification" << std::endl;
+#ifdef TEST
     checkOutput(triangles_dev, num_triangles, all);
+    // std::ofstream outfile;
+    // outfile.open("layers.txt");
+    // for (int z = 0; z < NUM_LAYERS; z++) {
+    //     for (int y = Y_DIM-1; y >= 0; y--) {
+    //         for (int x = 0; x < X_DIM; x++) {
+    //             if (all[z*Y_DIM*X_DIM + y*X_DIM + x]) outfile << "XX";
+    //             else outfile << "  ";
+    //         }
+    //         outfile << "\n";
+    //     }
+    //     outfile << "\n\n";
+    // }
+    // outfile.close();
+#endif
     cudaFree(all_dev);
     cudaFree(triangles_dev);
-
-    std::ofstream outfile;
-    outfile.open("layers.txt");
-    for (int z = 0; z < NUM_LAYERS; z++) {
-        for (int y = Y_DIM-1; y >= 0; y--) {
-            for (int x = 0; x < X_DIM; x++) {
-                if (all[z*Y_DIM*X_DIM + y*X_DIM + x]) outfile << "XX";
-                else outfile << "  ";
-            }
-            outfile << "\n";
-        }
-        outfile << "\n\n";
-    }
-    outfile.close();
-
     free(all);
 
     return 0;
