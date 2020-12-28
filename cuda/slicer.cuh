@@ -9,6 +9,7 @@
 #define THREADS_PER_BLOCK (1 << LOG_THREADS)
 #define MAX_TRUNK_SIZE	28
 #define BATCH_SIZE  (4 * THREADS_PER_BLOCK)
+#define NUM_BLOCKS  256
 
 // in mm
 #define LOG_X 8
@@ -58,5 +59,7 @@ __global__ void smallTriIntersection(triangle* tri_small, double* zMins, size_t 
 __global__ void overlapSlicer(triangle* tri_small, double* zMins, size_t num_small, bool* out);
 __global__ void layerExtraction(bool* out, layer_t start);
 __host__ void GPUsort(triangle* tris_dev, size_t size, double* zMins);
+
+__global__ void rectTriIntersection(triangle* tri_global, size_t num_tri, bool* out);
 
 #endif

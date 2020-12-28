@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
     size_t* trunk_length;
     cudaMalloc(&trunk_length, Y_DIM * X_DIM * sizeof(size_t));
 
-    // out[y][x][z]
+    // out[z][y][x]
     bool* out = (bool*)malloc(NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool));
     bool* out_dev;
     cudaMalloc(&out_dev, Y_DIM * X_DIM * NUM_LAYERS * sizeof(bool));
@@ -96,7 +96,7 @@ int main(int argc, char* argv[]) {
     // for (int z = 0; z < NUM_LAYERS; z++) {
     //     for (int y = Y_DIM-1; y >= 0; y--) {
     //         for (int x = 0; x < X_DIM; x++) {
-    //             if (out[z][x][y]) std::cout << "XX";
+    //             if (out[z][y][x]) std::cout << "XX";
     //             else std::cout << "  ";
     //         }
     //         std::cout << std::endl;
