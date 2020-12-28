@@ -46,6 +46,7 @@ int main(int argc, char* argv[]) {
     bool* all_dev;
     size_t size = NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool);
     cudaMalloc(&all_dev, size);
+    cudaMemset(all_dev, 0, size);
     cudaMalloc(&triangles_dev, num_triangles * sizeof(triangle));
     cudaMemcpy(triangles_dev, triangles.data(), num_triangles * sizeof(triangle), cudaMemcpyHostToDevice);
 

@@ -20,15 +20,15 @@
 #define RESOLUTION 0.5 // Must be (negative) power of 2
 
 // in pixels
-#define NUM_LAYERS ((size_t)(HEIGHT / RESOLUTION))
+#define NUM_LAYERS ((int)(HEIGHT / RESOLUTION))
 // X_DIM must be at least as large as THREADS_PER_BLOCK
-#define X_DIM ((size_t)(X_LEN / RESOLUTION))
-#define Y_DIM ((size_t)(Y_LEN / RESOLUTION))
+#define X_DIM ((int)(X_LEN / RESOLUTION))
+#define Y_DIM ((int)(Y_LEN / RESOLUTION))
 
-#define X_MIN ((long)(-1 * X_DIM / 2))
-#define X_MAX ((long)(X_DIM / 2))
-#define Y_MIN ((long)(-1 * Y_DIM / 2))
-#define Y_MAX ((long)(Y_DIM / 2))
+#define X_MIN ((int)(-1 * X_DIM / 2))
+#define X_MAX ((int)(X_DIM / 2 - 1))
+#define Y_MIN ((int)(-1 * Y_DIM / 2))
+#define Y_MAX ((int)(Y_DIM / 2 - 1))
 
 typedef int layer_t;
 

@@ -21,6 +21,11 @@ __global__ void rectTriIntersection(triangle* tri_global, size_t num_tri, bool* 
         int yMin = (int)(min3(t.p1.y, t.p2.y, t.p3.y) / RESOLUTION);
         int xMax = __double2int_ru(max3(t.p1.x, t.p2.x, t.p3.x) / RESOLUTION);
         int yMax = __double2int_ru(max3(t.p1.y, t.p2.y, t.p3.y) / RESOLUTION);
+        // Make sure the bounds are inside the supported space
+        xMax = min(xMax, X_MAX);
+        xMin = max(xMin, X_MIN);
+        yMax = min(yMax, Y_MAX);
+        yMin = max(yMin, Y_MIN);
         // iterate over all pixels inside the bounding box
         // Will likely cause (lots of) wrap divergence, but we'll deal with that later
         for (int x = xMin; x <= xMax; x++) {
