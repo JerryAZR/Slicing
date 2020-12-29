@@ -1,0 +1,34 @@
+==102947== NVPROF is profiling process 102947, command: ./out/second-main models/heart.stl
+==102947== Profiling application: ./out/second-main models/heart.stl
+==102947== Profiling result:
+            Type  Time(%)      Time     Calls       Avg       Min       Max  Name
+ GPU activities:   90.71%  296.58ms         1  296.58ms  296.58ms  296.58ms  smallTriIntersection(triangle*, double*, unsigned long, bool*)
+                    3.97%  12.970ms         1  12.970ms  12.970ms  12.970ms  [CUDA memcpy DtoH]
+                    3.25%  10.629ms         1  10.629ms  10.629ms  10.629ms  [CUDA memcpy HtoD]
+                    0.95%  3.1079ms         6  517.99us  504.97us  546.61us  void cub::DeviceRadixSortDownsweepKernel<cub::DeviceRadixSortPolicy<double, triangle, int>::Policy700, bool=1, bool=0, double, triangle, int>(cub::DeviceRadixSortPolicy<double, triangle, int>::Policy700 const *, cub::DeviceRadixSortDownsweepKernel<cub::DeviceRadixSortPolicy<double, triangle, int>::Policy700, bool=1, bool=0, double, triangle, int>*, bool=1 const *, cub::DeviceRadixSortDownsweepKernel<cub::DeviceRadixSortPolicy<double, triangle, int>::Policy700, bool=1, bool=0, double, triangle, int>**, bool=0*, cub::DeviceRadixSortDownsweepKernel<cub::DeviceRadixSortPolicy<double, triangle, int>::Policy700, bool=1, bool=0, double, triangle, int>**, int, int, cub::GridEvenShare<cub::DeviceRadixSortDownsweepKernel<cub::DeviceRadixSortPolicy<double, triangle, int>::Policy700, bool=1, bool=0, double, triangle, int>**>)
+                    0.90%  2.9540ms         4  738.50us  731.25us  742.58us  void cub::DeviceRadixSortDownsweepKernel<cub::DeviceRadixSortPolicy<double, triangle, int>::Policy700, bool=0, bool=0, double, triangle, int>(cub::DeviceRadixSortPolicy<double, triangle, int>::Policy700 const *, cub::DeviceRadixSortDownsweepKernel<cub::DeviceRadixSortPolicy<double, triangle, int>::Policy700, bool=0, bool=0, double, triangle, int>*, bool=0 const *, cub::DeviceRadixSortDownsweepKernel<cub::DeviceRadixSortPolicy<double, triangle, int>::Policy700, bool=0, bool=0, double, triangle, int>**, bool=0*, cub::DeviceRadixSortDownsweepKernel<cub::DeviceRadixSortPolicy<double, triangle, int>::Policy700, bool=0, bool=0, double, triangle, int>**, int, int, cub::GridEvenShare<cub::DeviceRadixSortDownsweepKernel<cub::DeviceRadixSortPolicy<double, triangle, int>::Policy700, bool=0, bool=0, double, triangle, int>**>)
+                    0.06%  198.69us         1  198.69us  198.69us  198.69us  getZMin(triangle*, unsigned long, double*)
+                    0.05%  175.46us         6  29.243us  28.865us  29.729us  void cub::DeviceRadixSortUpsweepKernel<cub::DeviceRadixSortPolicy<double, triangle, int>::Policy700, bool=1, bool=0, double, int>(cub::DeviceRadixSortPolicy<double, triangle, int>::Policy700 const *, bool=1*, cub::DeviceRadixSortPolicy<double, triangle, int>::Policy700 const *, int, int, cub::GridEvenShare<cub::DeviceRadixSortPolicy<double, triangle, int>::Policy700 const *>)
+                    0.04%  143.72us         4  35.928us  34.017us  40.097us  void cub::DeviceRadixSortUpsweepKernel<cub::DeviceRadixSortPolicy<double, triangle, int>::Policy700, bool=0, bool=0, double, int>(cub::DeviceRadixSortPolicy<double, triangle, int>::Policy700 const *, bool=0*, cub::DeviceRadixSortPolicy<double, triangle, int>::Policy700 const *, int, int, cub::GridEvenShare<cub::DeviceRadixSortPolicy<double, triangle, int>::Policy700 const *>)
+                    0.04%  134.69us        10  13.469us  13.280us  14.080us  void cub::RadixSortScanBinsKernel<cub::DeviceRadixSortPolicy<double, triangle, int>::Policy700, int>(triangle*, int)
+                    0.02%  54.914us         1  54.914us  54.914us  54.914us  [CUDA memset]
+      API calls:   78.72%  1.23320s         6  205.53ms  106.85us  1.23230s  cudaMalloc
+                   18.95%  296.80ms         3  98.932ms  4.0630us  296.59ms  cudaDeviceSynchronize
+                    1.56%  24.511ms         2  12.256ms  10.544ms  13.967ms  cudaMemcpy
+                    0.61%  9.4866ms         4  2.3717ms  320.32us  6.5494ms  cudaFree
+                    0.09%  1.4106ms         2  705.31us  700.92us  709.69us  cuDeviceTotalMem
+                    0.05%  776.60us       202  3.8440us     216ns  225.72us  cuDeviceGetAttribute
+                    0.01%  182.47us        32  5.7020us  3.7390us  20.284us  cudaLaunchKernel
+                    0.00%  59.835us         2  29.917us  23.017us  36.818us  cuDeviceGetName
+                    0.00%  31.313us         1  31.313us  31.313us  31.313us  cudaMemset
+                    0.00%  18.241us        12  1.5200us     502ns  10.777us  cudaOccupancyMaxActiveBlocksPerMultiprocessorWithFlags
+                    0.00%  12.923us        84     153ns     134ns     383ns  cudaGetLastError
+                    0.00%  12.503us         2  6.2510us  2.4550us  10.048us  cuDeviceGetPCIBusId
+                    0.00%  11.888us         1  11.888us  11.888us  11.888us  cudaFuncGetAttributes
+                    0.00%  10.392us        60     173ns     144ns     290ns  cudaPeekAtLastError
+                    0.00%  3.6420us         5     728ns     356ns  1.6350us  cudaGetDevice
+                    0.00%  1.9470us         2     973ns     625ns  1.3220us  cudaDeviceGetAttribute
+                    0.00%  1.8790us         4     469ns     225ns  1.1010us  cuDeviceGet
+                    0.00%  1.8160us         3     605ns     290ns  1.2360us  cuDeviceGetCount
+                    0.00%     659ns         2     329ns     287ns     372ns  cuDeviceGetUuid
+                    0.00%     294ns         1     294ns     294ns     294ns  cudaGetDeviceCount
