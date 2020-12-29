@@ -1,0 +1,19 @@
+Bbox: A bounding-box based slicing algorithm.
+Unlike other algorithms in this repo, in this algorithm the mapping between thread and pixel is not fixed.
+This algorithm aims to reduce the amount of wasted work.
+
+High-level description:
+For each triangle, do the following:
+    1. Compute the 2D bounding box of the triangle (using min&max of x&y)
+    2. Iterate over all pixels inside the bounding box:
+        2.1 Try to compute the intersection of the current triangle & pixel ray pair.
+        2.2 If intersection is valid, (atomically) increment the corresponding counter in global memory
+    
+After all triangles have been processed, perform layer extraction based on the counter values.
+(i.e. determine the pixels that are inside the model as well as the ones that are outside)
+
+Current (naive) implementation:
+Create multiple (256x256) threads. Each thread is responsible for processing some triangles.
+E.g. If there are 65536 triangles in the model, then each thread would be assigned exactly 1 triangle.
+
+The current implementation has low wrap efficiency (a.k.a. high wrap divergence) and low memory efficiency, but is already performing much better than any other algorithms we have. Detailed performance metrics can be found in the ../performance/ directory.

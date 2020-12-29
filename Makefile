@@ -15,6 +15,7 @@ new: new-main new-test
 second: second-main second-test
 mfps: mfps-main mfps-test
 ofps: ofps-main ofps-test
+bbox: bbox-main bbox-test
 
 new-main: AlgoGPU/new-main.cu $(NEW_DEPS)
 	mkdir -p $(OUTDIR)

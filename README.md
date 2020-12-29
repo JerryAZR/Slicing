@@ -4,15 +4,16 @@ The cuda codes are in [cuda](./cuda/) and [AlgoGPU](./AlgoGPU/).
 
 To build, type:
 
-``make [fps|pps|new|second|mfps]``
+``make [fps|pps|new|second|mfps|bbox]``
 
 | Algorithm |      Details                                         |
 |:----------|:-----------------------------------------------------|
 | pps       | Pixelwise parallel slicing                           |
 | fps       | Fully parallel slicing                               |
 | new       | Map-based triangle sorting and slicing               |
-| second    | Processing large and small triangles separately ([details](./docs/doc.txt))     |
+| second    | Processing large and small triangles separately ([details](./docs/second.txt))     |
 | mfps      | Modified fps. Each thread handles multiple triangles |
+| bbox      | Bounding-box based slicing algorithm. ([details](./docs/bbox.txt))    |
 
 The output binary will be in [out](./out/).
 
