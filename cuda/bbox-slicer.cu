@@ -26,6 +26,7 @@ __global__ void rectTriIntersection(triangle* tri_global, size_t num_tri, bool* 
         xMin = max(xMin, X_MIN);
         yMax = min(yMax, Y_MAX);
         yMin = max(yMin, Y_MIN);
+        if (xMax < xMin || yMax < yMin) continue;
         // iterate over all pixels inside the bounding box
         // Will likely cause (lots of) wrap divergence, but we'll deal with that later
         int x = xMin;
