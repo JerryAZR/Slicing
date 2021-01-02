@@ -26,10 +26,11 @@ __global__ void rectTriIntersection(triangle* tri_global, size_t num_tri, bool* 
         xMin = max(xMin, X_MIN);
         yMax = min(yMax, Y_MAX);
         yMin = max(yMin, Y_MIN);
+        if (xMax < xMin || yMax < yMin) continue;
         // iterate over all pixels inside the bounding box
         // Will likely cause (lots of) wrap divergence, but we'll deal with that later
-        for (int x = xMin; x <= xMax; x++) {
-            for (int y = yMin; y <= yMax; y++) {
+        for (int y = yMin; y <= yMax; y++) {
+            for (int x = xMin; x <= xMax; x++) {
                 layer_t curr_intersection = pixelRayIntersection(t, x, y);
                 if (curr_intersection >= 0 && curr_intersection < NUM_LAYERS) {
                     // Found a valid intersection
