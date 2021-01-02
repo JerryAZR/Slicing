@@ -6,7 +6,7 @@ CXX=nvcc
 DEPS = $(SRCDIR)/slicer.cuh $(SRCDIR)/triangle.cuh $(SRCDIR)/golden.cuh
 NEW_DEPS = AlgoGPU/slicer.cu AlgoGPU/triangle.cu AlgoGPU/slicer.cuh AlgoGPU/triangle.cuh
 
-all: fps pps second mfps ofps
+all: fps pps second mfps ofps bbox
 
 fps: fps-main fps-test
 pps: pps-main pps-test

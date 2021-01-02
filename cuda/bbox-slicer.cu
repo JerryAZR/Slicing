@@ -28,17 +28,21 @@ __global__ void rectTriIntersection(triangle* tri_global, size_t num_tri, bool* 
         yMin = max(yMin, Y_MIN);
         // iterate over all pixels inside the bounding box
         // Will likely cause (lots of) wrap divergence, but we'll deal with that later
-        for (int x = xMin; x <= xMax; x++) {
-            for (int y = yMin; y <= yMax; y++) {
-                layer_t curr_intersection = pixelRayIntersection(t, x, y);
-                if (curr_intersection >= 0 && curr_intersection < NUM_LAYERS) {
-                    // Found a valid intersection
-                    int x_idx = x + (X_DIM >> 1);
-                    int y_idx = y + (Y_DIM >> 1);
-                    char* temp_ptr = (char*) (out + curr_intersection*X_DIM*Y_DIM + y_idx*X_DIM + x_idx);
-                    atomicAdd(temp_ptr, 1);
-                }
+        int x = xMin;
+        int y = yMin;
+        while (y <= yMax) {
+            layer_t curr_intersection = pixelRayIntersection(t, x, y);
+            if (curr_intersection >= 0 && curr_intersection < NUM_LAYERS) {
+                // Found a valid intersection
+                int x_idx = x + (X_DIM >> 1);
+                int y_idx = y + (Y_DIM >> 1);
+                char* temp_ptr = (char*) (out + curr_intersection*X_DIM*Y_DIM + y_idx*X_DIM + x_idx);
+                atomicAdd(temp_ptr, 1);
             }
+            // update coords
+            bool nextLine = (x == xMax);
+            y += (int)nextLine;
+            x = nextLine ? xMin : (x+1);
         }
     }
 }
