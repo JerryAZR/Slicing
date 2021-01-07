@@ -6,21 +6,43 @@ __device__ __forceinline__ void triangleCopy(void* src, void* dest, int id);
 __device__ __forceinline__ double min3(double a, double b, double c);
 __device__ __forceinline__ double max3(double a, double b, double c);
 __device__ __forceinline__ char atomicAdd(char* address, char val);
+__device__ __forceinline__ layer_t pixelRayIntersection_point(double x1, double y1, double z1,
+    double x2, double y2, double z2, double x3, double y3, double z3, int x, int y);
 
-__global__ void rectTriIntersection(triangle* tri_global, size_t num_tri, bool* out) {
+__global__ void rectTriIntersection(double* tri_global, size_t num_tri, bool* out) {
     size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
     size_t num_per_thread = num_tri / (NUM_BLOCKS << LOG_THREADS) + 1;
-    size_t base_idx = num_per_thread * idx;
+    size_t base_idx = idx;
+
+    double* x1_base = tri_global;
+    double* y1_base = tri_global + num_tri;
+    double* z1_base = tri_global + 2*num_tri;
+    double* x2_base = tri_global + 3*num_tri;
+    double* y2_base = tri_global + 4*num_tri;
+    double* z2_base = tri_global + 5*num_tri;
+    double* x3_base = tri_global + 6*num_tri;
+    double* y3_base = tri_global + 7*num_tri;
+    double* z3_base = tri_global + 8*num_tri;
 
     // iterate over all triangles assigned to this thread.
     for (size_t i = 0; i < num_per_thread; i++) {
         // Compute bounding box
         if (base_idx >= num_tri) break;
-        triangle t = tri_global[base_idx++]; // Using post-increment;
-        int xMin = (int)(min3(t.p1.x, t.p2.x, t.p3.x) / RESOLUTION);
-        int yMin = (int)(min3(t.p1.y, t.p2.y, t.p3.y) / RESOLUTION);
-        int xMax = __double2int_ru(max3(t.p1.x, t.p2.x, t.p3.x) / RESOLUTION);
-        int yMax = __double2int_ru(max3(t.p1.y, t.p2.y, t.p3.y) / RESOLUTION);
+        double x1 = x1_base[base_idx];
+        double y1 = y1_base[base_idx];
+        double z1 = z1_base[base_idx];
+        double x2 = x2_base[base_idx];
+        double y2 = y2_base[base_idx];
+        double z2 = z2_base[base_idx];
+        double x3 = x3_base[base_idx];
+        double y3 = y3_base[base_idx];
+        double z3 = z3_base[base_idx];
+        
+        int xMin = (int)(min3(x1, x2, x3) / RESOLUTION);
+        int yMin = (int)(min3(y1, y2, y3) / RESOLUTION);
+        int xMax = __double2int_ru(max3(x1, x2, x3) / RESOLUTION);
+        int yMax = __double2int_ru(max3(y1, y2, y3) / RESOLUTION);
+        base_idx += (NUM_BLOCKS << LOG_THREADS);
         // Make sure the bounds are inside the supported space
         xMax = min(xMax, X_MAX);
         xMin = max(xMin, X_MIN);
@@ -31,7 +53,8 @@ __global__ void rectTriIntersection(triangle* tri_global, size_t num_tri, bool* 
         // Will likely cause (lots of) wrap divergence, but we'll deal with that later
         for (int y = yMin; y <= yMax; y++) {
             for (int x = xMin; x <= xMax; x++) {
-                layer_t curr_intersection = pixelRayIntersection(t, x, y);
+                layer_t curr_intersection = 
+                    pixelRayIntersection_point(x1, y1, z1, x2, y2, z2, x3, y3, z3, x, y);
                 if (curr_intersection >= 0 && curr_intersection < NUM_LAYERS) {
                     // Found a valid intersection
                     int x_idx = x + (X_DIM >> 1);
@@ -68,7 +91,8 @@ void layerExtraction(bool* out, layer_t start) {
  *      The layer on which they intersect, or -1 if no intersection
  */
 __device__ __forceinline__
-layer_t pixelRayIntersection(triangle t, int x, int y) {
+layer_t pixelRayIntersection_point(double x1, double y1, double z1,
+    double x2, double y2, double z2, double x3, double y3, double z3, int x, int y) {
     /*
     Let A, B, C be the 3 vertices of the given triangle
     Let S(x,y,z) be the intersection, where x,y are given
@@ -79,25 +103,25 @@ layer_t pixelRayIntersection(triangle t, int x, int y) {
     double x_pos = x * RESOLUTION;
     double y_pos = y * RESOLUTION;
 
-    // double x_max = max3(t.p1.x, t.p2.x, t.p3.x);
-    // double x_min = min3(t.p1.x, t.p2.x, t.p3.x);
+    // double x_max = max3(x1, x2, x3);
+    // double x_min = min3(x1, x2, x3);
 
     // if (x_pos < x_min || x_pos > x_max) return NONE;
 
-    double x_d = x_pos - t.p1.x;
-    double y_d = y_pos - t.p1.y;
+    double x_d = x_pos - x1;
+    double y_d = y_pos - y1;
 
-    double x1 = t.p2.x - t.p1.x;
-    double y1 = t.p2.y - t.p1.y;
-    double z1 = t.p2.z - t.p1.z;
+    double xx1 = x2 - x1;
+    double yy1 = y2 - y1;
+    double zz1 = z2 - z1;
 
-    double x2 = t.p3.x - t.p1.x;
-    double y2 = t.p3.y - t.p1.y;
-    double z2 = t.p3.z - t.p1.z;
-    double a = (x_d * y2 - x2 * y_d) / (x1 * y2 - x2 * y1);
-    double b = (x_d * y1 - x1 * y_d) / (x2 * y1 - x1 * y2);
+    double xx2 = x3 - x1;
+    double yy2 = y3 - y1;
+    double zz2 = z3 - z1;
+    double a = (x_d * yy2 - xx2 * y_d) / (xx1 * yy2 - xx2 * yy1);
+    double b = (x_d * yy1 - xx1 * y_d) / (xx2 * yy1 - xx1 * yy2);
     bool inside = (a >= 0) && (b >= 0) && (a+b <= 1);
-    double intersection = (a * z1 + b * z2) + t.p1.z;
+    double intersection = (a * zz1 + b * zz2) + z1;
     // // divide by layer width
     layer_t layer = inside ? (intersection / RESOLUTION) : (layer_t)(-1);
     return layer;

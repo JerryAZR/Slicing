@@ -60,6 +60,6 @@ __global__ void overlapSlicer(triangle* tri_small, double* zMins, size_t num_sma
 __global__ void layerExtraction(bool* out, layer_t start);
 __host__ void GPUsort(triangle* tris_dev, size_t size, double* zMins);
 
-__global__ void rectTriIntersection(triangle* tri_global, size_t num_tri, bool* out);
+__global__ void rectTriIntersection(double* tri_global, size_t num_tri, bool* out);
 
 #endif
