@@ -54,7 +54,8 @@ __global__ void rectTriIntersection(double* tri_global, size_t num_tri, bool* ou
         int x = xMin;
         int y = yMin;
         while (y <= yMax) {
-            layer_t curr_intersection = pixelRayIntersection(t, x, y);
+            layer_t curr_intersection = 
+                pixelRayIntersection_point(x1, y1, z1, x2, y2, z2, x3, y3, z3, x, y);
             if (curr_intersection >= 0 && curr_intersection < NUM_LAYERS) {
                 // Found a valid intersection
                 int x_idx = x + (X_DIM >> 1);
