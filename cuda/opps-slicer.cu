@@ -17,7 +17,7 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
     // Copy triangles to shared memory
     // Each block has a shared memory storing some triangles.
     __shared__ triangle tri_base[THREADS_PER_BLOCK];
-    __shared__ layer_t layers_shared[THREADS_PER_BLOCK][MAX_TRUNK_SIZE];
+    layer_t layers_local[MAX_TRUNK_SIZE];
     __shared__ bool yNotInside[THREADS_PER_BLOCK];
 
     triangle* triangles = (triangle*) tri_base;
@@ -25,7 +25,7 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
     size_t num_iters = num_triangles / THREADS_PER_BLOCK;
     int length = 0;
     double y_pos = y * RESOLUTION;
-    layer_t* layers = &layers_shared[threadIdx.x][0];
+    layer_t* layers = &layers_local[0];
 
     for (size_t i = 0; i < num_iters; i++) {
         triangle t = triangles_global[i*THREADS_PER_BLOCK + threadIdx.x];
@@ -103,14 +103,16 @@ layer_t pixelRayIntersection(triangle t, int x, int y) {
     If a >= 0, b >= 0, and a+b <= 1, S is a valid intersection.
     */
 
-    double x_max = max(t.p1.x, max(t.p2.x, t.p3.x));
-    double x_min = min(t.p1.x, min(t.p2.x, t.p3.x));
-    double y_max = max(t.p1.y, max(t.p2.y, t.p3.y));
-    double y_min = min(t.p1.y, min(t.p2.y, t.p3.y));
-
     double x_pos = x * RESOLUTION;
     double y_pos = y * RESOLUTION;
-    if ((x_pos < x_min) || (x_pos > x_max) || (y_pos < y_min) || (y_pos > y_max)) return NONE;
+
+    double x_max = max(t.p1.x, max(t.p2.x, t.p3.x));
+    double x_min = min(t.p1.x, min(t.p2.x, t.p3.x));
+    // double y_max = max(t.p1.y, max(t.p2.y, t.p3.y));
+    // double y_min = min(t.p1.y, min(t.p2.y, t.p3.y));
+
+    // if ((x_pos < x_min) || (x_pos > x_max) || (y_pos < y_min) || (y_pos > y_max)) return NONE;
+    if ((x_pos < x_min) || (x_pos > x_max)) return NONE;
 
     double x_d = x_pos - t.p1.x;
     double y_d = y_pos - t.p1.y;

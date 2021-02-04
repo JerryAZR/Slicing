@@ -14,7 +14,7 @@
  *      trunk_length -- number of intersections of each pixel ray
  */
 __global__
-void fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections, size_t* trunk_length, int* locks) {
+void fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections, unsigned* trunk_length, int* locks) {
     size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
     size_t tri_idx = idx / (X_DIM * Y_DIM);
     // if (tri_idx >= num_triangles) return;
@@ -54,61 +54,55 @@ void fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections,
     bool notInRect = (x_pos < x_min) || (x_pos > x_max);
 
     layer_t* layers = all_intersections + y_idx * X_DIM * MAX_TRUNK_SIZE + x_idx * MAX_TRUNK_SIZE;
-    int* lock = locks + y_idx * X_DIM + x_idx;
-    size_t* length = trunk_length + y_idx * X_DIM + x_idx;
+    unsigned* length = trunk_length + y_idx * X_DIM + x_idx;
     // if current pixel is not in the rectangle defined by x_min/max and y_min/max,
     // there cannot be an intersection
     layer_t intersection = notInRect ? (layer_t)(-1) : pixelRayIntersection(triangle_shared, x, y);
-    bool run = (intersection != (layer_t)(-1));
 
-    while (run) {
-        if(atomicCAS(lock, 0, 1) == 0) {
-            layers[length[0]] = intersection;
-            length[0]++;
-            run = false;
-            atomicExch(lock, 0);
-        }
+    if (intersection != (layer_t)(-1)) {
+        size_t layer_array_idx = atomicAdd(length, 1);
+        layers[layer_array_idx] = intersection;
     }
 }
  
- /**
-  * fps2: second stage of slicing -- trunk sorting
-  * Inputs:
-  *      all_intersections -- array of intersections computed in fps1
-  *      trunk_length -- number of intersections of each pixel ray
-  * Outputs:
-  *      all_intersections -- sorting will be performed in-place
-  */
- __global__
- void fps2(layer_t* all_intersections, size_t* trunk_length) {
-     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
-     if (idx >= X_DIM * Y_DIM) return;
-     size_t length = trunk_length[idx];
-     layer_t* curr_trunk = all_intersections + (idx * MAX_TRUNK_SIZE);
-     thrust::sort(thrust::device, curr_trunk, curr_trunk + length);
- }
+/**
+ * fps2: second stage of slicing -- trunk sorting
+ * Inputs:
+ *      all_intersections -- array of intersections computed in fps1
+ *      trunk_length -- number of intersections of each pixel ray
+ * Outputs:
+ *      all_intersections -- sorting will be performed in-place
+ */
+__global__
+void fps2(layer_t* all_intersections, unsigned* trunk_length) {
+    size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
+    if (idx >= X_DIM * Y_DIM) return;
+    unsigned length = trunk_length[idx];
+    layer_t* curr_trunk = all_intersections + (idx * MAX_TRUNK_SIZE);
+    thrust::sort(thrust::device, curr_trunk, curr_trunk + length);
+}
  
- /**
-  * fps3: third stage of slicing: layer extractions
-  * Inputs:
-  *      sorted_intersections -- sorted array of intersections
-  *      trunk_length -- number of intersections of each pixel ray
-  * Outputs:
-  *      out -- Z*X*Y array representing the sliced model. A cell is True
-  *             if it is inside the model, False if not.
-  */
- __global__
- void fps3(layer_t* sorted_intersections, size_t* trunk_length, bool* out) {
-     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
-     int z_idx = idx / (X_DIM * Y_DIM);
-     if (z_idx >= NUM_LAYERS) return;
-     int y_idx = (idx - (z_idx * X_DIM * Y_DIM)) / X_DIM;
-     int x_idx = (idx - (z_idx * X_DIM * Y_DIM)) & (X_DIM - 1);
- 
-     size_t length = trunk_length[y_idx * X_DIM + x_idx];
-     layer_t* intersection_trunk = sorted_intersections + y_idx * X_DIM * MAX_TRUNK_SIZE + x_idx * MAX_TRUNK_SIZE;
-     out[idx] = isInside(z_idx, intersection_trunk, length);
- }
+/**
+ * fps3: third stage of slicing: layer extractions
+ * Inputs:
+ *      sorted_intersections -- sorted array of intersections
+ *      trunk_length -- number of intersections of each pixel ray
+ * Outputs:
+ *      out -- Z*X*Y array representing the sliced model. A cell is True
+ *             if it is inside the model, False if not.
+ */
+__global__
+void fps3(layer_t* sorted_intersections, unsigned* trunk_length, bool* out) {
+    size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
+    int z_idx = idx / (X_DIM * Y_DIM);
+    if (z_idx >= NUM_LAYERS) return;
+    int y_idx = (idx - (z_idx * X_DIM * Y_DIM)) / X_DIM;
+    int x_idx = (idx - (z_idx * X_DIM * Y_DIM)) & (X_DIM - 1);
+
+    unsigned length = trunk_length[y_idx * X_DIM + x_idx];
+    layer_t* intersection_trunk = sorted_intersections + y_idx * X_DIM * MAX_TRUNK_SIZE + x_idx * MAX_TRUNK_SIZE;
+    out[idx] = isInside(z_idx, intersection_trunk, length);
+}
 
 /**
  * pixelRayIntersection: helper function, computes the intersection of given triangle and pixel ray

@@ -21,30 +21,30 @@ long checkOutput(triangle* triangles_dev, size_t num_triangles, bool* in) {
     bool* expected = (bool*) malloc(NUM_LAYERS * X_DIM * Y_DIM * sizeof(bool));
     std::cout << "executing golden model" << std::endl;
     goldenModel(triangles_dev, num_triangles, &expected[0]);
-    long size = NUM_LAYERS * Y_DIM * X_DIM;
+    size_t size = NUM_LAYERS * Y_DIM * X_DIM;
     long diff = 0;
     long inside = 0;
     long real = 0;
     std::cout << "comparing results" << std::endl;
-    for (int i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
         inside += expected[i];
         real += in[i];
         diff += (expected[i] != in[i]);
     }
 
-    std::ofstream outfile;
-    outfile.open("expected.txt");
-    for (int z = 0; z < NUM_LAYERS; z++) {
-        for (int y = Y_DIM-1; y >= 0; y--) {
-            for (int x = 0; x < X_DIM; x++) {
-                if (expected[z*X_DIM*Y_DIM + y*X_DIM + x]) outfile << "XX";
-                else outfile << "  ";
-            }
-            outfile << "\n";
-        }
-        outfile << "\n\n";
-    }
-    outfile.close();
+    // std::ofstream outfile;
+    // outfile.open("expected.txt");
+    // for (int z = 0; z < NUM_LAYERS; z++) {
+    //     for (int y = Y_DIM-1; y >= 0; y--) {
+    //         for (int x = 0; x < X_DIM; x++) {
+    //             if (expected[z*X_DIM*Y_DIM + y*X_DIM + x]) outfile << "XX";
+    //             else outfile << "  ";
+    //         }
+    //         outfile << "\n";
+    //     }
+    //     outfile << "\n\n";
+    // }
+    // outfile.close();
 
     free(expected);
     std::cout << inside << " pixels are inside the model." << std::endl;

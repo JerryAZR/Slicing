@@ -52,14 +52,14 @@ int main(int argc, char* argv[]) {
     cudaError_t err = cudaGetLastError();  // add
     if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
 
-    int threadsPerBlock = THREADS_PER_BLOCK;
-    int blocksPerGrid;
+    long threadsPerBlock = THREADS_PER_BLOCK;
+    long blocksPerGrid;
 
     layer_t* all_intersections;
     cudaMalloc(&all_intersections, Y_DIM * X_DIM * MAX_TRUNK_SIZE * sizeof(layer_t));
-    size_t* trunk_length;
-    cudaMalloc(&trunk_length, Y_DIM * X_DIM * sizeof(size_t));
-    cudaMemset(trunk_length, 0, Y_DIM * X_DIM * sizeof(size_t));
+    unsigned* trunk_length;
+    cudaMalloc(&trunk_length, Y_DIM * X_DIM * sizeof(unsigned));
+    cudaMemset(trunk_length, 0, Y_DIM * X_DIM * sizeof(unsigned));
     int* locks;
     cudaMalloc(&locks, Y_DIM * X_DIM * sizeof(int));
     cudaMemset(locks, 0, Y_DIM * X_DIM * sizeof(int));

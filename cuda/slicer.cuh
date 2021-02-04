@@ -17,18 +17,18 @@
 #define X_LEN (1 << LOG_X)
 #define Y_LEN (1 << LOG_Y)
 #define HEIGHT 100
-#define RESOLUTION 0.5 // Must be (negative) power of 2
+#define RESOLUTION 1 // Must be (negative) power of 2
 
 // in pixels
-#define NUM_LAYERS ((int)(HEIGHT / RESOLUTION))
+#define NUM_LAYERS ((long)(HEIGHT / RESOLUTION))
 // X_DIM must be at least as large as THREADS_PER_BLOCK
-#define X_DIM ((int)(X_LEN / RESOLUTION))
-#define Y_DIM ((int)(Y_LEN / RESOLUTION))
+#define X_DIM ((long)(X_LEN / RESOLUTION))
+#define Y_DIM ((long)(Y_LEN / RESOLUTION))
 
-#define X_MIN ((int)(-1 * X_DIM / 2))
-#define X_MAX ((int)(X_DIM / 2 - 1))
-#define Y_MIN ((int)(-1 * Y_DIM / 2))
-#define Y_MAX ((int)(Y_DIM / 2 - 1))
+#define X_MIN ((long)(-1 * X_DIM / 2))
+#define X_MAX ((long)(X_DIM / 2 - 1))
+#define Y_MIN ((long)(-1 * Y_DIM / 2))
+#define Y_MAX ((long)(Y_DIM / 2 - 1))
 
 typedef int layer_t;
 
@@ -44,9 +44,9 @@ __device__ layer_t pixelRayIntersection(triangle t, int x, int y);
 __device__ int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles, layer_t* layers);
 __device__ bool isInside(layer_t current, layer_t* trunk, size_t length);
 
-__global__ void fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections, size_t* trunk_length, int* locks);
-__global__ void fps2(layer_t* all_intersections, size_t* trunk_length);
-__global__ void fps3(layer_t* sorted_intersections, size_t* trunk_length, bool* out);
+__global__ void fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections, unsigned* trunk_length, int* locks);
+__global__ void fps2(layer_t* all_intersections, unsigned* trunk_length);
+__global__ void fps3(layer_t* sorted_intersections, unsigned* trunk_length, bool* out);
 
 __global__ void triangle_sort(triangle* triangles_global, size_t num_triangles, double* zmins_global, int* index_global);
 __global__ void outputArray(triangle* triangles_global, size_t num_triangles, bool* out, int* index_global);
