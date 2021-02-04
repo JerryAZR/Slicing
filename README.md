@@ -14,6 +14,7 @@ To build, type:
 | second    | Processing large and small triangles separately ([details](./docs/second.txt))     |
 | mfps      | Modified fps. Each thread handles multiple triangles |
 | bbox      | Bounding-box based slicing algorithm. ([details](./docs/bbox.txt))    |
+| ofps/opps | Optimized fps/pps implementation                     |
 
 The output binary will be in [out](./out/).
 
