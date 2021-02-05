@@ -6,6 +6,7 @@ Usage:
     ./run.py prof <exe> [--stl STL] [-a | --all] [--txt | --csv]
     ./run.py nsight <exe> [--stl STL] [-a | --all] [--txt | --csv] [-k KERNEL]
     ./run.py list
+    ./run.py resize [<stl> <scale>]
     ./run.py -h | --help
 
 Options:
@@ -13,6 +14,7 @@ Options:
     prof        Run nvprof profiler
     nsight      Run Nsight profiler
     list        List all available STL models
+    resize      Resize the input model
     --stl STL   The stl file to be sliced [default: models/bunny.stl]
     -a --all    Proflie all events and metrics
     --txt       Save output to a text file
@@ -23,6 +25,8 @@ Options:
 
 Arguments:
     exe         The implemenation to test or profile. Can be one of (fps|pps|new|second|mfps)
+    stl         Same as STL. No default value
+    scale       The factor by which to scale the input model
 '''
 
 from docopt import docopt
@@ -78,6 +82,17 @@ if __name__ == '__main__':
                 run(cmd, stderr=outFile)
         else:
             run(cmd)
+
+    elif args["resize"]:
+        cmd = ["./models/resize.py"]
+        stl = args["<stl>"]
+        scale = args["<scale>"]
+        if stl:
+            cmd.append(stl)
+        if scale:
+            cmd.append(scale)
+        
+        run(cmd)
 
     elif args["nsight"]:
         exe += "-main"
