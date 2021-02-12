@@ -5,19 +5,21 @@
 #include <thrust/device_vector.h>
 #include <iostream>
 
-#define LOG_THREADS 8
+#define LOG_THREADS 7
 #define THREADS_PER_BLOCK (1 << LOG_THREADS)
 #define MAX_TRUNK_SIZE	28
 #define BATCH_SIZE  (4 * THREADS_PER_BLOCK)
 #define NUM_BLOCKS  256
+#define TILE_WIDTH 128
+#define BLOCK_HEIGHT 32
 
 // in mm
-#define LOG_X 8
+#define LOG_X 7
 #define LOG_Y 7
 #define X_LEN (1 << LOG_X)
 #define Y_LEN (1 << LOG_Y)
 #define HEIGHT 100
-#define RESOLUTION 1 // Must be (negative) power of 2
+#define RESOLUTION 0.25 // Must be (negative) power of 2
 
 // in pixels
 #define NUM_LAYERS ((long)(HEIGHT / RESOLUTION))
@@ -39,6 +41,8 @@ static_assert(THREADS_PER_BLOCK <= X_DIM, "THREADS_PER_BLOCK may not be larger t
 static_assert(!(X_DIM & (X_DIM-1)), "RESOLUTION must be some power of 2");
 
 __global__ void pps(triangle* triangles, size_t num_triangles, bool* out);
+__global__ void pps(triangle* triangles, size_t num_triangles, bool* out, unsigned base_layer);
+
 // returns the layer of intersection
 __device__ layer_t pixelRayIntersection(triangle t, int x, int y);
 __device__ int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles, layer_t* layers);
