@@ -46,8 +46,9 @@ __global__ void rectTriIntersection(double* tri_global, size_t num_tri, bool* ou
         // Make sure the bounds are inside the supported space
         xMax = min(xMax, X_MAX);
         xMin = max(xMin, X_MIN);
-        zMax = min(zMax, NUM_LAYERS-1);
-        zMin = max(zMin, (long)0);
+        long zMax_ub = min(NUM_LAYERS-1, (long)(base_layer+BLOCK_HEIGHT-1));
+        zMax = min(zMax, zMax_ub);
+        zMin = max(zMin, (long)(base_layer));
         if (xMax < xMin || zMax < zMin) continue;
         // iterate over all pixels inside the bounding box
         // Will likely cause (lots of) wrap divergence, but we'll deal with that later
@@ -60,7 +61,7 @@ __global__ void rectTriIntersection(double* tri_global, size_t num_tri, bool* ou
                 // Found a valid intersection
                 int x_idx = x + (X_DIM >> 1);
                 int y_idx = curr_intersection + (Y_DIM >> 1);
-                char* temp_ptr = (char*) (out + z*X_DIM*Y_DIM + y_idx*X_DIM + x_idx);
+                char* temp_ptr = (char*) (out + (z-base_layer)*X_DIM*Y_DIM + y_idx*X_DIM + x_idx);
                 atomicAdd(temp_ptr, 1);
             }
             // update coords

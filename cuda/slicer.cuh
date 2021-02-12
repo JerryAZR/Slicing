@@ -11,7 +11,7 @@
 #define BATCH_SIZE  (4 * THREADS_PER_BLOCK)
 #define NUM_BLOCKS  256
 #define TILE_WIDTH 128
-#define BLOCK_HEIGHT 128
+#define BLOCK_HEIGHT 32
 
 // in mm
 #define LOG_X 7
@@ -19,7 +19,7 @@
 #define X_LEN (1 << LOG_X)
 #define Y_LEN (1 << LOG_Y)
 #define HEIGHT 128
-#define RESOLUTION 1 // Must be (negative) power of 2
+#define RESOLUTION 0.25 // Must be (negative) power of 2
 
 // in pixels
 #define NUM_LAYERS ((long)(HEIGHT / RESOLUTION))

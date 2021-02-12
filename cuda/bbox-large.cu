@@ -19,7 +19,14 @@ void timer_checkpoint(chrono_t & checkpoint) {
     std::cout << std::endl;
 #endif
 }
- 
+
+void checkCudaError() {
+    cudaError_t err = cudaGetLastError();
+    if (err != cudaSuccess) {
+        std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
+        exit(1);
+    }
+}
 
 int main(int argc, char* argv[]) {
     std::string stl_file_name;
@@ -44,9 +51,13 @@ int main(int argc, char* argv[]) {
     triangle* triangles_dev;
     double* points_dev;
     // all[z][y][x]
+#ifdef TEST
     bool* all = (bool*)malloc(NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool));
+#else
+    bool* all = (bool*)malloc(BLOCK_HEIGHT * Y_DIM * X_DIM * sizeof(bool));
+#endif
     bool* all_dev;
-    size_t size = NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool);
+    size_t size = BLOCK_HEIGHT * Y_DIM * X_DIM * sizeof(bool);
     cudaMalloc(&all_dev, size);
     cudaMemset(all_dev, 0, size);
     cudaMalloc(&triangles_dev, num_triangles * sizeof(triangle));
@@ -67,47 +78,45 @@ int main(int argc, char* argv[]) {
 
     timer_checkpoint(start);
     std::cout << "Running 1st kernel...                 ";
-    rectTriIntersection<<<NUM_BLOCKS, THREADS_PER_BLOCK>>>(points_dev, num_triangles, all_dev, 0);
-    cudaDeviceSynchronize();
-    if (err != cudaSuccess) {
-        std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
-        return 1;
+    for (unsigned layer_idx = 0; layer_idx < NUM_LAYERS; layer_idx += BLOCK_HEIGHT) {
+        rectTriIntersection<<<NUM_BLOCKS, THREADS_PER_BLOCK>>>(points_dev, num_triangles, all_dev, layer_idx);
+        cudaDeviceSynchronize();
+        checkCudaError();
+        size_t blocksPerGrid = (X_DIM * BLOCK_HEIGHT + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+        layerExtraction<<<blocksPerGrid, THREADS_PER_BLOCK>>>(all_dev);
+        cudaDeviceSynchronize();
+        checkCudaError();
+        size_t copy_size = (layer_idx + BLOCK_HEIGHT) < NUM_LAYERS ? BLOCK_HEIGHT : NUM_LAYERS - layer_idx;
+        copy_size = copy_size * X_DIM * Y_DIM * sizeof(bool);
+    #ifdef TEST
+        bool* host_addr = &all[X_DIM*Y_DIM*layer_idx];
+    #else
+        bool* host_addr = &all[0];
+    #endif
+        cudaMemcpy(host_addr, all_dev, copy_size, cudaMemcpyDeviceToHost);
+        cudaMemset(all_dev, 0, size);
+        cudaDeviceSynchronize();
+        checkCudaError();
     }
+
     timer_checkpoint(start);
-    std::cout << "Running 2nd kernel...                 ";
-    size_t blocksPerGrid = (X_DIM * Y_DIM + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    layerExtraction<<<blocksPerGrid, THREADS_PER_BLOCK>>>(all_dev);
-    cudaDeviceSynchronize();
-    if (err != cudaSuccess) {
-        std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
-        return 1;
-    }
-    timer_checkpoint(start);
-    std::cout << "Copying memory contents...            ";
-    // Copy result from device memory to host memory
-    cudaMemcpy(all, all_dev, size, cudaMemcpyDeviceToHost);
-    err = cudaGetLastError();  // add
-    if (err != cudaSuccess) {
-        std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
-        return 1;
-    }
-    timer_checkpoint(start);
+    cudaFree(all_dev);
+    cudaFree(points_dev);
+
 #ifdef TEST
     checkOutput(triangles_dev, num_triangles, all);
-    for (int z = 0; z < NUM_LAYERS; z++) {
-        for (int y = Y_DIM; y > 0; y--) {
-            for (int x = 0; x < X_DIM; x++) {
-                if (all[z*X_DIM*Y_DIM + y*X_DIM + x]) std::cout << "XX";
-                else std::cout << "  ";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << std::endl << std::endl;
-    }
+    // for (int z = 0; z < NUM_LAYERS; z++) {
+    //     for (int y = Y_DIM; y > 0; y--) {
+    //         for (int x = 0; x < X_DIM; x++) {
+    //             if (all[z*X_DIM*Y_DIM + y*X_DIM + x]) std::cout << "XX";
+    //             else std::cout << "  ";
+    //         }
+    //         std::cout << std::endl;
+    //     }
+    //     std::cout << std::endl << std::endl;
+    // }
 #endif
-    cudaFree(all_dev);
     cudaFree(triangles_dev);
-    cudaFree(points_dev);
     free(all);
 
     return 0;
