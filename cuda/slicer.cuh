@@ -11,15 +11,15 @@
 #define BATCH_SIZE  (4 * THREADS_PER_BLOCK)
 #define NUM_BLOCKS  256
 #define TILE_WIDTH 128
-#define BLOCK_HEIGHT 32
+#define BLOCK_HEIGHT 128
 
 // in mm
 #define LOG_X 7
 #define LOG_Y 7
 #define X_LEN (1 << LOG_X)
 #define Y_LEN (1 << LOG_Y)
-#define HEIGHT 100
-#define RESOLUTION 0.25 // Must be (negative) power of 2
+#define HEIGHT 128
+#define RESOLUTION 1 // Must be (negative) power of 2
 
 // in pixels
 #define NUM_LAYERS ((long)(HEIGHT / RESOLUTION))
@@ -65,5 +65,7 @@ __global__ void layerExtraction(bool* out, layer_t start);
 __host__ void GPUsort(triangle* tris_dev, size_t size, double* zMins);
 
 __global__ void rectTriIntersection(double* tri_global, size_t num_tri, bool* out);
+__global__ void rectTriIntersection(double* tri_global, size_t num_tri, bool* out, unsigned base_layer);
+__global__ void layerExtraction(bool* out);
 
 #endif
