@@ -10,7 +10,7 @@ int pixelRayIntersectionY(triangle t, int x, int z);
 
 __global__
 void pps(triangle* triangles_global, size_t num_triangles, bool* out, unsigned base_layer) {
-    int idx = blockDim.x * blockIdx.x + threadIdx.x;
+    size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
     // printf("starting thread %d\n", idx);
     int z_idx = idx / X_DIM;
     // if (y >= Y_DIM) return;
@@ -119,3 +119,24 @@ int pixelRayIntersectionY(triangle t, int x, int z) {
     // // divide by layer width
     return inside ? (intersection / RESOLUTION) : YNONE;
 }
+
+__global__ 
+void triangleSelect(triangle* in, triangle* out, unsigned in_length,
+                    unsigned* out_length, unsigned base_layer)
+{
+    size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
+    size_t total_threads = blockDim.x * gridDim.x;
+    double min_height = base_layer * RESOLUTION;
+    double max_height = (base_layer + BLOCK_HEIGHT) * RESOLUTION;
+    while (idx < in_length) {
+        triangle t = in[idx];
+        idx += total_threads;
+        double z_min = min(t.p1.z, min(t.p2.z, t.p3.z));
+        if (z_min > max_height) continue;
+        double z_max = max(t.p1.z, max(t.p2.z, t.p3.z));
+        if (z_max < min_height) continue;
+        size_t curr_length = atomicAdd(out_length, 1);
+        out[curr_length] = t;
+    }
+}
+    

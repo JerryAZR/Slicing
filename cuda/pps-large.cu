@@ -48,7 +48,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Allocating device memory...           ";
 
     int num_triangles = triangles.size();
-    triangle* triangles_dev;
+    triangle* triangles_dev, * triangles_selected;
     // all[z][y][x]
 #ifdef TEST 
     // Allocate all reauired memory
@@ -61,7 +61,11 @@ int main(int argc, char* argv[]) {
     bool* all_dev;
     cudaMalloc(&all_dev, BLOCK_HEIGHT * Y_DIM * X_DIM * sizeof(bool));
     cudaMalloc(&triangles_dev, num_triangles * sizeof(triangle));
+    cudaMalloc(&triangles_selected, num_triangles * sizeof(triangle));
     cudaMemcpy(triangles_dev, triangles.data(), num_triangles * sizeof(triangle), cudaMemcpyHostToDevice);
+
+    unsigned* out_length_d, out_length_h;
+    cudaMalloc(&out_length_d, sizeof(unsigned));
 
     cudaError_t err = cudaGetLastError();  // add
     if (err != cudaSuccess) {
@@ -76,8 +80,13 @@ int main(int argc, char* argv[]) {
     timer_checkpoint(start);
     std::cout << "Running pps kernel...                 ";
     for (unsigned layer_idx = 0; layer_idx < NUM_LAYERS; layer_idx += BLOCK_HEIGHT) {
-        pps<<<blocksPerGrid, threadsPerBlock>>>(&triangles_dev[0], num_triangles, all_dev, layer_idx);
-        cudaDeviceSynchronize();
+        cudaMemset(out_length_d, 0, sizeof(unsigned));
+        checkCudaError();
+        triangleSelect<<<128,128>>>(triangles_dev, triangles_selected, num_triangles, out_length_d, layer_idx);
+        checkCudaError();
+        cudaMemcpy(&out_length_h, out_length_d, sizeof(unsigned), cudaMemcpyDeviceToHost);
+        checkCudaError();
+        pps<<<blocksPerGrid, threadsPerBlock>>>(triangles_selected, out_length_h, all_dev, layer_idx);
         checkCudaError();
         size_t copy_size = (layer_idx + BLOCK_HEIGHT) < NUM_LAYERS ? BLOCK_HEIGHT : NUM_LAYERS - layer_idx;
         copy_size = copy_size * X_DIM * Y_DIM * sizeof(bool);
@@ -90,9 +99,12 @@ int main(int argc, char* argv[]) {
         cudaDeviceSynchronize();
         checkCudaError();
     }
+
     
     timer_checkpoint(start);
     cudaFree(all_dev);
+    cudaFree(triangles_selected);
+    cudaFree(out_length_d);
 
 #ifdef TEST
     checkOutput(triangles_dev, num_triangles, all);
