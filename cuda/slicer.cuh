@@ -11,7 +11,7 @@
 #define BATCH_SIZE  (4 * THREADS_PER_BLOCK)
 #define NUM_BLOCKS  256
 #define TILE_WIDTH 128
-#define BLOCK_HEIGHT 32
+#define BLOCK_HEIGHT 16
 
 // in mm
 #define LOG_X 7
@@ -69,5 +69,6 @@ __global__ void rectTriIntersection(double* tri_global, size_t num_tri, bool* ou
 __global__ void layerExtraction(bool* out);
 
 __global__ void triangleSelect(triangle* in, triangle* out, unsigned in_length, unsigned* out_length, unsigned base_layer);
+__global__ void pointSelect(double* in, double* out, unsigned in_length, unsigned* out_length, unsigned base_layer);
 
 #endif

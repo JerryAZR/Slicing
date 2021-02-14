@@ -38,10 +38,10 @@ __global__ void rectTriIntersection(double* tri_global, size_t num_tri, bool* ou
         double y3 = y3_base[base_idx];
         double z3 = z3_base[base_idx];
         
-        long xMin = (long)(min3(x1, x2, x3) / RESOLUTION);
-        long zMin = (long)(min3(z1, z2, z3) / RESOLUTION);
-        long xMax = __double2ll_ru(max3(x1, x2, x3) / RESOLUTION);
-        long zMax = __double2ll_ru(max3(z1, z2, z3) / RESOLUTION);
+        long xMin = __double2ll_ru(min3(x1, x2, x3) / RESOLUTION);
+        long zMin = __double2ll_ru(min3(z1, z2, z3) / RESOLUTION);
+        long xMax = __double2ll_rd(max3(x1, x2, x3) / RESOLUTION);
+        long zMax = __double2ll_rd(max3(z1, z2, z3) / RESOLUTION);
         base_idx += (NUM_BLOCKS << LOG_THREADS);
         // Make sure the bounds are inside the supported space
         xMax = min(xMax, X_MAX);
