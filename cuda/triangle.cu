@@ -65,8 +65,8 @@ void read_stl(string fname, vector <triangle>&v) {
             //populate each point of the triangle
             //using v3::v3(char* bin);
             //Ignore triangles that are parallel to some pixel ray
-            v3 norm(facet);
-            if (norm.z == 0) continue;
+            // v3 norm(facet);
+            // if (norm.z == 0) continue;
             //facet + 12 skips the triangle's unit normal
             v3 p1(facet+12);
             v3 p2(facet+24);
