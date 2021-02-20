@@ -89,20 +89,7 @@ void layerExtraction(bool* out) {
         isInside = isInside ^ flip;
     }
 }
-// __global__
-// void layerExtraction(bool* out) {
-//     size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
-//     bool isInside = false;
-//     char* out_ptr = (char*) (out + idx);
-//     char intersection_count;
-//     for (size_t i = 0; i < NUM_LAYERS; i++) {
-//         intersection_count = out_ptr[i*X_DIM*Y_DIM];
-//         bool flip = (bool)(intersection_count & 1);
-//         bool intersect = (intersection_count > 0);
-//         out_ptr[i*X_DIM*Y_DIM] = (char) (isInside || intersect);
-//         isInside = isInside ^ flip;
-//     }
-// }
+
 /**
  * pixelRayIntersection: helper function, computes the intersection of given triangle and pixel ray
  * Inputs:

@@ -12,6 +12,7 @@
 #define NUM_BLOCKS  256
 #define TILE_WIDTH 128
 #define BLOCK_HEIGHT 16
+#define NUM_CPU_THREADS 16
 
 // in mm
 #define LOG_X 7
@@ -19,7 +20,7 @@
 #define X_LEN (1 << LOG_X)
 #define Y_LEN (1 << LOG_Y)
 #define HEIGHT 128
-#define RESOLUTION 0.25 // Must be (negative) power of 2
+#define RESOLUTION 0.125 // Must be (negative) power of 2
 
 // in pixels
 #define NUM_LAYERS ((long)(HEIGHT / RESOLUTION))
@@ -70,5 +71,13 @@ __global__ void layerExtraction(bool* out);
 
 __global__ void triangleSelect(triangle* in, triangle* out, unsigned in_length, unsigned* out_length, unsigned base_layer);
 __global__ void pointSelect(double* in, double* out, unsigned in_length, unsigned* out_length, unsigned base_layer);
+
+// Compression
+
+#define MAX_FLIPS 32
+
+__global__ void bbox_ints(bool* in, unsigned* out);
+void bbox_ints_decompress(unsigned* in, bool* out);
+
 
 #endif
