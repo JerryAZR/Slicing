@@ -3,9 +3,6 @@
 #include <thrust/functional.h>
 #include <stdio.h>
 
-__device__ __forceinline__
-layer_t pixelRayIntersection(triangle t, int x, int y);
-
 __global__
 void pps(triangle* triangles_global, size_t num_triangles, bool* out) {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;

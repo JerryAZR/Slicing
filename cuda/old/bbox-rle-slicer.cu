@@ -1,15 +1,16 @@
 #include "slicer.cuh"
 #include "triangle.cuh"
 #include <thrust/functional.h>
+#include <thread>
 
 __device__ __forceinline__ void triangleCopy(void* src, void* dest, int id);
 __device__ __forceinline__ double min3(double a, double b, double c);
 __device__ __forceinline__ double max3(double a, double b, double c);
 __device__ __forceinline__ char atomicAdd(char* address, char val);
-__device__ __forceinline__ layer_t pixelRayIntersection_point(double x1, double y1, double z1,
+__device__ __forceinline__ int pixelRayIntersection_point(double x1, double y1, double z1,
     double x2, double y2, double z2, double x3, double y3, double z3, int x, int y);
 
-__global__ void rectTriIntersection(double* tri_global, size_t num_tri, bool* out) {
+__global__ void rectTriIntersection(double* tri_global, size_t num_tri, bool* out, unsigned base_layer) {
     size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
     size_t num_per_thread = num_tri / (NUM_BLOCKS << LOG_THREADS) + 1;
     size_t base_idx = idx;
@@ -39,52 +40,111 @@ __global__ void rectTriIntersection(double* tri_global, size_t num_tri, bool* ou
         double z3 = z3_base[base_idx];
         
         long xMin = __double2ll_ru(min3(x1, x2, x3) / RESOLUTION);
-        long yMin = __double2ll_ru(min3(y1, y2, y3) / RESOLUTION);
+        long zMin = __double2ll_ru(min3(z1, z2, z3) / RESOLUTION);
         long xMax = __double2ll_rd(max3(x1, x2, x3) / RESOLUTION);
-        long yMax = __double2ll_rd(max3(y1, y2, y3) / RESOLUTION);
+        long zMax = __double2ll_rd(max3(z1, z2, z3) / RESOLUTION);
         base_idx += (NUM_BLOCKS << LOG_THREADS);
         // Make sure the bounds are inside the supported space
         xMax = min(xMax, X_MAX);
         xMin = max(xMin, X_MIN);
-        yMax = min(yMax, Y_MAX);
-        yMin = max(yMin, Y_MIN);
-        if (xMax < xMin || yMax < yMin) continue;
+        long zMax_ub = min(NUM_LAYERS-1, (long)(base_layer+BLOCK_HEIGHT-1));
+        zMax = min(zMax, zMax_ub);
+        zMin = max(zMin, (long)(base_layer));
+        if (xMax < xMin || zMax < zMin) continue;
         // iterate over all pixels inside the bounding box
         // Will likely cause (lots of) wrap divergence, but we'll deal with that later
         int x = xMin;
-        int y = yMin;
-        while (y <= yMax) {
-            layer_t curr_intersection = 
-                pixelRayIntersection_point(x1, y1, z1, x2, y2, z2, x3, y3, z3, x, y);
-            if (curr_intersection >= 0 && curr_intersection < NUM_LAYERS) {
+        int z = zMin;
+        while (z <= zMax) {
+            int curr_intersection = 
+                pixelRayIntersection_point(x1, y1, z1, x2, y2, z2, x3, y3, z3, x, z);
+            if (curr_intersection >= Y_MIN && curr_intersection <= Y_MAX) {
                 // Found a valid intersection
                 int x_idx = x + (X_DIM >> 1);
-                int y_idx = y + (Y_DIM >> 1);
-                char* temp_ptr = (char*) (out + curr_intersection*X_DIM*Y_DIM + y_idx*X_DIM + x_idx);
+                int y_idx = curr_intersection + (Y_DIM >> 1);
+                // replace by adding current intersection to trunk
+                char* temp_ptr = (char*) (out + (z-base_layer)*X_DIM*Y_DIM + y_idx*X_DIM + x_idx);
                 atomicAdd(temp_ptr, 1);
             }
             // update coords
             bool nextLine = (x == xMax);
-            y += (int)nextLine;
+            z += (int)nextLine;
             x = nextLine ? xMin : (x+1);
         }
     }
 }
 
-__global__
-void layerExtraction(bool* out) {
+// Output is the indices at which the state flips
+__global__ void bbox_ints(bool* in, unsigned* out) {
     size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
+    size_t x_idx = idx % X_DIM;
+    size_t z_idx = idx / X_DIM;
     bool isInside = false;
-    char* out_ptr = (char*) (out + idx);
+    char* in_ptr = (char*) (in);
     char intersection_count;
-    for (size_t i = 0; i < NUM_LAYERS; i++) {
-        intersection_count = out_ptr[i*X_DIM*Y_DIM];
+    bool curr = false;
+    bool prev = false;
+    unsigned out_length = 0;
+    unsigned* out_base = out + (idx * MAX_FLIPS);
+
+    for (size_t y = 0; y < Y_DIM; y++) {
+        prev = curr;
+        size_t full_idx = z_idx*X_DIM*Y_DIM + y*X_DIM + x_idx;
+        intersection_count = in_ptr[full_idx];
         bool flip = (bool)(intersection_count & 1);
         bool intersect = (intersection_count > 0);
-        out_ptr[i*X_DIM*Y_DIM] = (char) (isInside || intersect);
+        curr = (isInside || intersect);
         isInside = isInside ^ flip;
+        if (prev != curr) {
+            out_base[out_length] = y;
+            out_length++;
+        }
+    }
+    if (out_length > MAX_FLIPS) printf("Too many flips.\nPlease change MAX_FLIPS and try again.\n");
+    else if (out_length < MAX_FLIPS) out_base[out_length] = Y_DIM;
+}
+
+
+// single thread ver
+void bbox_ints_decompress_st(unsigned* in, bool* out, unsigned nlayers) {
+    for (unsigned z = 0; z < nlayers; z++) {
+        for (unsigned x = 0; x < X_DIM; x++) {
+            unsigned* in_base = in + (z*X_DIM*MAX_FLIPS + x*MAX_FLIPS);
+            bool* out_base = out + (z*Y_DIM*X_DIM + x);
+            unsigned flip_idx = 0;
+            bool inside = false;
+            for (unsigned y = 0; y < Y_DIM; y++) {
+                if (in_base[flip_idx] == y) {
+                    inside = !inside;
+                    flip_idx = (flip_idx + 1) & (MAX_FLIPS - 1);
+                }
+                out_base[y*X_DIM] = inside;
+            }
+        }
     }
 }
+
+void bbox_ints_decompress(unsigned* in, bool* out) {
+    unsigned num_per_thread = (NUM_LAYERS + NUM_CPU_THREADS - 1) / NUM_CPU_THREADS;
+    std::thread threads[NUM_CPU_THREADS];
+    size_t in_offset = 0;
+    size_t out_offset = 0;
+    for (unsigned i = 0; i < NUM_CPU_THREADS-1; i++) {
+        unsigned* thread_in = in + in_offset;
+        bool* thread_out = out + out_offset;
+        threads[i] = std::thread(bbox_ints_decompress_st, thread_in, thread_out, num_per_thread);
+        in_offset += (num_per_thread*X_DIM*MAX_FLIPS);
+        out_offset += (num_per_thread*X_DIM*Y_DIM);
+    }
+    unsigned remaining = NUM_LAYERS - ((NUM_CPU_THREADS-1)*num_per_thread);
+    unsigned* thread_in = in + in_offset;
+    bool* thread_out = out + out_offset;
+    threads[NUM_CPU_THREADS-1] = std::thread(bbox_ints_decompress_st, thread_in, thread_out, remaining);
+    for (unsigned i = 0; i < NUM_CPU_THREADS; i++) {
+        threads[i].join();
+    }
+}
+
 
 /**
  * pixelRayIntersection: helper function, computes the intersection of given triangle and pixel ray
@@ -95,8 +155,8 @@ void layerExtraction(bool* out) {
  *      The layer on which they intersect, or -1 if no intersection
  */
 __device__ __forceinline__
-layer_t pixelRayIntersection_point(double x1, double y1, double z1,
-    double x2, double y2, double z2, double x3, double y3, double z3, int x, int y) {
+int pixelRayIntersection_point(double x1, double y1, double z1,
+    double x2, double y2, double z2, double x3, double y3, double z3, int x, int z) {
     /*
     Let A, B, C be the 3 vertices of the given triangle
     Let S(x,y,z) be the intersection, where x,y are given
@@ -105,7 +165,7 @@ layer_t pixelRayIntersection_point(double x1, double y1, double z1,
     */
 
     double x_pos = x * RESOLUTION;
-    double y_pos = y * RESOLUTION;
+    double z_pos = z * RESOLUTION;
 
     // double x_max = max3(x1, x2, x3);
     // double x_min = min3(x1, x2, x3);
@@ -113,7 +173,7 @@ layer_t pixelRayIntersection_point(double x1, double y1, double z1,
     // if (x_pos < x_min || x_pos > x_max) return NONE;
 
     double x_d = x_pos - x1;
-    double y_d = y_pos - y1;
+    double z_d = z_pos - z1;
 
     double xx1 = x2 - x1;
     double yy1 = y2 - y1;
@@ -122,12 +182,12 @@ layer_t pixelRayIntersection_point(double x1, double y1, double z1,
     double xx2 = x3 - x1;
     double yy2 = y3 - y1;
     double zz2 = z3 - z1;
-    double a = (x_d * yy2 - xx2 * y_d) / (xx1 * yy2 - xx2 * yy1);
-    double b = (x_d * yy1 - xx1 * y_d) / (xx2 * yy1 - xx1 * yy2);
+    double a = (x_d * zz2 - xx2 * z_d) / (xx1 * zz2 - xx2 * zz1);
+    double b = (x_d * zz1 - xx1 * z_d) / (xx2 * zz1 - xx1 * zz2);
     bool inside = (a >= 0) && (b >= 0) && (a+b <= 1);
-    double intersection = (a * zz1 + b * zz2) + z1;
+    double intersection = (a * yy1 + b * yy2) + y1;
     // // divide by layer width
-    layer_t layer = inside ? (intersection / RESOLUTION) : (layer_t)(-1);
+    int layer = inside ? (intersection / RESOLUTION) : INT_MIN;
     return layer;
 }
  

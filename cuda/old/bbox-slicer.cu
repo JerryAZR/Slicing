@@ -72,12 +72,12 @@ __global__ void rectTriIntersection(double* tri_global, size_t num_tri, bool* ou
 }
 
 __global__
-void layerExtraction(bool* out) {
+void layerExtraction(bool* out, layer_t start) {
     size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
     bool isInside = false;
     char* out_ptr = (char*) (out + idx);
     char intersection_count;
-    for (size_t i = 0; i < NUM_LAYERS; i++) {
+    for (size_t i = start; i < NUM_LAYERS; i++) {
         intersection_count = out_ptr[i*X_DIM*Y_DIM];
         bool flip = (bool)(intersection_count & 1);
         bool intersect = (intersection_count > 0);

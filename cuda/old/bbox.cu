@@ -76,7 +76,7 @@ int main(int argc, char* argv[]) {
     timer_checkpoint(start);
     std::cout << "Running 2nd kernel...                 ";
     size_t blocksPerGrid = (X_DIM * Y_DIM + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-    layerExtraction<<<blocksPerGrid, THREADS_PER_BLOCK>>>(all_dev);
+    layerExtraction<<<blocksPerGrid, THREADS_PER_BLOCK>>>(all_dev, 0);
     cudaDeviceSynchronize();
     if (err != cudaSuccess) {
         std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;

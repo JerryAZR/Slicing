@@ -38,12 +38,32 @@ typedef int layer_t;
 #define NONE ((layer_t)(-1))
 
 // Sanity Check
+static_assert(THREADS_PER_BLOCK <= X_DIM, "THREADS_PER_BLOCK may not be larger than X_DIM");
+static_assert(!(X_DIM & (X_DIM-1)), "RESOLUTION must be some power of 2");
 
 __global__ void pps(triangle* triangles, size_t num_triangles, bool* out);
 __global__ void pps(triangle* triangles, size_t num_triangles, bool* out, unsigned base_layer);
 
 // returns the layer of intersection
 __device__ layer_t pixelRayIntersection(triangle t, int x, int y);
+__device__ int getIntersectionTrunk(int x, int y, triangle* triangles, size_t num_triangles, layer_t* layers);
+__device__ bool isInside(layer_t current, layer_t* trunk, size_t length);
+
+__global__ void fps1(triangle* triangles, size_t num_triangles, layer_t* all_intersections, unsigned* trunk_length, int* locks);
+__global__ void fps2(layer_t* all_intersections, unsigned* trunk_length);
+__global__ void fps3(layer_t* sorted_intersections, unsigned* trunk_length, bool* out);
+
+__global__ void triangle_sort(triangle* triangles_global, size_t num_triangles, double* zmins_global, int* index_global);
+__global__ void outputArray(triangle* triangles_global, size_t num_triangles, bool* out, int* index_global);
+__device__ int pixelRayIntersectionNew(triangle t, int x, int y);
+__device__ bool getIntersect(int x, int y, triangle* triangles, size_t num_triangles, size_t layer, int* index);
+__device__ void getOutarray(int x, int y, triangle* triangles, size_t num_triangles, size_t layer, size_t outIdx, size_t flagIdx, bool* out, bool* flagArray, int* index);
+
+__global__ void smallTriIntersection(triangle* tri_small, double* zMins, size_t num_small, bool* out);
+
+__global__ void overlapSlicer(triangle* tri_small, double* zMins, size_t num_small, bool* out);
+__global__ void layerExtraction(bool* out, layer_t start);
+__host__ void GPUsort(triangle* tris_dev, size_t size, double* zMins);
 
 __global__ void rectTriIntersection(double* tri_global, size_t num_tri, bool* out);
 __global__ void rectTriIntersection(double* tri_global, size_t num_tri, bool* out, unsigned base_layer);
