@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include "triangle.cuh"
 #include "slicer.cuh"
@@ -56,16 +57,16 @@ int main(int argc, char* argv[]) {
 #else
     bool* all = (bool*)malloc(BLOCK_HEIGHT * Y_DIM * X_DIM * sizeof(bool));
 #endif
-    bool* all_dev;
-    size_t size = BLOCK_HEIGHT * Y_DIM * X_DIM * sizeof(bool);
-    cudaMalloc(&all_dev, size);
-    cudaMemset(all_dev, 0, size);
-    unsigned* flips_dev;
-    cudaMalloc(&flips_dev, BLOCK_HEIGHT * X_DIM * MAX_FLIPS * sizeof(unsigned));
+    unsigned* trunks_dev;
+    cudaMalloc(&trunks_dev, BLOCK_HEIGHT * X_DIM * MAX_TRUNK_SIZE * sizeof(unsigned));
+    unsigned* trunk_length;
+    cudaMalloc(&trunk_length, BLOCK_HEIGHT * X_DIM * sizeof(unsigned));
+    cudaMemset(trunk_length, 0, BLOCK_HEIGHT * X_DIM * sizeof(unsigned));
+
 #ifdef TEST
-    unsigned* flips_host = (unsigned*)malloc(NUM_LAYERS * MAX_FLIPS * X_DIM * sizeof(unsigned));
+    unsigned* trunks_host = (unsigned*)malloc(NUM_LAYERS * MAX_TRUNK_SIZE * X_DIM * sizeof(unsigned));
 #else
-    unsigned* flips_host = (unsigned*)malloc(BLOCK_HEIGHT * MAX_FLIPS * X_DIM * sizeof(unsigned));
+    unsigned* trunks_host = (unsigned*)malloc(BLOCK_HEIGHT * MAX_TRUNK_SIZE * X_DIM * sizeof(unsigned));
 #endif
     cudaMalloc(&triangles_dev, num_triangles * sizeof(triangle));
     cudaMemcpy(triangles_dev, triangles.data(), num_triangles * sizeof(triangle), cudaMemcpyHostToDevice);
@@ -86,50 +87,55 @@ int main(int argc, char* argv[]) {
     timer_checkpoint(start);
     std::cout << "Running 1st kernel...                 ";
     for (unsigned layer_idx = 0; layer_idx < NUM_LAYERS; layer_idx += BLOCK_HEIGHT) {
-        rectTriIntersection<<<NUM_BLOCKS, THREADS_PER_BLOCK>>>(points_dev, num_triangles, all_dev, layer_idx);
+        rectTriIntersection<<<NUM_BLOCKS, THREADS_PER_BLOCK>>>
+            (points_dev, num_triangles, trunks_dev, trunk_length, layer_idx);
         cudaDeviceSynchronize();
         checkCudaError();
         size_t blocksPerGrid = (X_DIM * BLOCK_HEIGHT + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-        bbox_ints<<<blocksPerGrid, THREADS_PER_BLOCK>>>(all_dev, flips_dev);
+        trunk_compress<<<blocksPerGrid, THREADS_PER_BLOCK>>>(trunks_dev, trunk_length);
         cudaDeviceSynchronize();
         checkCudaError();
         size_t copy_size = (layer_idx + BLOCK_HEIGHT) < NUM_LAYERS ? BLOCK_HEIGHT : NUM_LAYERS - layer_idx;
-        copy_size = copy_size * X_DIM * MAX_FLIPS * sizeof(unsigned);
+        copy_size = copy_size * X_DIM * MAX_TRUNK_SIZE * sizeof(unsigned);
     #ifdef TEST
-        unsigned* flips_addr = &flips_host[X_DIM*MAX_FLIPS*layer_idx];
+        unsigned* trunks_addr = &trunks_host[X_DIM*MAX_TRUNK_SIZE*layer_idx];
     #else
-        unsigned* flips_addr = &flips_host[0];
+        unsigned* trunks_addr = &trunks_host[0];
     #endif
-        cudaMemcpy(flips_addr, flips_dev, copy_size, cudaMemcpyDeviceToHost);
-        cudaMemset(all_dev, 0, size);
+        cudaMemcpy(trunks_addr, trunks_dev, copy_size, cudaMemcpyDeviceToHost);
+        cudaMemset(trunk_length, 0, BLOCK_HEIGHT * X_DIM * sizeof(unsigned));
         cudaDeviceSynchronize();
         checkCudaError();
     }
 
     timer_checkpoint(start);
-    cudaFree(all_dev);
+    cudaFree(trunk_length);
     cudaFree(points_dev);
-    cudaFree(flips_dev);
+    cudaFree(trunks_dev);
 
 #ifdef TEST
     std::cout << "Decompressing...                 ";
-    bbox_ints_decompress(flips_host, all);
+    bbox_ints_decompress(trunks_host, all);
     timer_checkpoint(start);
     checkOutput(triangles_dev, num_triangles, all);
-    // for (int z = 0; z < NUM_LAYERS; z++) {
-    //     for (int y = Y_DIM; y > 0; y--) {
-    //         for (int x = 0; x < X_DIM; x++) {
-    //             if (all[z*X_DIM*Y_DIM + y*X_DIM + x]) std::cout << "XX";
-    //             else std::cout << "  ";
-    //         }
-    //         std::cout << std::endl;
-    //     }
-    //     std::cout << std::endl << std::endl;
-    // }
+
+    std::ofstream outfile;
+    outfile.open("out.txt");
+    for (int z = 0; z < NUM_LAYERS; z++) {
+        for (int y = Y_DIM-1; y >= 0; y--) {
+            for (int x = 0; x < X_DIM; x++) {
+                if (all[z*X_DIM*Y_DIM + y*X_DIM + x]) outfile << "XX";
+                else outfile << "  ";
+            }
+            outfile << "\n";
+        }
+        outfile << "\n\n";
+    }
+    outfile.close();
 #endif
     cudaFree(triangles_dev);
     free(all);
-    free(flips_host);
+    free(trunks_host);
 
     return 0;
 }

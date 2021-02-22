@@ -10,7 +10,7 @@ __device__ __forceinline__ char atomicAdd(char* address, char val);
 __device__ __forceinline__ int pixelRayIntersection_point(double x1, double y1, double z1,
     double x2, double y2, double z2, double x3, double y3, double z3, int x, int y);
 
-__global__ void rectTriIntersection(double* tri_global, size_t num_tri, bool* out, unsigned base_layer) {
+__global__ void rectTriIntersection(double* tri_global, size_t num_tri, unsigned* trunks, unsigned* trunk_length, unsigned base_layer) {
     size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
     size_t num_per_thread = num_tri / (NUM_BLOCKS << LOG_THREADS) + 1;
     size_t base_idx = idx;
@@ -61,10 +61,16 @@ __global__ void rectTriIntersection(double* tri_global, size_t num_tri, bool* ou
             if (curr_intersection >= Y_MIN && curr_intersection <= Y_MAX) {
                 // Found a valid intersection
                 int x_idx = x + (X_DIM >> 1);
-                int y_idx = curr_intersection + (Y_DIM >> 1);
-                // replace by adding current intersection to trunk
-                char* temp_ptr = (char*) (out + (z-base_layer)*X_DIM*Y_DIM + y_idx*X_DIM + x_idx);
-                atomicAdd(temp_ptr, 1);
+                unsigned y_idx = curr_intersection + (Y_DIM >> 1);
+                // Add current intersection to trunk
+                unsigned* trunk_base = trunks + (z-base_layer)*X_DIM*MAX_TRUNK_SIZE + x_idx*MAX_TRUNK_SIZE;
+                unsigned* length_address = trunk_length + (z-base_layer)*X_DIM + x_idx;
+                unsigned curr_length = atomicAdd(length_address, 1);
+                // Need to check if out of range
+                if (curr_length >= MAX_TRUNK_SIZE) 
+                    printf("Error: Too many intersections.\n \
+                            Please increase MAX_TRUNK_SIZE in slicer.cuh and recompile.\n");
+                trunk_base[curr_length] = y_idx;
             }
             // update coords
             bool nextLine = (x == xMax);
@@ -74,49 +80,46 @@ __global__ void rectTriIntersection(double* tri_global, size_t num_tri, bool* ou
     }
 }
 
-// Output is the indices at which the state flips
-__global__ void bbox_ints(bool* in, unsigned* out) {
+__global__ void trunk_compress(unsigned* trunks, unsigned* trunk_length) {
     size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
-    size_t x_idx = idx % X_DIM;
-    size_t z_idx = idx / X_DIM;
-    bool isInside = false;
-    char* in_ptr = (char*) (in);
-    char intersection_count;
+    unsigned length = trunk_length[idx];
+    unsigned* trunk_base = trunks + idx*MAX_TRUNK_SIZE;
     bool curr = false;
     bool prev = false;
     unsigned out_length = 0;
-    unsigned* out_base = out + (idx * MAX_FLIPS);
 
-    for (size_t y = 0; y < Y_DIM; y++) {
+    thrust::sort(thrust::device, trunk_base, trunk_base + length);
+    trunk_base[length] = Y_DIM;
+
+    unsigned layerIdx = 0;
+    for (unsigned y = 0; y < Y_DIM; y++) {
+        // update prev flag
         prev = curr;
-        size_t full_idx = z_idx*X_DIM*Y_DIM + y*X_DIM + x_idx;
-        intersection_count = in_ptr[full_idx];
-        bool flip = (bool)(intersection_count & 1);
-        bool intersect = (intersection_count > 0);
-        curr = (isInside || intersect);
-        isInside = isInside ^ flip;
-        if (prev != curr) {
-            out_base[out_length] = y;
+        // If intersect
+        while (trunk_base[layerIdx] < y) layerIdx++;
+        bool intersect = (y == trunk_base[layerIdx]);
+        bool flag = (bool) (layerIdx & 1);
+        curr = intersect || flag;
+        if (curr != prev) {
+            trunk_base[out_length] = y;
             out_length++;
         }
     }
-    if (out_length > MAX_FLIPS) printf("Too many flips.\nPlease change MAX_FLIPS and try again.\n");
-    else if (out_length < MAX_FLIPS) out_base[out_length] = Y_DIM;
+    if (out_length < MAX_TRUNK_SIZE) trunk_base[out_length] = Y_DIM;
 }
-
 
 // single thread ver
 void bbox_ints_decompress_st(unsigned* in, bool* out, unsigned nlayers) {
     for (unsigned z = 0; z < nlayers; z++) {
         for (unsigned x = 0; x < X_DIM; x++) {
-            unsigned* in_base = in + (z*X_DIM*MAX_FLIPS + x*MAX_FLIPS);
+            unsigned* in_base = in + (z*X_DIM*MAX_TRUNK_SIZE + x*MAX_TRUNK_SIZE);
             bool* out_base = out + (z*Y_DIM*X_DIM + x);
             unsigned flip_idx = 0;
             bool inside = false;
             for (unsigned y = 0; y < Y_DIM; y++) {
                 if (in_base[flip_idx] == y) {
                     inside = !inside;
-                    flip_idx = (flip_idx + 1) & (MAX_FLIPS - 1);
+                    flip_idx++;
                 }
                 out_base[y*X_DIM] = inside;
             }
@@ -133,7 +136,7 @@ void bbox_ints_decompress(unsigned* in, bool* out) {
         unsigned* thread_in = in + in_offset;
         bool* thread_out = out + out_offset;
         threads[i] = std::thread(bbox_ints_decompress_st, thread_in, thread_out, num_per_thread);
-        in_offset += (num_per_thread*X_DIM*MAX_FLIPS);
+        in_offset += (num_per_thread*X_DIM*MAX_TRUNK_SIZE);
         out_offset += (num_per_thread*X_DIM*Y_DIM);
     }
     unsigned remaining = NUM_LAYERS - ((NUM_CPU_THREADS-1)*num_per_thread);
@@ -215,32 +218,4 @@ __device__ __forceinline__
 double max3(double a, double b, double c) {
     // thrust::maximum<double> max;
     return max(a, max(b, c));
-}
-
-__device__ __forceinline__
-char atomicAdd(char* address, char val) {
-    // *address = *address + val;
-    // return 0;
-    size_t addr_offset = (size_t) address & 3;
-    auto* base_address = (unsigned int*) ((size_t) address - addr_offset);
-    unsigned int long_val = (unsigned int) val << (8 * addr_offset);
-    unsigned int long_old = atomicAdd(base_address, long_val);
-
-    // Overflow check. skipped for simplicity.
-    // if (addr_offset == 3) {
-    //     return (char) (long_old >> 24);
-    // } else {
-    //     // bits that represent the char value within long_val
-    //     unsigned int mask = 0x000000ff << (8 * addr_offset);
-    //     unsigned int masked_old = long_old & mask;
-    //     // isolate the bits that represent the char value within long_old, add the long_val to that,
-    //     // then re-isolate by excluding bits that represent the char value
-    //     unsigned int overflow = (masked_old + long_val) & ~mask;
-    //     if (overflow) {
-    //         atomicSub(base_address, overflow);
-    //     }
-    //     return (char) (masked_old >> 8 * addr_offset);
-    // }
-
-    return (char) ((long_old >> 8 * addr_offset) & 0xff);
 }
