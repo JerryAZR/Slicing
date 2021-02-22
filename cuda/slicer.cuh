@@ -8,19 +8,16 @@
 #define LOG_THREADS 7
 #define THREADS_PER_BLOCK (1 << LOG_THREADS)
 #define MAX_TRUNK_SIZE	28
-#define BATCH_SIZE  (4 * THREADS_PER_BLOCK)
 #define NUM_BLOCKS  256
-#define TILE_WIDTH 128
 #define BLOCK_HEIGHT 16
 #define NUM_CPU_THREADS 16
 
 // in mm
-#define LOG_X 7
-#define LOG_Y 7
-#define X_LEN (1 << LOG_X)
-#define Y_LEN (1 << LOG_Y)
+// Power of 2 recommended for better performance
+#define X_LEN 128
+#define Y_LEN 128
 #define HEIGHT 128
-#define RESOLUTION 0.125 // Must be (negative) power of 2
+#define RESOLUTION 0.25
 
 // in pixels
 #define NUM_LAYERS ((long)(HEIGHT / RESOLUTION))
