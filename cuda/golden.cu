@@ -6,6 +6,9 @@
 #include <stdio.h>
 #include <fstream>
 
+#define GOLDEN_BLOCK_SIZE 256
+#define GOLDEN_GRID_SIZE 256
+
 // Declare local helper functions
 __global__ void _RTIntersection(triangle* tri_small, size_t num_small, bool* out);
 __global__ void _layerExtraction(bool* out);
@@ -15,6 +18,7 @@ __device__ __forceinline__ layer_t _pixelRayIntersection(triangle t, int x, int 
 __device__ __forceinline__ void _extractLayer(layer_t curr_layer, bool & isInside, char* out_local);
 __device__ __forceinline__ double _min3(double a, double b, double c);
 __device__ __forceinline__ double _max3(double a, double b, double c);
+__device__ __forceinline__ char _atomicAdd(char* address, char val);
 
 
 long checkOutput(triangle* triangles_dev, size_t num_triangles, bool* in) {
@@ -54,7 +58,7 @@ long checkOutput(triangle* triangles_dev, size_t num_triangles, bool* in) {
 }
 
 void goldenModel(triangle* triangles_dev, size_t num_triangles, bool* out) {
-    size_t threadsPerBlock = THREADS_PER_BLOCK;
+    size_t threadsPerBlock = GOLDEN_BLOCK_SIZE;
     size_t blocksPerGrid;
     bool* all_dev;
     size_t size = NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool);
@@ -63,11 +67,12 @@ void goldenModel(triangle* triangles_dev, size_t num_triangles, bool* out) {
     cudaError_t err = cudaGetLastError();  // add
     if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
 
-    blocksPerGrid = (Y_DIM * X_DIM + threadsPerBlock - 1) / threadsPerBlock;
-    _RTIntersection<<<blocksPerGrid, threadsPerBlock>>>(triangles_dev, num_triangles, all_dev);
+    _RTIntersection<<<GOLDEN_GRID_SIZE, GOLDEN_BLOCK_SIZE>>>
+        (triangles_dev, num_triangles, all_dev);
     cudaDeviceSynchronize();
     err = cudaGetLastError();  // add
-    if (err != cudaSuccess) std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
+    if (err != cudaSuccess) 
+        std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
     blocksPerGrid = (X_DIM * Y_DIM + threadsPerBlock - 1) / threadsPerBlock;
     _layerExtraction<<<blocksPerGrid, threadsPerBlock>>>(all_dev);
     cudaDeviceSynchronize();
@@ -82,65 +87,56 @@ void goldenModel(triangle* triangles_dev, size_t num_triangles, bool* out) {
 }
 
 __global__ 
-void _RTIntersection(triangle* tri_small, size_t num_small, bool* out) {
+void _RTIntersection(triangle* tri_base, size_t num_tri, bool* out) {
     size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
-    int x_idx = idx & (X_DIM-1);
-    int y_idx = idx / X_DIM;
-    int x = x_idx - (X_DIM >> 1);
-    int y = y_idx - (Y_DIM >> 1);
+    size_t num_per_thread = num_tri / (GOLDEN_BLOCK_SIZE * GOLDEN_GRID_SIZE) + 1;
+    size_t base_idx = idx;
 
-    __shared__ triangle tri_base[THREADS_PER_BLOCK];
-    __shared__ bool yNotInside[THREADS_PER_BLOCK];
-
-    // Use local array. Mapped to registers if NUM_LAYERS is small
-    char out_local[NUM_LAYERS] = {0};
-    char* out_ptr = (char*)(out + idx);
-
-    size_t num_iters = num_small / THREADS_PER_BLOCK;
-
-    double y_pos = y * RESOLUTION;
-    // double x_pos = x * RESOLUTION;
-
-    for (size_t i = 0; i < num_iters; i++) {
-        triangle t = tri_small[threadIdx.x + (i * THREADS_PER_BLOCK)];
-        tri_base[threadIdx.x] = t;
-        double yMin = _min3(t.p1.y, t.p2.y, t.p3.y);
-        double yMax = _max3(t.p1.y, t.p2.y, t.p3.y);
-        yNotInside[threadIdx.x] = (y_pos < yMin) || (y_pos > yMax);
-        // Wait for other threads to complete;
-        __syncthreads();
-        if (y_idx < Y_DIM) {
-            for (size_t tri_idx = 0; tri_idx < THREADS_PER_BLOCK; tri_idx++) {
-                if (yNotInside[tri_idx]) continue;
-                layer_t curr_intersection = _pixelRayIntersection(tri_base[tri_idx], x, y);
-                if (curr_intersection >= 0 && curr_intersection < NUM_LAYERS) out_local[curr_intersection]++;
+    // iterate over all triangles assigned to this thread.
+    for (size_t i = 0; i < num_per_thread; i++) {
+        // Compute bounding box
+        if (base_idx >= num_tri) break;
+        triangle t = tri_base[base_idx];
+        double x1 = t.p1.x;
+        double y1 = t.p1.y;
+        // double z1 = t.p1.z;
+        double x2 = t.p2.x;
+        double y2 = t.p2.y;
+        // double z2 = t.p2.z;
+        double x3 = t.p3.x;
+        double y3 = t.p3.y;
+        // double z3 = t.p3.z;
+        
+        long xMin = __double2ll_ru(_min3(x1, x2, x3) / RESOLUTION);
+        long yMin = __double2ll_ru(_min3(y1, y2, y3) / RESOLUTION);
+        long xMax = __double2ll_rd(_max3(x1, x2, x3) / RESOLUTION);
+        long yMax = __double2ll_rd(_max3(y1, y2, y3) / RESOLUTION);
+        base_idx += (GOLDEN_BLOCK_SIZE * GOLDEN_GRID_SIZE);
+        // Make sure the bounds are inside the supported space
+        xMax = min(xMax, X_MAX);
+        xMin = max(xMin, X_MIN);
+        yMax = min(yMax, Y_MAX);
+        yMin = max(yMin, Y_MIN);
+        if (xMax < xMin || yMax < yMin) continue;
+        // iterate over all pixels inside the bounding box
+        // Will likely cause (lots of) wrap divergence, but we'll deal with that later
+        int x = xMin;
+        int y = yMin;
+        while (y <= yMax) {
+            layer_t curr_intersection = 
+                _pixelRayIntersection(t, x, y);
+            if (curr_intersection >= 0 && curr_intersection < NUM_LAYERS) {
+                // Found a valid intersection
+                int x_idx = x + (X_DIM >> 1);
+                int y_idx = y + (Y_DIM >> 1);
+                char* temp_ptr = (char*) (out + curr_intersection*X_DIM*Y_DIM + y_idx*X_DIM + x_idx);
+                _atomicAdd(temp_ptr, 1);
             }
+            // update coords
+            bool nextLine = (x == xMax);
+            y += (int)nextLine;
+            x = nextLine ? xMin : (x+1);
         }
-        __syncthreads();
-    }
-
-    size_t remaining = num_small - (num_iters * THREADS_PER_BLOCK);
-
-    if (threadIdx.x < remaining) {
-        triangle t = tri_small[threadIdx.x + (num_iters * THREADS_PER_BLOCK)];
-        tri_base[threadIdx.x] = t;
-        double yMin = _min3(t.p1.y, t.p2.y, t.p3.y);
-        double yMax = _max3(t.p1.y, t.p2.y, t.p3.y);
-        yNotInside[threadIdx.x] = (y_pos < yMin) || (y_pos > yMax);
-    }
-    __syncthreads();
-    if (remaining) {
-        if (y_idx < Y_DIM) {
-            for (size_t tri_idx = 0; tri_idx < remaining; tri_idx++) {
-                if (yNotInside[tri_idx]) continue;
-                layer_t curr_intersection = _pixelRayIntersection(tri_base[tri_idx], x, y);
-                if (curr_intersection >= 0 && curr_intersection < NUM_LAYERS) out_local[curr_intersection]++;
-            }
-        }
-    }
-
-    for (size_t i = 0; i < NUM_LAYERS; i++) {
-        out_ptr[i*X_DIM*Y_DIM] = out_local[i];
     }
 }
 
@@ -181,8 +177,6 @@ layer_t _pixelRayIntersection(triangle t, int x, int y) {
     double x_pos = x * RESOLUTION;
     double y_pos = y * RESOLUTION;
 
-    if (x_pos < x_min || x_pos > x_max) return NONE;
-
     double x_d = x_pos - t.p1.x;
     double y_d = y_pos - t.p1.y;
 
@@ -221,4 +215,18 @@ __device__ __forceinline__
 double _max3(double a, double b, double c) {
     thrust::maximum<double> max;
     return max(a, max(b, c));
+}
+
+__device__ __forceinline__
+char _atomicAdd(char* address, char val) {
+    // *address = *address + val;
+    // return 0;
+    size_t addr_offset = (size_t) address & 3;
+    auto* base_address = (unsigned int*) ((size_t) address - addr_offset);
+    unsigned int long_val = (unsigned int) val << (8 * addr_offset);
+    unsigned int long_old = atomicAdd(base_address, long_val);
+
+    // Overflow check. skipped for simplicity.
+
+    return (char) ((long_old >> 8 * addr_offset) & 0xff);
 }
