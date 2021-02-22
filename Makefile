@@ -6,7 +6,9 @@ CXX=nvcc
 DEPS = $(SRCDIR)/slicer.cuh $(SRCDIR)/triangle.cuh $(SRCDIR)/golden.cuh
 NEW_DEPS = AlgoGPU/slicer.cu AlgoGPU/triangle.cu AlgoGPU/slicer.cuh AlgoGPU/triangle.cuh
 
-all: pps bbox bbox-large pps-large
+all: pps bbox bbox-large pps-large bbox-rle
+main: pps-main bbox-main pps-large-main bbox-large-main bbox-rle-main
+test: pps-test bbox-test pps-large-test bbox-large-test bbox-rle-test
 
 fps: fps-main fps-test
 pps: pps-main pps-test
@@ -18,6 +20,7 @@ mfps: mfps-main mfps-test
 ofps: ofps-main ofps-test
 bbox: bbox-main bbox-test
 bbox-large: bbox-large-main bbox-large-test
+bbox-rle: bbox-rle-main bbox-rle-test
 
 new-main: AlgoGPU/new-main.cu $(NEW_DEPS)
 	mkdir -p $(OUTDIR)

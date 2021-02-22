@@ -1,10 +1,16 @@
 # Slicing
 
-The cuda codes are in [cuda](./cuda/) and [AlgoGPU](./AlgoGPU/).
+A GPU based slicing algorithm for continuous 3D printing.
+
+The cuda codes are in [cuda](./cuda/).
+
+Some old algorithms have been moved to [old](./cuda/old/)
 
 To build, type:
 
-``make [fps|pps|new|second|mfps|bbox]``
+``make [Name_of_Algo]``
+
+Note that only ``pps, bbox, pps-large, bbox-large, bbox-rle`` are currently available
 
 | Algorithm |      Details                                         |
 |:----------|:-----------------------------------------------------|
@@ -15,6 +21,7 @@ To build, type:
 | mfps      | Modified fps. Each thread handles multiple triangles |
 | bbox      | Bounding-box based slicing algorithm. ([details](./docs/bbox.txt))    |
 | ofps/opps | Optimized fps/pps implementation                     |
+| *-large   | The output is generated several layers at a time     |
 
 The output binary will be in [out](./out/).
 
