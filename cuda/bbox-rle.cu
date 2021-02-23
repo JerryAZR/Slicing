@@ -13,8 +13,8 @@ typedef std::chrono::time_point<std::chrono::high_resolution_clock> chrono_t;
 void timer_checkpoint(chrono_t & checkpoint) {
 #ifdef TEST
     chrono_t end = NOW;
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - checkpoint);
-    std::cout << duration.count() << "ms" << std::endl;
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - checkpoint);
+    std::cout << (double)duration.count()/1000 << "ms" << std::endl;
     checkpoint = end;
 #else
     std::cout << std::endl;
@@ -33,6 +33,7 @@ int main(int argc, char* argv[]) {
     std::string stl_file_name;
     std::vector<triangle> triangles;
     std::vector<std::vector<double>> point_array(9);
+    double decompression_time = 0.0;
 
     if (argc == 2) {
         stl_file_name = argv[1];
@@ -95,28 +96,28 @@ int main(int argc, char* argv[]) {
         trunk_compress<<<blocksPerGrid, THREADS_PER_BLOCK>>>(trunks_dev, trunk_length);
         cudaDeviceSynchronize();
         checkCudaError();
-        size_t copy_size = (layer_idx + BLOCK_HEIGHT) < NUM_LAYERS ? BLOCK_HEIGHT : NUM_LAYERS - layer_idx;
-        copy_size = copy_size * Y_DIM * MAX_TRUNK_SIZE * sizeof(unsigned);
-    #ifdef TEST
-        unsigned* trunks_addr = &trunks_host[Y_DIM*MAX_TRUNK_SIZE*layer_idx];
-    #else
+        size_t copy_layers = (layer_idx + BLOCK_HEIGHT) < NUM_LAYERS ? BLOCK_HEIGHT : NUM_LAYERS - layer_idx;
+        size_t copy_size = copy_layers * Y_DIM * MAX_TRUNK_SIZE * sizeof(unsigned);
         unsigned* trunks_addr = &trunks_host[0];
-    #endif
         cudaMemcpy(trunks_addr, trunks_dev, copy_size, cudaMemcpyDeviceToHost);
         cudaMemset(trunk_length, 0, BLOCK_HEIGHT * Y_DIM * sizeof(unsigned));
         cudaDeviceSynchronize();
         checkCudaError();
+    #ifdef TEST
+        bool* out_addr = &all[layer_idx*X_DIM*Y_DIM];
+    #else
+        bool* out_addr = &all[0];
+    #endif
+        decompression_time += bbox_ints_decompress(trunks_addr, out_addr, copy_layers);
     }
 
     timer_checkpoint(start);
     cudaFree(trunk_length);
     cudaFree(points_dev);
     cudaFree(trunks_dev);
+    std::cout << "Total decompression time: " << decompression_time << "ms" << std::endl;
 
 #ifdef TEST
-    std::cout << "Decompressing...                 ";
-    bbox_ints_decompress(trunks_host, all);
-    timer_checkpoint(start);
     checkOutput(triangles_dev, num_triangles, all);
 
     // std::ofstream outfile;

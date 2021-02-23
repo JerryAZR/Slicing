@@ -2,6 +2,9 @@
 #include "triangle.cuh"
 #include <thrust/functional.h>
 #include <thread>
+#include <chrono>
+#define NOW (std::chrono::high_resolution_clock::now())
+typedef std::chrono::time_point<std::chrono::high_resolution_clock> chrono_t;
 
 __device__ __forceinline__ void triangleCopy(void* src, void* dest, int id);
 __device__ __forceinline__ double min3(double a, double b, double c);
@@ -137,8 +140,11 @@ void bbox_ints_decompress_st(unsigned* in, bool* out, unsigned nlayers) {
     }
 }
 
-void bbox_ints_decompress(unsigned* in, bool* out) {
-    unsigned num_per_thread = (NUM_LAYERS + NUM_CPU_THREADS - 1) / NUM_CPU_THREADS;
+// Returns the running time
+double bbox_ints_decompress(unsigned* in, bool* out, unsigned nlayers) {
+    chrono_t start = NOW;
+    
+    unsigned num_per_thread = (nlayers + NUM_CPU_THREADS - 1) / NUM_CPU_THREADS;
     std::thread threads[NUM_CPU_THREADS];
     size_t in_offset = 0;
     size_t out_offset = 0;
@@ -149,13 +155,17 @@ void bbox_ints_decompress(unsigned* in, bool* out) {
         in_offset += (num_per_thread*X_DIM*MAX_TRUNK_SIZE);
         out_offset += (num_per_thread*X_DIM*Y_DIM);
     }
-    unsigned remaining = NUM_LAYERS - ((NUM_CPU_THREADS-1)*num_per_thread);
+    unsigned remaining = nlayers - ((NUM_CPU_THREADS-1)*num_per_thread);
     unsigned* thread_in = in + in_offset;
     bool* thread_out = out + out_offset;
     threads[NUM_CPU_THREADS-1] = std::thread(bbox_ints_decompress_st, thread_in, thread_out, remaining);
     for (unsigned i = 0; i < NUM_CPU_THREADS; i++) {
         threads[i].join();
     }
+
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(NOW - start);
+    double ms = (double)duration.count() / 1e6;
+    return ms;
 }
 
 
