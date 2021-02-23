@@ -96,7 +96,7 @@ __global__ void trunk_compress(unsigned* trunks, unsigned* trunk_length, unsigne
     for (unsigned i = 0; i < length; i++) {
         input_trunk[i] = *(trunks + z_idx*MAX_TRUNK_SIZE*Y_DIM + i*Y_DIM + y_idx);
     }
-    __syncthreads();
+    __syncwarps();
     thrust::sort(thrust::device, input_trunk, input_trunk + length);
     if (length < MAX_TRUNK_SIZE) input_trunk[length] = X_DIM;
 
@@ -126,7 +126,6 @@ __global__ void trunk_compress(unsigned* trunks, unsigned* trunk_length, unsigne
 void bbox_ints_decompress_st(unsigned* in, bool* out, unsigned nlayers) {
     for (unsigned z = 0; z < nlayers; z++) {
         for (unsigned y = 0; y < Y_DIM; y++) {
-            // if (z == 1) printf("STarting layer %d, row %d.\n", z, y);
             unsigned* in_base = in + (z*Y_DIM*MAX_TRUNK_SIZE + y*MAX_TRUNK_SIZE);
             bool* out_base = out + (z*Y_DIM*X_DIM + y*X_DIM);
             bool inside = false;
