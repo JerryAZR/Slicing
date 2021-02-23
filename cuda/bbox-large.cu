@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
     }
 
     timer_checkpoint(start);
-    std::cout << "Running 1st kernel...                 ";
+    std::cout << "Slicing...                        ";
     for (unsigned layer_idx = 0; layer_idx < NUM_LAYERS; layer_idx += BLOCK_HEIGHT) {
         rectTriIntersection<<<NUM_BLOCKS, THREADS_PER_BLOCK>>>(points_dev, num_triangles, all_dev, layer_idx);
         cudaDeviceSynchronize();
