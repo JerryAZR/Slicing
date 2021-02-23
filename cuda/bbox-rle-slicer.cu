@@ -63,14 +63,14 @@ __global__ void rectTriIntersection(double* tri_global, size_t num_tri, unsigned
                 int y_idx = y + (Y_DIM >> 1);
                 unsigned x_idx = curr_intersection + (X_DIM >> 1);
                 // Add current intersection to trunk
-                unsigned* trunk_base = trunks + (z-base_layer)*Y_DIM*MAX_TRUNK_SIZE + y_idx*MAX_TRUNK_SIZE;
+                unsigned* trunk_base = trunks + (z-base_layer)*Y_DIM*MAX_TRUNK_SIZE + y_idx;
                 unsigned* length_address = trunk_length + (z-base_layer)*Y_DIM + y_idx;
                 unsigned curr_length = atomicAdd(length_address, 1);
                 // Need to check if out of range
                 if (curr_length >= MAX_TRUNK_SIZE) 
                     printf("Error: Too many intersections.\n \
                             Please increase MAX_TRUNK_SIZE in slicer.cuh and recompile.\n");
-                trunk_base[curr_length] = x_idx;
+                trunk_base[curr_length*Y_DIM] = x_idx;
             }
             // update coords
             bool nextLine = (y == yMax);
@@ -82,6 +82,8 @@ __global__ void rectTriIntersection(double* tri_global, size_t num_tri, unsigned
 
 __global__ void trunk_compress(unsigned* trunks, unsigned* trunk_length) {
     size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
+    size_t y_idx = idx % Y_DIM;
+    size_t z_idx = idx / Y_DIM;
     unsigned length = trunk_length[idx];
     unsigned* trunk_base = trunks + idx*MAX_TRUNK_SIZE;
     bool curr = false;
@@ -89,27 +91,31 @@ __global__ void trunk_compress(unsigned* trunks, unsigned* trunk_length) {
     unsigned out_length = 0;
     unsigned run_length = 0;
 
-    thrust::sort(thrust::device, trunk_base, trunk_base + length);
-    trunk_base[length] = X_DIM;
+    unsigned input_trunk[MAX_TRUNK_SIZE];
+    for (unsigned i = 0; i < length; i++) {
+        input_trunk[i] = *(trunks + z_idx*MAX_TRUNK_SIZE*Y_DIM + i*Y_DIM + y_idx);
+    }
+    __syncthreads();
+    thrust::sort(thrust::device, input_trunk, input_trunk + length);
+    input_trunk[length] = X_DIM;
 
     unsigned layerIdx = 0;
     for (unsigned x = 0; x < X_DIM; x++) {
         // update prev flag
         prev = curr;
         // If intersect
-        while (trunk_base[layerIdx] < x) layerIdx++;
-        bool intersect = (x == trunk_base[layerIdx]);
+        while (input_trunk[layerIdx] < x) layerIdx++;
+        bool intersect = (x == input_trunk[layerIdx]);
         bool flag = (bool) (layerIdx & 1);
         curr = intersect || flag;
         if (curr != prev) {
-            trunk_base[out_length] = run_length;
-            out_length++;
+            trunk_base[out_length++] = run_length;
             run_length = 0;
         }
         run_length++;
     }
     trunk_base[out_length++] = run_length;
-    trunk_base[out_length++] = 0;
+    trunk_base[out_length] = 0;
 }
 
 // single thread ver
