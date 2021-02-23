@@ -7,7 +7,7 @@ DEPS = $(SRCDIR)/slicer.cuh $(SRCDIR)/triangle.cuh $(SRCDIR)/golden.cuh
 NEW_DEPS = AlgoGPU/slicer.cu AlgoGPU/triangle.cu AlgoGPU/slicer.cuh AlgoGPU/triangle.cuh
 
 all: pps bbox bbox-large pps-large bbox-rle
-main: pps-main bbox-main pps-large-main bbox-large-main bbox-rle-main
+main: pps-large-main bbox-large-main bbox-rle-main
 test: pps-test bbox-test pps-large-test bbox-large-test bbox-rle-test
 
 fps: fps-main fps-test

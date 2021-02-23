@@ -60,6 +60,8 @@ int main(int argc, char* argv[]) {
 #endif
     unsigned* trunks_dev;
     cudaMalloc(&trunks_dev, BLOCK_HEIGHT * Y_DIM * MAX_TRUNK_SIZE * sizeof(unsigned));
+    unsigned* trunks_out;
+    cudaMalloc(&trunks_out, BLOCK_HEIGHT * Y_DIM * MAX_TRUNK_SIZE * sizeof(unsigned));
     unsigned* trunk_length;
     cudaMalloc(&trunk_length, BLOCK_HEIGHT * Y_DIM * sizeof(unsigned));
     cudaMemset(trunk_length, 0, BLOCK_HEIGHT * Y_DIM * sizeof(unsigned));
@@ -86,20 +88,20 @@ int main(int argc, char* argv[]) {
     }
 
     timer_checkpoint(start);
-    std::cout << "Slicing...                        ";
+    std::cout << "Slicing...                            ";
     for (unsigned layer_idx = 0; layer_idx < NUM_LAYERS; layer_idx += BLOCK_HEIGHT) {
         rectTriIntersection<<<NUM_BLOCKS, THREADS_PER_BLOCK>>>
             (points_dev, num_triangles, trunks_dev, trunk_length, layer_idx);
         cudaDeviceSynchronize();
         checkCudaError();
         size_t blocksPerGrid = (X_DIM * BLOCK_HEIGHT + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-        trunk_compress<<<blocksPerGrid, THREADS_PER_BLOCK>>>(trunks_dev, trunk_length);
+        trunk_compress<<<blocksPerGrid, THREADS_PER_BLOCK>>>(trunks_dev, trunk_length, trunks_out);
         cudaDeviceSynchronize();
         checkCudaError();
         size_t copy_layers = (layer_idx + BLOCK_HEIGHT) < NUM_LAYERS ? BLOCK_HEIGHT : NUM_LAYERS - layer_idx;
         size_t copy_size = copy_layers * Y_DIM * MAX_TRUNK_SIZE * sizeof(unsigned);
         unsigned* trunks_addr = &trunks_host[0];
-        cudaMemcpy(trunks_addr, trunks_dev, copy_size, cudaMemcpyDeviceToHost);
+        cudaMemcpy(trunks_addr, trunks_out, copy_size, cudaMemcpyDeviceToHost);
         cudaMemset(trunk_length, 0, BLOCK_HEIGHT * Y_DIM * sizeof(unsigned));
         cudaDeviceSynchronize();
         checkCudaError();
@@ -115,6 +117,7 @@ int main(int argc, char* argv[]) {
     cudaFree(trunk_length);
     cudaFree(points_dev);
     cudaFree(trunks_dev);
+    cudaFree(trunks_out);
     std::cout << "Total decompression time: " << decompression_time << "ms" << std::endl;
 
 #ifdef TEST

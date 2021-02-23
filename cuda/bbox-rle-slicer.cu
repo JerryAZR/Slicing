@@ -83,16 +83,14 @@ __global__ void rectTriIntersection(double* tri_global, size_t num_tri, unsigned
     }
 }
 
-__global__ void trunk_compress(unsigned* trunks, unsigned* trunk_length) {
+__global__ void trunk_compress(unsigned* trunks, unsigned* trunk_length, unsigned* out) {
     size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
     size_t y_idx = idx % Y_DIM;
     size_t z_idx = idx / Y_DIM;
     unsigned length = trunk_length[idx];
-    unsigned* trunk_base = trunks + idx*MAX_TRUNK_SIZE;
-    bool curr = false;
-    bool prev = false;
+    unsigned* trunk_base = out + idx*MAX_TRUNK_SIZE;
     unsigned out_length = 0;
-    unsigned run_length = 0;
+    unsigned prev_idx = 0;
 
     unsigned input_trunk[MAX_TRUNK_SIZE];
     for (unsigned i = 0; i < length; i++) {
@@ -100,31 +98,35 @@ __global__ void trunk_compress(unsigned* trunks, unsigned* trunk_length) {
     }
     __syncthreads();
     thrust::sort(thrust::device, input_trunk, input_trunk + length);
-    input_trunk[length] = X_DIM;
+    if (length < MAX_TRUNK_SIZE) input_trunk[length] = X_DIM;
 
-    unsigned layerIdx = 0;
-    for (unsigned x = 0; x < X_DIM; x++) {
-        // update prev flag
-        prev = curr;
-        // If intersect
-        while (input_trunk[layerIdx] < x) layerIdx++;
-        bool intersect = (x == input_trunk[layerIdx]);
-        bool flag = (bool) (layerIdx & 1);
-        curr = intersect || flag;
-        if (curr != prev) {
-            trunk_base[out_length++] = run_length;
-            run_length = 0;
+    unsigned i = 0;
+    // Manually process the first intersection to avoid problems
+    trunk_base[out_length++] = input_trunk[0];
+    prev_idx = input_trunk[0];
+    i = 0;
+
+    while (i < length) {
+        // Find the next run of 1's
+        i++;
+        while ((input_trunk[i] - input_trunk[i-1] <= 1 || i & 1 == 1) && i < length) {
+            i++;
         }
-        run_length++;
+        unsigned run_1s = input_trunk[i-1] - prev_idx + 1;
+        unsigned run_0s = (i == length) ?
+                X_DIM - input_trunk[i-1] - 1 : input_trunk[i] - input_trunk[i-1] - 1;
+        prev_idx = input_trunk[i];
+        trunk_base[out_length++] = run_1s;
+        trunk_base[out_length++] = run_0s;
     }
-    trunk_base[out_length++] = run_length;
-    trunk_base[out_length] = 0;
+    if (out_length < MAX_TRUNK_SIZE) trunk_base[out_length] = 0;
 }
 
 // single thread ver
 void bbox_ints_decompress_st(unsigned* in, bool* out, unsigned nlayers) {
     for (unsigned z = 0; z < nlayers; z++) {
-        for (unsigned y = 0; y < X_DIM; y++) {
+        for (unsigned y = 0; y < Y_DIM; y++) {
+            // if (z == 1) printf("STarting layer %d, row %d.\n", z, y);
             unsigned* in_base = in + (z*Y_DIM*MAX_TRUNK_SIZE + y*MAX_TRUNK_SIZE);
             bool* out_base = out + (z*Y_DIM*X_DIM + y*X_DIM);
             bool inside = false;
