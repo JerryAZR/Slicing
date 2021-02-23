@@ -96,7 +96,6 @@ __global__ void trunk_compress(unsigned* trunks, unsigned* trunk_length, unsigne
     for (unsigned i = 0; i < length; i++) {
         input_trunk[i] = *(trunks + z_idx*MAX_TRUNK_SIZE*Y_DIM + i*Y_DIM + y_idx);
     }
-    __syncwarps();
     thrust::sort(thrust::device, input_trunk, input_trunk + length);
     if (length < MAX_TRUNK_SIZE) input_trunk[length] = X_DIM;
 
