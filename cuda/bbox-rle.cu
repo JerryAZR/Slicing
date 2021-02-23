@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include "triangle.cuh"
 #include "slicer.cuh"
@@ -12,8 +13,8 @@ typedef std::chrono::time_point<std::chrono::high_resolution_clock> chrono_t;
 void timer_checkpoint(chrono_t & checkpoint) {
 #ifdef TEST
     chrono_t end = NOW;
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - checkpoint);
-    std::cout << duration.count() << "ms" << std::endl;
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - checkpoint);
+    std::cout << (double)duration.count()/1000 << "ms" << std::endl;
     checkpoint = end;
 #else
     std::cout << std::endl;
@@ -32,6 +33,7 @@ int main(int argc, char* argv[]) {
     std::string stl_file_name;
     std::vector<triangle> triangles;
     std::vector<std::vector<double>> point_array(9);
+    double decompression_time = 0.0;
 
     if (argc == 2) {
         stl_file_name = argv[1];
@@ -56,16 +58,16 @@ int main(int argc, char* argv[]) {
 #else
     bool* all = (bool*)malloc(BLOCK_HEIGHT * Y_DIM * X_DIM * sizeof(bool));
 #endif
-    bool* all_dev;
-    size_t size = BLOCK_HEIGHT * Y_DIM * X_DIM * sizeof(bool);
-    cudaMalloc(&all_dev, size);
-    cudaMemset(all_dev, 0, size);
-    unsigned* flips_dev;
-    cudaMalloc(&flips_dev, BLOCK_HEIGHT * X_DIM * MAX_FLIPS * sizeof(unsigned));
+    unsigned* trunks_dev;
+    cudaMalloc(&trunks_dev, BLOCK_HEIGHT * Y_DIM * MAX_TRUNK_SIZE * sizeof(unsigned));
+    unsigned* trunk_length;
+    cudaMalloc(&trunk_length, BLOCK_HEIGHT * Y_DIM * sizeof(unsigned));
+    cudaMemset(trunk_length, 0, BLOCK_HEIGHT * Y_DIM * sizeof(unsigned));
+
 #ifdef TEST
-    unsigned* flips_host = (unsigned*)malloc(NUM_LAYERS * MAX_FLIPS * X_DIM * sizeof(unsigned));
+    unsigned* trunks_host = (unsigned*)malloc(NUM_LAYERS * MAX_TRUNK_SIZE * Y_DIM * sizeof(unsigned));
 #else
-    unsigned* flips_host = (unsigned*)malloc(BLOCK_HEIGHT * MAX_FLIPS * X_DIM * sizeof(unsigned));
+    unsigned* trunks_host = (unsigned*)malloc(BLOCK_HEIGHT * MAX_TRUNK_SIZE * Y_DIM * sizeof(unsigned));
 #endif
     cudaMalloc(&triangles_dev, num_triangles * sizeof(triangle));
     cudaMemcpy(triangles_dev, triangles.data(), num_triangles * sizeof(triangle), cudaMemcpyHostToDevice);
@@ -86,50 +88,56 @@ int main(int argc, char* argv[]) {
     timer_checkpoint(start);
     std::cout << "Running 1st kernel...                 ";
     for (unsigned layer_idx = 0; layer_idx < NUM_LAYERS; layer_idx += BLOCK_HEIGHT) {
-        rectTriIntersection<<<NUM_BLOCKS, THREADS_PER_BLOCK>>>(points_dev, num_triangles, all_dev, layer_idx);
+        rectTriIntersection<<<NUM_BLOCKS, THREADS_PER_BLOCK>>>
+            (points_dev, num_triangles, trunks_dev, trunk_length, layer_idx);
         cudaDeviceSynchronize();
         checkCudaError();
         size_t blocksPerGrid = (X_DIM * BLOCK_HEIGHT + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-        bbox_ints<<<blocksPerGrid, THREADS_PER_BLOCK>>>(all_dev, flips_dev);
+        trunk_compress<<<blocksPerGrid, THREADS_PER_BLOCK>>>(trunks_dev, trunk_length);
         cudaDeviceSynchronize();
         checkCudaError();
-        size_t copy_size = (layer_idx + BLOCK_HEIGHT) < NUM_LAYERS ? BLOCK_HEIGHT : NUM_LAYERS - layer_idx;
-        copy_size = copy_size * X_DIM * MAX_FLIPS * sizeof(unsigned);
+        size_t copy_layers = (layer_idx + BLOCK_HEIGHT) < NUM_LAYERS ? BLOCK_HEIGHT : NUM_LAYERS - layer_idx;
+        size_t copy_size = copy_layers * Y_DIM * MAX_TRUNK_SIZE * sizeof(unsigned);
+        unsigned* trunks_addr = &trunks_host[0];
+        cudaMemcpy(trunks_addr, trunks_dev, copy_size, cudaMemcpyDeviceToHost);
+        cudaMemset(trunk_length, 0, BLOCK_HEIGHT * Y_DIM * sizeof(unsigned));
+        cudaDeviceSynchronize();
+        checkCudaError();
     #ifdef TEST
-        unsigned* flips_addr = &flips_host[X_DIM*MAX_FLIPS*layer_idx];
+        bool* out_addr = &all[layer_idx*X_DIM*Y_DIM];
     #else
-        unsigned* flips_addr = &flips_host[0];
+        bool* out_addr = &all[0];
     #endif
-        cudaMemcpy(flips_addr, flips_dev, copy_size, cudaMemcpyDeviceToHost);
-        cudaMemset(all_dev, 0, size);
-        cudaDeviceSynchronize();
-        checkCudaError();
+        decompression_time += bbox_ints_decompress(trunks_addr, out_addr, copy_layers);
     }
 
     timer_checkpoint(start);
-    cudaFree(all_dev);
+    cudaFree(trunk_length);
     cudaFree(points_dev);
-    cudaFree(flips_dev);
+    cudaFree(trunks_dev);
+    std::cout << "Total decompression time: " << decompression_time << "ms" << std::endl;
 
 #ifdef TEST
-    std::cout << "Decompressing...                 ";
-    bbox_ints_decompress(flips_host, all);
-    timer_checkpoint(start);
     checkOutput(triangles_dev, num_triangles, all);
+
+    // std::ofstream outfile;
+    // std::cout << "Writing to output file...                 ";
+    // outfile.open("out.txt");
     // for (int z = 0; z < NUM_LAYERS; z++) {
-    //     for (int y = Y_DIM; y > 0; y--) {
+    //     for (int y = Y_DIM-1; y >= 0; y--) {
     //         for (int x = 0; x < X_DIM; x++) {
-    //             if (all[z*X_DIM*Y_DIM + y*X_DIM + x]) std::cout << "XX";
-    //             else std::cout << "  ";
+    //             if (all[z*X_DIM*Y_DIM + y*X_DIM + x]) outfile << "XX";
+    //             else outfile << "  ";
     //         }
-    //         std::cout << std::endl;
+    //         outfile << "\n";
     //     }
-    //     std::cout << std::endl << std::endl;
+    //     outfile << "\n\n";
     // }
+    // outfile.close();
 #endif
     cudaFree(triangles_dev);
     free(all);
-    free(flips_host);
+    free(trunks_host);
 
     return 0;
 }

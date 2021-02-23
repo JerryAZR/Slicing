@@ -2,6 +2,9 @@
 #include "triangle.cuh"
 #include <thrust/functional.h>
 #include <thread>
+#include <chrono>
+#define NOW (std::chrono::high_resolution_clock::now())
+typedef std::chrono::time_point<std::chrono::high_resolution_clock> chrono_t;
 
 __device__ __forceinline__ void triangleCopy(void* src, void* dest, int id);
 __device__ __forceinline__ double min3(double a, double b, double c);
@@ -10,7 +13,7 @@ __device__ __forceinline__ char atomicAdd(char* address, char val);
 __device__ __forceinline__ int pixelRayIntersection_point(double x1, double y1, double z1,
     double x2, double y2, double z2, double x3, double y3, double z3, int x, int y);
 
-__global__ void rectTriIntersection(double* tri_global, size_t num_tri, bool* out, unsigned base_layer) {
+__global__ void rectTriIntersection(double* tri_global, size_t num_tri, unsigned* trunks, unsigned* trunk_length, unsigned base_layer) {
     size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
     size_t num_per_thread = num_tri / (NUM_BLOCKS << LOG_THREADS) + 1;
     size_t base_idx = idx;
@@ -39,93 +42,109 @@ __global__ void rectTriIntersection(double* tri_global, size_t num_tri, bool* ou
         double y3 = y3_base[base_idx];
         double z3 = z3_base[base_idx];
         
-        long xMin = __double2ll_ru(min3(x1, x2, x3) / RESOLUTION);
+        long yMin = __double2ll_ru(min3(y1, y2, y3) / RESOLUTION);
         long zMin = __double2ll_ru(min3(z1, z2, z3) / RESOLUTION);
-        long xMax = __double2ll_rd(max3(x1, x2, x3) / RESOLUTION);
+        long yMax = __double2ll_rd(max3(y1, y2, y3) / RESOLUTION);
         long zMax = __double2ll_rd(max3(z1, z2, z3) / RESOLUTION);
         base_idx += (NUM_BLOCKS << LOG_THREADS);
         // Make sure the bounds are inside the supported space
-        xMax = min(xMax, X_MAX);
-        xMin = max(xMin, X_MIN);
+        yMax = min(yMax, Y_MAX);
+        yMin = max(yMin, Y_MIN);
         long zMax_ub = min(NUM_LAYERS-1, (long)(base_layer+BLOCK_HEIGHT-1));
         zMax = min(zMax, zMax_ub);
         zMin = max(zMin, (long)(base_layer));
-        if (xMax < xMin || zMax < zMin) continue;
+        if (yMax < yMin || zMax < zMin) continue;
         // iterate over all pixels inside the bounding box
         // Will likely cause (lots of) wrap divergence, but we'll deal with that later
-        int x = xMin;
+        int y = yMin;
         int z = zMin;
         while (z <= zMax) {
             int curr_intersection = 
-                pixelRayIntersection_point(x1, y1, z1, x2, y2, z2, x3, y3, z3, x, z);
-            if (curr_intersection >= Y_MIN && curr_intersection <= Y_MAX) {
+                pixelRayIntersection_point(x1, y1, z1, x2, y2, z2, x3, y3, z3, y, z);
+            if (curr_intersection >= X_MIN && curr_intersection <= X_MAX) {
                 // Found a valid intersection
-                int x_idx = x + (X_DIM >> 1);
-                int y_idx = curr_intersection + (Y_DIM >> 1);
-                // replace by adding current intersection to trunk
-                char* temp_ptr = (char*) (out + (z-base_layer)*X_DIM*Y_DIM + y_idx*X_DIM + x_idx);
-                atomicAdd(temp_ptr, 1);
+                int y_idx = y + (Y_DIM >> 1);
+                unsigned x_idx = curr_intersection + (X_DIM >> 1);
+                // Add current intersection to trunk
+                unsigned* trunk_base = trunks + (z-base_layer)*Y_DIM*MAX_TRUNK_SIZE + y_idx;
+                unsigned* length_address = trunk_length + (z-base_layer)*Y_DIM + y_idx;
+                unsigned curr_length = atomicAdd(length_address, 1);
+                // Need to check if out of range
+                if (curr_length >= MAX_TRUNK_SIZE) 
+                    printf("Error: Too many intersections.\n \
+                            Please increase MAX_TRUNK_SIZE in slicer.cuh and recompile.\n");
+                trunk_base[curr_length*Y_DIM] = x_idx;
             }
             // update coords
-            bool nextLine = (x == xMax);
+            bool nextLine = (y == yMax);
             z += (int)nextLine;
-            x = nextLine ? xMin : (x+1);
+            y = nextLine ? yMin : (y+1);
         }
     }
 }
 
-// Output is the indices at which the state flips
-__global__ void bbox_ints(bool* in, unsigned* out) {
+__global__ void trunk_compress(unsigned* trunks, unsigned* trunk_length) {
     size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
-    size_t x_idx = idx % X_DIM;
-    size_t z_idx = idx / X_DIM;
-    bool isInside = false;
-    char* in_ptr = (char*) (in);
-    char intersection_count;
+    size_t y_idx = idx % Y_DIM;
+    size_t z_idx = idx / Y_DIM;
+    unsigned length = trunk_length[idx];
+    unsigned* trunk_base = trunks + idx*MAX_TRUNK_SIZE;
     bool curr = false;
     bool prev = false;
     unsigned out_length = 0;
-    unsigned* out_base = out + (idx * MAX_FLIPS);
+    unsigned run_length = 0;
 
-    for (size_t y = 0; y < Y_DIM; y++) {
-        prev = curr;
-        size_t full_idx = z_idx*X_DIM*Y_DIM + y*X_DIM + x_idx;
-        intersection_count = in_ptr[full_idx];
-        bool flip = (bool)(intersection_count & 1);
-        bool intersect = (intersection_count > 0);
-        curr = (isInside || intersect);
-        isInside = isInside ^ flip;
-        if (prev != curr) {
-            out_base[out_length] = y;
-            out_length++;
-        }
+    unsigned input_trunk[MAX_TRUNK_SIZE];
+    for (unsigned i = 0; i < length; i++) {
+        input_trunk[i] = *(trunks + z_idx*MAX_TRUNK_SIZE*Y_DIM + i*Y_DIM + y_idx);
     }
-    if (out_length > MAX_FLIPS) printf("Too many flips.\nPlease change MAX_FLIPS and try again.\n");
-    else if (out_length < MAX_FLIPS) out_base[out_length] = Y_DIM;
-}
+    __syncthreads();
+    thrust::sort(thrust::device, input_trunk, input_trunk + length);
+    input_trunk[length] = X_DIM;
 
+    unsigned layerIdx = 0;
+    for (unsigned x = 0; x < X_DIM; x++) {
+        // update prev flag
+        prev = curr;
+        // If intersect
+        while (input_trunk[layerIdx] < x) layerIdx++;
+        bool intersect = (x == input_trunk[layerIdx]);
+        bool flag = (bool) (layerIdx & 1);
+        curr = intersect || flag;
+        if (curr != prev) {
+            trunk_base[out_length++] = run_length;
+            run_length = 0;
+        }
+        run_length++;
+    }
+    trunk_base[out_length++] = run_length;
+    trunk_base[out_length] = 0;
+}
 
 // single thread ver
 void bbox_ints_decompress_st(unsigned* in, bool* out, unsigned nlayers) {
     for (unsigned z = 0; z < nlayers; z++) {
-        for (unsigned x = 0; x < X_DIM; x++) {
-            unsigned* in_base = in + (z*X_DIM*MAX_FLIPS + x*MAX_FLIPS);
-            bool* out_base = out + (z*Y_DIM*X_DIM + x);
-            unsigned flip_idx = 0;
+        for (unsigned y = 0; y < X_DIM; y++) {
+            unsigned* in_base = in + (z*Y_DIM*MAX_TRUNK_SIZE + y*MAX_TRUNK_SIZE);
+            bool* out_base = out + (z*Y_DIM*X_DIM + y*X_DIM);
             bool inside = false;
-            for (unsigned y = 0; y < Y_DIM; y++) {
-                if (in_base[flip_idx] == y) {
-                    inside = !inside;
-                    flip_idx++;
-                }
-                out_base[y*X_DIM] = inside;
+            unsigned start = 0;
+            unsigned length;
+            for (unsigned idx = 0; in_base[idx] != 0; idx++) {
+                length = in_base[idx];
+                memset(out_base+start, inside, length);
+                inside = !inside;
+                start += length;
             }
         }
     }
 }
 
-void bbox_ints_decompress(unsigned* in, bool* out) {
-    unsigned num_per_thread = (NUM_LAYERS + NUM_CPU_THREADS - 1) / NUM_CPU_THREADS;
+// Returns the running time
+double bbox_ints_decompress(unsigned* in, bool* out, unsigned nlayers) {
+    chrono_t start = NOW;
+    
+    unsigned num_per_thread = (nlayers + NUM_CPU_THREADS - 1) / NUM_CPU_THREADS;
     std::thread threads[NUM_CPU_THREADS];
     size_t in_offset = 0;
     size_t out_offset = 0;
@@ -133,16 +152,20 @@ void bbox_ints_decompress(unsigned* in, bool* out) {
         unsigned* thread_in = in + in_offset;
         bool* thread_out = out + out_offset;
         threads[i] = std::thread(bbox_ints_decompress_st, thread_in, thread_out, num_per_thread);
-        in_offset += (num_per_thread*X_DIM*MAX_FLIPS);
+        in_offset += (num_per_thread*X_DIM*MAX_TRUNK_SIZE);
         out_offset += (num_per_thread*X_DIM*Y_DIM);
     }
-    unsigned remaining = NUM_LAYERS - ((NUM_CPU_THREADS-1)*num_per_thread);
+    unsigned remaining = nlayers - ((NUM_CPU_THREADS-1)*num_per_thread);
     unsigned* thread_in = in + in_offset;
     bool* thread_out = out + out_offset;
     threads[NUM_CPU_THREADS-1] = std::thread(bbox_ints_decompress_st, thread_in, thread_out, remaining);
     for (unsigned i = 0; i < NUM_CPU_THREADS; i++) {
         threads[i].join();
     }
+
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(NOW - start);
+    double ms = (double)duration.count() / 1e6;
+    return ms;
 }
 
 
@@ -156,7 +179,7 @@ void bbox_ints_decompress(unsigned* in, bool* out) {
  */
 __device__ __forceinline__
 int pixelRayIntersection_point(double x1, double y1, double z1,
-    double x2, double y2, double z2, double x3, double y3, double z3, int x, int z) {
+    double x2, double y2, double z2, double x3, double y3, double z3, int y, int z) {
     /*
     Let A, B, C be the 3 vertices of the given triangle
     Let S(x,y,z) be the intersection, where x,y are given
@@ -164,15 +187,10 @@ int pixelRayIntersection_point(double x1, double y1, double z1,
     If a >= 0, b >= 0, and a+b <= 1, S is a valid intersection.
     */
 
-    double x_pos = x * RESOLUTION;
+    double y_pos = y * RESOLUTION;
     double z_pos = z * RESOLUTION;
 
-    // double x_max = max3(x1, x2, x3);
-    // double x_min = min3(x1, x2, x3);
-
-    // if (x_pos < x_min || x_pos > x_max) return NONE;
-
-    double x_d = x_pos - x1;
+    double y_d = y_pos - y1;
     double z_d = z_pos - z1;
 
     double xx1 = x2 - x1;
@@ -182,27 +200,13 @@ int pixelRayIntersection_point(double x1, double y1, double z1,
     double xx2 = x3 - x1;
     double yy2 = y3 - y1;
     double zz2 = z3 - z1;
-    double a = (x_d * zz2 - xx2 * z_d) / (xx1 * zz2 - xx2 * zz1);
-    double b = (x_d * zz1 - xx1 * z_d) / (xx2 * zz1 - xx1 * zz2);
+    double a = (y_d * zz2 - yy2 * z_d) / (yy1 * zz2 - yy2 * zz1);
+    double b = (y_d * zz1 - yy1 * z_d) / (yy2 * zz1 - yy1 * zz2);
     bool inside = (a >= 0) && (b >= 0) && (a+b <= 1);
-    double intersection = (a * yy1 + b * yy2) + y1;
+    double intersection = (a * xx1 + b * xx2) + x1;
     // // divide by layer width
     int layer = inside ? (intersection / RESOLUTION) : INT_MIN;
     return layer;
-}
- 
-// Copy (THREADS_PER_BLOCK) triangles from src to dest
-// Achieves 100% memory efficiency
-__device__ __forceinline__
-void triangleCopy(void* src, void* dest, int id) {
-    copy_unit_t* src_ptr = (copy_unit_t*) src;
-    copy_unit_t* dest_ptr = (copy_unit_t*) dest;
-
-    #pragma unroll
-    for (int d = 0; d < unit_per_tri; d++) {
-        size_t offset = d * THREADS_PER_BLOCK;
-        dest_ptr[id + offset] = src_ptr[id + offset];
-    }
 }
 
 __device__ __forceinline__
@@ -215,32 +219,4 @@ __device__ __forceinline__
 double max3(double a, double b, double c) {
     // thrust::maximum<double> max;
     return max(a, max(b, c));
-}
-
-__device__ __forceinline__
-char atomicAdd(char* address, char val) {
-    // *address = *address + val;
-    // return 0;
-    size_t addr_offset = (size_t) address & 3;
-    auto* base_address = (unsigned int*) ((size_t) address - addr_offset);
-    unsigned int long_val = (unsigned int) val << (8 * addr_offset);
-    unsigned int long_old = atomicAdd(base_address, long_val);
-
-    // Overflow check. skipped for simplicity.
-    // if (addr_offset == 3) {
-    //     return (char) (long_old >> 24);
-    // } else {
-    //     // bits that represent the char value within long_val
-    //     unsigned int mask = 0x000000ff << (8 * addr_offset);
-    //     unsigned int masked_old = long_old & mask;
-    //     // isolate the bits that represent the char value within long_old, add the long_val to that,
-    //     // then re-isolate by excluding bits that represent the char value
-    //     unsigned int overflow = (masked_old + long_val) & ~mask;
-    //     if (overflow) {
-    //         atomicSub(base_address, overflow);
-    //     }
-    //     return (char) (masked_old >> 8 * addr_offset);
-    // }
-
-    return (char) ((long_old >> 8 * addr_offset) & 0xff);
 }
