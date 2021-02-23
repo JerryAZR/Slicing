@@ -7,11 +7,10 @@
 
 #define LOG_THREADS 7
 #define THREADS_PER_BLOCK (1 << LOG_THREADS)
-#define MAX_TRUNK_SIZE	28
+#define MAX_TRUNK_SIZE	64
 #define BATCH_SIZE  (4 * THREADS_PER_BLOCK)
 #define NUM_BLOCKS  256
 #define TILE_WIDTH 128
-#define BLOCK_HEIGHT 16
 #define NUM_CPU_THREADS 16
 
 // in mm
@@ -20,7 +19,7 @@
 #define X_LEN (1 << LOG_X)
 #define Y_LEN (1 << LOG_Y)
 #define HEIGHT 128
-#define RESOLUTION 0.25 // Must be (negative) power of 2
+#define RESOLUTION 0.125 // Must be (negative) power of 2
 
 // in pixels
 #define NUM_LAYERS ((long)(HEIGHT / RESOLUTION))
@@ -32,6 +31,8 @@
 #define X_MAX ((long)(X_DIM / 2 - 1))
 #define Y_MIN ((long)(-1 * Y_DIM / 2))
 #define Y_MAX ((long)(Y_DIM / 2 - 1))
+
+#define BLOCK_HEIGHT 32
 
 typedef int layer_t;
 
@@ -77,7 +78,7 @@ __global__ void pointSelect(double* in, double* out, unsigned in_length, unsigne
 // Compression
 
 __global__ void bbox_ints(bool* in, unsigned* out);
-void bbox_ints_decompress(unsigned* in, bool* out);
+double bbox_ints_decompress(unsigned* in, bool* out, unsigned nlayers);
 
 
 #endif
