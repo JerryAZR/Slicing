@@ -116,7 +116,7 @@ void bbox_ints_decompress_st(unsigned* in, bool* out, unsigned nlayers) {
             for (unsigned y = 0; y < Y_DIM; y++) {
                 if (in_base[flip_idx] == y) {
                     inside = !inside;
-                    flip_idx = (flip_idx + 1) & (MAX_FLIPS - 1);
+                    flip_idx++;
                 }
                 out_base[y*X_DIM] = inside;
             }

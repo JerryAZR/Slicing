@@ -11,13 +11,14 @@
 #define NUM_BLOCKS  256
 #define BLOCK_HEIGHT 16
 #define NUM_CPU_THREADS 16
+#define RECTS_PER_LAYER 1024
 
 // in mm
 // Power of 2 recommended for better performance
 #define X_LEN 128
 #define Y_LEN 128
 #define HEIGHT 128
-#define RESOLUTION 0.25
+#define RESOLUTION 0.125
 
 // in pixels
 #define NUM_LAYERS ((long)(HEIGHT / RESOLUTION))
@@ -45,6 +46,8 @@ __device__ layer_t pixelRayIntersection(triangle t, int x, int y);
 __global__ void rectTriIntersection(double* tri_global, size_t num_tri, bool* out);
 __global__ void rectTriIntersection(double* tri_global, size_t num_tri, bool* out, unsigned base_layer);
 __global__ void layerExtraction(bool* out);
+__global__ void rectEncoding(bool* in, unsigned* out, unsigned* length);
+void rectEncodingCPU(bool* in, unsigned* out, unsigned* length);
 
 __global__ void triangleSelect(triangle* in, triangle* out, unsigned in_length, unsigned* out_length, unsigned base_layer);
 __global__ void pointSelect(double* in, double* out, unsigned in_length, unsigned* out_length, unsigned base_layer);
@@ -55,6 +58,7 @@ __global__ void pointSelect(double* in, double* out, unsigned in_length, unsigne
 
 __global__ void bbox_ints(bool* in, unsigned* out);
 void bbox_ints_decompress(unsigned* in, bool* out);
+void bbox_rect_decode(unsigned* in, bool* out, unsigned* length);
 
 
 #endif
