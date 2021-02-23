@@ -58,15 +58,15 @@ int main(int argc, char* argv[]) {
     bool* all = (bool*)malloc(BLOCK_HEIGHT * Y_DIM * X_DIM * sizeof(bool));
 #endif
     unsigned* trunks_dev;
-    cudaMalloc(&trunks_dev, BLOCK_HEIGHT * X_DIM * MAX_TRUNK_SIZE * sizeof(unsigned));
+    cudaMalloc(&trunks_dev, BLOCK_HEIGHT * Y_DIM * MAX_TRUNK_SIZE * sizeof(unsigned));
     unsigned* trunk_length;
-    cudaMalloc(&trunk_length, BLOCK_HEIGHT * X_DIM * sizeof(unsigned));
-    cudaMemset(trunk_length, 0, BLOCK_HEIGHT * X_DIM * sizeof(unsigned));
+    cudaMalloc(&trunk_length, BLOCK_HEIGHT * Y_DIM * sizeof(unsigned));
+    cudaMemset(trunk_length, 0, BLOCK_HEIGHT * Y_DIM * sizeof(unsigned));
 
 #ifdef TEST
-    unsigned* trunks_host = (unsigned*)malloc(NUM_LAYERS * MAX_TRUNK_SIZE * X_DIM * sizeof(unsigned));
+    unsigned* trunks_host = (unsigned*)malloc(NUM_LAYERS * MAX_TRUNK_SIZE * Y_DIM * sizeof(unsigned));
 #else
-    unsigned* trunks_host = (unsigned*)malloc(BLOCK_HEIGHT * MAX_TRUNK_SIZE * X_DIM * sizeof(unsigned));
+    unsigned* trunks_host = (unsigned*)malloc(BLOCK_HEIGHT * MAX_TRUNK_SIZE * Y_DIM * sizeof(unsigned));
 #endif
     cudaMalloc(&triangles_dev, num_triangles * sizeof(triangle));
     cudaMemcpy(triangles_dev, triangles.data(), num_triangles * sizeof(triangle), cudaMemcpyHostToDevice);
@@ -96,14 +96,14 @@ int main(int argc, char* argv[]) {
         cudaDeviceSynchronize();
         checkCudaError();
         size_t copy_size = (layer_idx + BLOCK_HEIGHT) < NUM_LAYERS ? BLOCK_HEIGHT : NUM_LAYERS - layer_idx;
-        copy_size = copy_size * X_DIM * MAX_TRUNK_SIZE * sizeof(unsigned);
+        copy_size = copy_size * Y_DIM * MAX_TRUNK_SIZE * sizeof(unsigned);
     #ifdef TEST
-        unsigned* trunks_addr = &trunks_host[X_DIM*MAX_TRUNK_SIZE*layer_idx];
+        unsigned* trunks_addr = &trunks_host[Y_DIM*MAX_TRUNK_SIZE*layer_idx];
     #else
         unsigned* trunks_addr = &trunks_host[0];
     #endif
         cudaMemcpy(trunks_addr, trunks_dev, copy_size, cudaMemcpyDeviceToHost);
-        cudaMemset(trunk_length, 0, BLOCK_HEIGHT * X_DIM * sizeof(unsigned));
+        cudaMemset(trunk_length, 0, BLOCK_HEIGHT * Y_DIM * sizeof(unsigned));
         cudaDeviceSynchronize();
         checkCudaError();
     }
@@ -119,19 +119,20 @@ int main(int argc, char* argv[]) {
     timer_checkpoint(start);
     checkOutput(triangles_dev, num_triangles, all);
 
-    std::ofstream outfile;
-    outfile.open("out.txt");
-    for (int z = 0; z < NUM_LAYERS; z++) {
-        for (int y = Y_DIM-1; y >= 0; y--) {
-            for (int x = 0; x < X_DIM; x++) {
-                if (all[z*X_DIM*Y_DIM + y*X_DIM + x]) outfile << "XX";
-                else outfile << "  ";
-            }
-            outfile << "\n";
-        }
-        outfile << "\n\n";
-    }
-    outfile.close();
+    // std::ofstream outfile;
+    // std::cout << "Writing to output file...                 ";
+    // outfile.open("out.txt");
+    // for (int z = 0; z < NUM_LAYERS; z++) {
+    //     for (int y = Y_DIM-1; y >= 0; y--) {
+    //         for (int x = 0; x < X_DIM; x++) {
+    //             if (all[z*X_DIM*Y_DIM + y*X_DIM + x]) outfile << "XX";
+    //             else outfile << "  ";
+    //         }
+    //         outfile << "\n";
+    //     }
+    //     outfile << "\n\n";
+    // }
+    // outfile.close();
 #endif
     cudaFree(triangles_dev);
     free(all);
