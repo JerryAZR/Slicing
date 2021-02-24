@@ -111,6 +111,7 @@ __global__ void trunk_compress(unsigned* trunks, unsigned* trunk_length, unsigne
         while ((input_trunk[i] - input_trunk[i-1] <= 1 || i & 1 == 1) && i < length) {
             i++;
         }
+        __syncwarp();
         unsigned run_1s = input_trunk[i-1] - prev_idx + 1;
         unsigned run_0s = (i == length) ?
                 X_DIM - input_trunk[i-1] - 1 : input_trunk[i] - input_trunk[i-1] - 1;
@@ -119,27 +120,6 @@ __global__ void trunk_compress(unsigned* trunks, unsigned* trunk_length, unsigne
         trunk_base[out_length++] = run_0s;
     }
     if (out_length < MAX_TRUNK_SIZE) trunk_base[out_length] = 0;
-
-    // bool curr = false;
-    // bool prev = false;
-    // unsigned run_length = 0;
-    // unsigned layerIdx = 0;
-    // for (unsigned x = 0; x < X_DIM; x++) {
-    //     // update prev flag
-    //     prev = curr;
-    //     // If intersect
-    //     while (input_trunk[layerIdx] < x) layerIdx++;
-    //     bool intersect = (x == input_trunk[layerIdx]);
-    //     bool flag = (bool) (layerIdx & 1);
-    //     curr = intersect || flag;
-    //     if (curr != prev) {
-    //         trunk_base[out_length++] = run_length;
-    //         run_length = 0;
-    //     }
-    //     run_length++;
-    // }
-    // trunk_base[out_length++] = run_length;
-    // trunk_base[out_length] = 0;
 }
 
 // single thread ver
