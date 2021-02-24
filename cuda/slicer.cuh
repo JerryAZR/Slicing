@@ -18,7 +18,7 @@
 #define X_LEN 128
 #define Y_LEN 128
 #define HEIGHT 128
-#define RESOLUTION 0.25
+#define RESOLUTION 0.125
 
 // in pixels
 #define NUM_LAYERS ((long)(HEIGHT / RESOLUTION))
