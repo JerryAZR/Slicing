@@ -119,20 +119,18 @@ __global__ void trunk_compress(unsigned* trunks, unsigned* trunk_length, unsigne
 }
 
 // single thread ver
-void bbox_ints_decompress_st(unsigned* in, bool* out, unsigned nlayers) {
-    for (unsigned z = 0; z < nlayers; z++) {
-        for (unsigned y = 0; y < Y_DIM; y++) {
-            unsigned* in_base = in + (z*Y_DIM*MAX_TRUNK_SIZE + y*MAX_TRUNK_SIZE);
-            bool* out_base = out + (z*Y_DIM*X_DIM + y*X_DIM);
-            bool inside = false;
-            unsigned start = 0;
-            unsigned length;
-            for (unsigned idx = 0; in_base[idx] != 0; idx++) {
-                length = in_base[idx];
-                memset(out_base+start, inside, length);
-                inside = !inside;
-                start += length;
-            }
+void bbox_ints_decompress_st(unsigned* in, bool* out, unsigned num_trunks) {
+    for (unsigned y = 0; y < num_trunks; y++) {
+        unsigned* in_base = in + (y*MAX_TRUNK_SIZE);
+        bool* out_base = out + (y*X_DIM);
+        bool inside = false;
+        unsigned start = 0;
+        unsigned length;
+        for (unsigned idx = 0; in_base[idx] != 0; idx++) {
+            length = in_base[idx];
+            memset(out_base+start, inside, length);
+            inside = !inside;
+            start += length;
         }
     }
 }
@@ -142,7 +140,7 @@ double bbox_ints_decompress(unsigned* in, bool* out, unsigned nlayers) {
     chrono_t start = NOW;
     
     unsigned num_trunks = nlayers * Y_DIM;
-    unsigned num_per_thread = (nlayers + NUM_CPU_THREADS - 1) / NUM_CPU_THREADS;
+    unsigned num_per_thread = (num_trunks + NUM_CPU_THREADS - 1) / NUM_CPU_THREADS;
     std::thread threads[NUM_CPU_THREADS];
     size_t in_offset = 0;
     size_t out_offset = 0;
@@ -150,10 +148,10 @@ double bbox_ints_decompress(unsigned* in, bool* out, unsigned nlayers) {
         unsigned* thread_in = in + in_offset;
         bool* thread_out = out + out_offset;
         threads[i] = std::thread(bbox_ints_decompress_st, thread_in, thread_out, num_per_thread);
-        in_offset += (num_per_thread*Y_DIM*MAX_TRUNK_SIZE);
-        out_offset += (num_per_thread*X_DIM*Y_DIM);
+        in_offset += (num_per_thread*MAX_TRUNK_SIZE);
+        out_offset += (num_per_thread*X_DIM);
     }
-    unsigned remaining = nlayers - ((NUM_CPU_THREADS-1)*num_per_thread);
+    unsigned remaining = num_trunks - ((NUM_CPU_THREADS-1)*num_per_thread);
     unsigned* thread_in = in + in_offset;
     bool* thread_out = out + out_offset;
     threads[NUM_CPU_THREADS-1] = std::thread(bbox_ints_decompress_st, thread_in, thread_out, remaining);
