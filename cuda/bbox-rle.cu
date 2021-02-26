@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
             (points_dev, num_triangles, trunks_dev, trunk_length, layer_idx);
         cudaDeviceSynchronize();
         checkCudaError();
-        size_t blocksPerGrid = (X_DIM * BLOCK_HEIGHT + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+        size_t blocksPerGrid = (Y_DIM * BLOCK_HEIGHT + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
         trunk_compress<<<blocksPerGrid, THREADS_PER_BLOCK>>>(trunks_dev, trunk_length, trunks_out);
         cudaDeviceSynchronize();
         checkCudaError();
