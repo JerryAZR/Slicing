@@ -6,10 +6,9 @@
 #define NOW (std::chrono::high_resolution_clock::now())
 typedef std::chrono::time_point<std::chrono::high_resolution_clock> chrono_t;
 
-__device__ __forceinline__ void triangleCopy(void* src, void* dest, int id);
+__device__ unsigned bubblesort(unsigned* start, unsigned length, unsigned step);
 __device__ __forceinline__ double min3(double a, double b, double c);
 __device__ __forceinline__ double max3(double a, double b, double c);
-__device__ __forceinline__ char atomicAdd(char* address, char val);
 __device__ __forceinline__ int pixelRayIntersection_point(double x1, double y1, double z1,
     double x2, double y2, double z2, double x3, double y3, double z3, int x, int y);
 
@@ -89,15 +88,12 @@ __global__ void trunk_compress(unsigned* trunks, unsigned* trunk_length, unsigne
     size_t z_idx = idx / Y_DIM;
     unsigned length = trunk_length[idx];
     unsigned* trunk_base = out + idx*MAX_TRUNK_SIZE;
+    unsigned* input_trunk = trunks + z_idx*MAX_TRUNK_SIZE*Y_DIM + y_idx;
     unsigned out_length = 0;
     unsigned prev_idx = 0;
 
-    unsigned input_trunk[MAX_TRUNK_SIZE];
-    for (unsigned i = 0; i < length; i++) {
-        input_trunk[i] = *(trunks + z_idx*MAX_TRUNK_SIZE*Y_DIM + i*Y_DIM + y_idx);
-    }
-    thrust::sort(thrust::device, input_trunk, input_trunk + length);
-    if (length < MAX_TRUNK_SIZE) input_trunk[length] = X_DIM;
+    bubblesort(input_trunk, length, Y_DIM);
+    if (length < MAX_TRUNK_SIZE) input_trunk[length*Y_DIM] = X_DIM;
 
     unsigned i = 0;
     // Manually process the first intersection to avoid problems
@@ -108,14 +104,14 @@ __global__ void trunk_compress(unsigned* trunks, unsigned* trunk_length, unsigne
     while (i < length) {
         // Find the next run of 1's
         i++;
-        while ((input_trunk[i] - input_trunk[i-1] <= 1 || i & 1 == 1) && i < length) {
+        while ((input_trunk[i*Y_DIM] - input_trunk[(i-1)*Y_DIM] <= 1 || i & 1 == 1) && i < length) {
             i++;
         }
         __syncwarp();
-        unsigned run_1s = input_trunk[i-1] - prev_idx + 1;
+        unsigned run_1s = input_trunk[(i-1)*Y_DIM] - prev_idx + 1;
         unsigned run_0s = (i == length) ?
-                X_DIM - input_trunk[i-1] - 1 : input_trunk[i] - input_trunk[i-1] - 1;
-        prev_idx = input_trunk[i];
+                X_DIM - input_trunk[(i-1)*Y_DIM] - 1 : input_trunk[i*Y_DIM] - input_trunk[(i-1)*Y_DIM] - 1;
+        prev_idx = input_trunk[i*Y_DIM];
         trunk_base[out_length++] = run_1s;
         trunk_base[out_length++] = run_0s;
     }
@@ -169,6 +165,21 @@ double bbox_ints_decompress(unsigned* in, bool* out, unsigned nlayers) {
     return ms;
 }
 
+__device__ unsigned bubblesort(unsigned* start, unsigned length, unsigned step) {
+    for (unsigned unsorted = length; unsorted > 1; unsorted--) {
+        for (unsigned i = 1; i < unsorted; i++) {
+            unsigned curr_idx = i*step;
+            unsigned prev_idx = curr_idx-step;
+            unsigned curr = start[curr_idx];
+            unsigned prev = start[prev_idx];
+            if (curr < prev) {
+                start[curr_idx] = prev;
+                start[prev_idx] = curr;
+            }
+        }
+    }
+    return length;
+}
 
 /**
  * pixelRayIntersection: helper function, computes the intersection of given triangle and pixel ray
