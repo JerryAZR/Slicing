@@ -1,4 +1,5 @@
 #include <iostream>
+#include <fstream>
 #include <string>
 #include "triangle.cuh"
 #include "slicer.cuh"
@@ -9,6 +10,17 @@
 
 typedef std::chrono::time_point<std::chrono::high_resolution_clock> chrono_t;
 
+void timer_checkpoint(chrono_t & checkpoint) {
+#ifdef TEST
+    chrono_t end = NOW;
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - checkpoint);
+    std::cout << (double)duration.count()/1000 << "ms" << std::endl;
+    checkpoint = end;
+#else
+    std::cout << std::endl;
+#endif
+}
+
 void checkCudaError() {
     cudaError_t err = cudaGetLastError();
     if (err != cudaSuccess) {
@@ -17,21 +29,11 @@ void checkCudaError() {
     }
 }
 
-void timer_checkpoint(chrono_t & checkpoint) {
-#ifdef TEST
-    chrono_t end = NOW;
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - checkpoint);
-    std::cout << duration.count() << "ms" << std::endl;
-    checkpoint = end;
-#else
-    std::cout << std::endl;
-#endif
-}
- 
-
 int main(int argc, char* argv[]) {
     std::string stl_file_name;
     std::vector<triangle> triangles;
+    std::vector<std::vector<double>> point_array(9);
+    std::cout << "Block height is " << PPS_BLOCK_HEIGHT << std::endl;
 
     if (argc == 2) {
         stl_file_name = argv[1];
@@ -41,44 +43,60 @@ int main(int argc, char* argv[]) {
 
     chrono_t start = NOW;
 
-    read_stl(stl_file_name,triangles);
+    load_point_array(stl_file_name, point_array, triangles);
 
     std::cout << "Reading STL file...                   ";
     timer_checkpoint(start);
     std::cout << "Allocating device memory...           ";
 
     int num_triangles = triangles.size();
-    triangle* triangles_dev, * triangles_selected;
+    triangle* triangles_dev, * triangles_selected;;
+    double* points_dev;
     // all[z][y][x]
-#ifdef TEST 
-    // Allocate all reauired memory
-    size_t size = NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool);
-#else 
-    // Allocation just enough memory for profiling
-    size_t size = PPS_BLOCK_HEIGHT * Y_DIM * X_DIM * sizeof(bool);
+#if (COMPRESSION_ONLY == 0)
+    double decompression_time = 0.0;
+#ifdef TEST
+    bool* all = (bool*)malloc(NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool));
+#else
+    bool* all = (bool*)malloc(PPS_BLOCK_HEIGHT * Y_DIM * X_DIM * sizeof(bool));
 #endif
-    bool* all = (bool*)malloc(size);
-    bool* all_dev;
-    cudaMalloc(&all_dev, PPS_BLOCK_HEIGHT * Y_DIM * X_DIM * sizeof(bool));
+#endif
+    unsigned* trunks_dev;
+    cudaMalloc(&trunks_dev, PPS_BLOCK_HEIGHT * Y_DIM * MAX_TRUNK_SIZE * sizeof(unsigned));
+    unsigned* trunks_out;
+    cudaMalloc(&trunks_out, PPS_BLOCK_HEIGHT * Y_DIM * MAX_TRUNK_SIZE * sizeof(unsigned));
+    unsigned* trunk_length;
+    cudaMalloc(&trunk_length, PPS_BLOCK_HEIGHT * Y_DIM * sizeof(unsigned));
+    cudaMemset(trunk_length, 0, PPS_BLOCK_HEIGHT * Y_DIM * sizeof(unsigned));
+
+#ifdef TEST
+    unsigned* trunks_host = (unsigned*)malloc(NUM_LAYERS * MAX_TRUNK_SIZE * Y_DIM * sizeof(unsigned));
+#else
+    unsigned* trunks_host = (unsigned*)malloc(PPS_BLOCK_HEIGHT * MAX_TRUNK_SIZE * Y_DIM * sizeof(unsigned));
+#endif
     cudaMalloc(&triangles_dev, num_triangles * sizeof(triangle));
     cudaMalloc(&triangles_selected, num_triangles * sizeof(triangle));
     cudaMemcpy(triangles_dev, triangles.data(), num_triangles * sizeof(triangle), cudaMemcpyHostToDevice);
-
-    unsigned* out_length_d, out_length_h;
-    cudaMalloc(&out_length_d, sizeof(unsigned));
-
+    
+    cudaMalloc(&points_dev, num_triangles * sizeof(triangle));
+    size_t temp_offset = 0;
+    for (int i = 0; i < 9; i++) {
+        cudaMemcpy(points_dev + temp_offset, point_array[i].data(),
+                    num_triangles * sizeof(double), cudaMemcpyHostToDevice);
+        temp_offset += num_triangles;
+    }
     cudaError_t err = cudaGetLastError();  // add
     if (err != cudaSuccess) {
         std::cout << "CUDA error: " << cudaGetErrorString(err) << std::endl;
         return 1;
     }
 
-    int threadsPerBlock = THREADS_PER_BLOCK;
-    int blocksPerGrid;
-
-    blocksPerGrid = (PPS_BLOCK_HEIGHT * Y_DIM + threadsPerBlock - 1) / threadsPerBlock;
     timer_checkpoint(start);
-    std::cout << "Running pps kernel...                 ";
+    std::cout << "Slicing...                            ";
+    unsigned* out_length_d, out_length_h;
+    cudaMalloc(&out_length_d, sizeof(unsigned));
+
+    size_t blocksPerGrid = (Y_DIM * PPS_BLOCK_HEIGHT + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     for (unsigned layer_idx = 0; layer_idx < NUM_LAYERS; layer_idx += PPS_BLOCK_HEIGHT) {
         cudaMemset(out_length_d, 0, sizeof(unsigned));
         checkCudaError();
@@ -86,41 +104,61 @@ int main(int argc, char* argv[]) {
         checkCudaError();
         cudaMemcpy(&out_length_h, out_length_d, sizeof(unsigned), cudaMemcpyDeviceToHost);
         checkCudaError();
-        pps<<<blocksPerGrid, threadsPerBlock>>>(triangles_selected, out_length_h, all_dev, layer_idx);
-        checkCudaError();
-        size_t copy_size = (layer_idx + PPS_BLOCK_HEIGHT) < NUM_LAYERS ? PPS_BLOCK_HEIGHT : NUM_LAYERS - layer_idx;
-        copy_size = copy_size * X_DIM * Y_DIM * sizeof(bool);
-    #ifdef TEST
-        bool* host_addr = &all[X_DIM*Y_DIM*layer_idx];
-    #else
-        bool* host_addr = &all[0];
-    #endif
-        cudaMemcpy(host_addr, all_dev, copy_size, cudaMemcpyDeviceToHost);
+        pps<<<blocksPerGrid, THREADS_PER_BLOCK>>>
+            (triangles_selected, out_length_h, trunks_dev, trunk_length, layer_idx);
         cudaDeviceSynchronize();
         checkCudaError();
+        trunk_compress<<<blocksPerGrid, THREADS_PER_BLOCK>>>(trunks_dev, trunk_length, trunks_out);
+        cudaDeviceSynchronize();
+        checkCudaError();
+        size_t copy_layers = (layer_idx + PPS_BLOCK_HEIGHT) < NUM_LAYERS ? PPS_BLOCK_HEIGHT : NUM_LAYERS - layer_idx;
+        size_t copy_size = copy_layers * Y_DIM * MAX_TRUNK_SIZE * sizeof(unsigned);
+        unsigned* trunks_addr = &trunks_host[0];
+        cudaMemcpy(trunks_addr, trunks_out, copy_size, cudaMemcpyDeviceToHost);
+        cudaMemset(trunk_length, 0, PPS_BLOCK_HEIGHT * Y_DIM * sizeof(unsigned));
+        cudaDeviceSynchronize();
+        checkCudaError();
+    #if (COMPRESSION_ONLY == 0)
+    #ifdef TEST
+        bool* out_addr = &all[layer_idx*X_DIM*Y_DIM];
+    #else
+        bool* out_addr = &all[0];
+    #endif
+        decompression_time += rleDecode(trunks_addr, out_addr, copy_layers);
+    #endif
     }
 
-    
     timer_checkpoint(start);
-    cudaFree(all_dev);
-    cudaFree(triangles_selected);
-    cudaFree(out_length_d);
+    cudaFree(trunk_length);
+    cudaFree(points_dev);
+    cudaFree(trunks_dev);
+    cudaFree(trunks_out);
 
+#if (COMPRESSION_ONLY == 0)
+    std::cout << "Total decompression time: " << decompression_time << "ms" << std::endl;
 #ifdef TEST
     checkOutput(triangles_dev, num_triangles, all);
+
+    // std::ofstream outfile;
+    // std::cout << "Writing to output file...                 ";
+    // outfile.open("out.txt");
     // for (int z = 0; z < NUM_LAYERS; z++) {
-    //     for (int y = Y_DIM; y > 0; y--) {
+    //     for (int y = Y_DIM-1; y >= 0; y--) {
     //         for (int x = 0; x < X_DIM; x++) {
-    //             if (all[z*Y_DIM*X_DIM + y*X_DIM + x]) std::cout << "XX";
-    //             else std::cout << "  ";
+    //             if (all[z*X_DIM*Y_DIM + y*X_DIM + x]) outfile << "XX";
+    //             else outfile << "  ";
     //         }
-    //         std::cout << std::endl;
+    //         outfile << "\n";
     //     }
-    //     std::cout << std::endl << std::endl;
+    //     outfile << "\n\n";
     // }
-#endif
-    cudaFree(triangles_dev);
+    // outfile.close();
     free(all);
+#endif
+#endif
+
+    cudaFree(triangles_dev);
+    free(trunks_host);
 
     return 0;
 }

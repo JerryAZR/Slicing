@@ -20,7 +20,7 @@
 #define X_LEN 128
 #define Y_LEN 128
 #define HEIGHT 128
-#define RESOLUTION 0.125
+#define RESOLUTION 0.25
 
 // in pixels
 #define NUM_LAYERS ((long)(HEIGHT / RESOLUTION))
@@ -53,7 +53,7 @@ typedef int layer_t;
 
 __global__ void pps(triangle* triangles, size_t num_triangles, bool* out);
 __global__ void pps(triangle* triangles, size_t num_triangles, bool* out, unsigned base_layer);
-__global__ void pps(triangle* triangles, size_t num_triangles, unsigned* trunks, unsigned base_layer);
+__global__ void pps(triangle* triangles, size_t num_triangles, unsigned* trunks, unsigned* trunk_length, unsigned base_layer);
 
 // returns the layer of intersection
 __device__ layer_t pixelRayIntersection(triangle t, int x, int y);

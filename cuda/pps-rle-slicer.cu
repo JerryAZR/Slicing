@@ -1,15 +1,18 @@
 #include "slicer.cuh"
-#include <thrust/sort.h>
+#include "triangle.cuh"
 #include <thrust/functional.h>
-#include <stdio.h>
-
+#include <thread>
+#include <chrono>
+#define NOW (std::chrono::high_resolution_clock::now())
+typedef std::chrono::time_point<std::chrono::high_resolution_clock> chrono_t;
 #define XNONE INT_MIN
 
 __device__ __forceinline__
 int pixelRayIntersectionX(triangle t, int y, int z);
+__device__ unsigned bubblesort(unsigned* start, unsigned length, unsigned step);
 
 __global__
-void pps(triangle* triangles_global, size_t num_triangles, bool* out, unsigned base_layer) {
+void pps(triangle* triangles_global, size_t num_triangles, unsigned* trunks, unsigned* trunk_length, unsigned base_layer) {
     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
     // printf("starting thread %d\n", idx);
     int z_idx = idx / Y_DIM;
@@ -24,7 +27,7 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out, unsigned b
     triangle* triangles = (triangle*) tri_base;
     size_t num_iters = num_triangles / THREADS_PER_BLOCK;
     int length = 0;
-    int xints[MAX_TRUNK_SIZE+1];
+    unsigned* xints = trunks + z_idx*MAX_TRUNK_SIZE*Y_DIM + y_idx;
     for (size_t i = 0; i < num_iters; i++) {
         triangles[threadIdx.x] = triangles_global[threadIdx.x + (i * THREADS_PER_BLOCK)];
         // Wait for other threads to complete;
@@ -32,8 +35,8 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out, unsigned b
         if (z < NUM_LAYERS) {
             for (size_t tri_idx = 0; tri_idx < THREADS_PER_BLOCK; tri_idx++) {
                 int intersection = pixelRayIntersectionX(triangles[tri_idx], y, z);
-                if (intersection != XNONE) {
-                    xints[length] = intersection;
+                if (intersection >= X_MIN && intersection <= X_MAX) {
+                    xints[length*Y_DIM] = intersection - X_MIN;
                     length++;
                 }
             }
@@ -48,31 +51,13 @@ void pps(triangle* triangles_global, size_t num_triangles, bool* out, unsigned b
     if (remaining && z < NUM_LAYERS) {
         for (size_t tri_idx = 0; tri_idx < remaining; tri_idx++) {
             int intersection = pixelRayIntersectionX(triangles[tri_idx], y, z);
-            if (intersection != XNONE) {
-                xints[length] = intersection;
+            if (intersection >= X_MIN && intersection <= X_MAX) {
+                xints[length*Y_DIM] = intersection - X_MIN;
                 length++;
             }
         }
     }
-
-    if (z >= NUM_LAYERS) return;
-
-    thrust::sort(thrust::device, &xints[0], &xints[length]);
-    xints[length] = X_MAX;
-    if (length > MAX_TRUNK_SIZE) 
-        printf("Error: Too many intersections.\n \
-                Please increase MAX_TRUNK_SIZE in slicer.cuh and recompile.\n");
-
-    bool flag = false;
-    int layerIdx = 0;
-    for (int x = X_MIN; x < X_MAX; x++) {
-        // If intersect
-        while (xints[layerIdx] < x) layerIdx++;
-        bool intersect = (x == xints[layerIdx]);
-        flag = (bool) (layerIdx & 1);
-        unsigned x_idx = x - X_MIN;
-        out[z_idx*Y_DIM*X_DIM + y_idx*X_DIM + x_idx] = intersect || flag;
-    }
+    trunk_length[idx] = length;
 }
 
 /**
@@ -141,3 +126,100 @@ void triangleSelect(triangle* in, triangle* out, unsigned in_length,
     }
 }
     
+__global__ void trunk_compress(unsigned* trunks, unsigned* trunk_length, unsigned* out) {
+    size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
+    size_t y_idx = idx % Y_DIM;
+    size_t z_idx = idx / Y_DIM;
+    unsigned length = trunk_length[idx];
+    unsigned* trunk_base = out + idx*MAX_TRUNK_SIZE;
+    unsigned* input_trunk = trunks + z_idx*MAX_TRUNK_SIZE*Y_DIM + y_idx;
+    unsigned out_length = 0;
+    unsigned prev_idx = 0;
+
+    bubblesort(input_trunk, length, Y_DIM);
+    if (length < MAX_TRUNK_SIZE) input_trunk[length*Y_DIM] = X_DIM;
+
+    unsigned i = 0;
+    // Manually process the first intersection to avoid problems
+    trunk_base[out_length++] = input_trunk[0];
+    prev_idx = input_trunk[0];
+    i = 0;
+
+    while (i < length) {
+        // Find the next run of 1's
+        i++;
+        while ((input_trunk[i*Y_DIM] - input_trunk[(i-1)*Y_DIM] <= 1 || i & 1 == 1) && i < length) {
+            i++;
+        }
+        __syncwarp();
+        unsigned run_1s = input_trunk[(i-1)*Y_DIM] - prev_idx + 1;
+        unsigned run_0s = (i == length) ?
+                X_DIM - input_trunk[(i-1)*Y_DIM] - 1 : input_trunk[i*Y_DIM] - input_trunk[(i-1)*Y_DIM] - 1;
+        prev_idx = input_trunk[i*Y_DIM];
+        trunk_base[out_length++] = run_1s;
+        trunk_base[out_length++] = run_0s;
+    }
+    if (out_length < MAX_TRUNK_SIZE) trunk_base[out_length] = 0;
+}
+
+// single thread ver
+void rleDecodeSt(unsigned* in, bool* out, unsigned num_trunks) {
+    for (unsigned y = 0; y < num_trunks; y++) {
+        unsigned* in_base = in + (y*MAX_TRUNK_SIZE);
+        bool* out_base = out + (y*X_DIM);
+        bool inside = false;
+        unsigned start = 0;
+        unsigned length;
+        for (unsigned idx = 0; in_base[idx] != 0; idx++) {
+            length = in_base[idx];
+            memset(out_base+start, inside, length);
+            inside = !inside;
+            start += length;
+        }
+    }
+}
+
+// Returns the running time
+double rleDecode(unsigned* in, bool* out, unsigned nlayers) {
+    chrono_t start = NOW;
+    
+    unsigned num_trunks = nlayers * Y_DIM;
+    unsigned num_per_thread = (num_trunks + NUM_CPU_THREADS - 1) / NUM_CPU_THREADS;
+    std::thread threads[NUM_CPU_THREADS];
+    size_t in_offset = 0;
+    size_t out_offset = 0;
+    for (unsigned i = 0; i < NUM_CPU_THREADS-1; i++) {
+        unsigned* thread_in = in + in_offset;
+        bool* thread_out = out + out_offset;
+        threads[i] = std::thread(rleDecodeSt, thread_in, thread_out, num_per_thread);
+        in_offset += (num_per_thread*MAX_TRUNK_SIZE);
+        out_offset += (num_per_thread*X_DIM);
+    }
+    unsigned remaining = num_trunks - ((NUM_CPU_THREADS-1)*num_per_thread);
+    unsigned* thread_in = in + in_offset;
+    bool* thread_out = out + out_offset;
+    threads[NUM_CPU_THREADS-1] = std::thread(rleDecodeSt, thread_in, thread_out, remaining);
+    for (unsigned i = 0; i < NUM_CPU_THREADS; i++) {
+        threads[i].join();
+    }
+
+    auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(NOW - start);
+    double ms = (double)duration.count() / 1e6;
+    return ms;
+}
+
+__device__ unsigned bubblesort(unsigned* start, unsigned length, unsigned step) {
+    for (unsigned unsorted = length; unsorted > 1; unsorted--) {
+        for (unsigned i = 1; i < unsorted; i++) {
+            unsigned curr_idx = i*step;
+            unsigned prev_idx = curr_idx-step;
+            unsigned curr = start[curr_idx];
+            unsigned prev = start[prev_idx];
+            if (curr < prev) {
+                start[curr_idx] = prev;
+                start[prev_idx] = curr;
+            }
+        }
+    }
+    return length;
+}
