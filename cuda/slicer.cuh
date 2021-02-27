@@ -31,7 +31,10 @@
 #define Y_MIN ((long)(-1 * Y_DIM / 2))
 #define Y_MAX ((long)(Y_DIM / 2 - 1))
 
-#define BLOCK_HEIGHT 32
+#define PPS_BLOCK_HEIGHT 4 // smaller is better
+#define MAX_WORDS ((size_t)(1<<31)) // 2GB
+#define BBOX_BLOCK_HEIGHT (min(NUM_LAYERS, MAX_WORDS/(X_DIM*Y_DIM))) // larger is better
+static_assert(MAX_WORDS/(X_DIM*Y_DIM), "Layer size too large.\n");
 
 typedef int layer_t;
 

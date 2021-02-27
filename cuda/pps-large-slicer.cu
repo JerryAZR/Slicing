@@ -127,7 +127,7 @@ void triangleSelect(triangle* in, triangle* out, unsigned in_length,
     size_t idx = blockDim.x * blockIdx.x + threadIdx.x;
     size_t total_threads = blockDim.x * gridDim.x;
     double min_height = base_layer * RESOLUTION;
-    double max_height = (base_layer + BLOCK_HEIGHT) * RESOLUTION;
+    double max_height = (base_layer + PPS_BLOCK_HEIGHT) * RESOLUTION;
     while (idx < in_length) {
         triangle t = in[idx];
         idx += total_threads;

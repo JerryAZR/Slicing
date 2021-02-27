@@ -49,7 +49,7 @@ __global__ void rectTriIntersection(double* tri_global, size_t num_tri, unsigned
         // Make sure the bounds are inside the supported space
         yMax = min(yMax, Y_MAX);
         yMin = max(yMin, Y_MIN);
-        long zMax_ub = min(NUM_LAYERS-1, (long)(base_layer+BLOCK_HEIGHT-1));
+        long zMax_ub = min(NUM_LAYERS-1, (long)(base_layer+BBOX_BLOCK_HEIGHT-1));
         zMax = min(zMax, zMax_ub);
         zMin = max(zMin, (long)(base_layer));
         if (yMax < yMin || zMax < zMin) continue;

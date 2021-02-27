@@ -54,10 +54,10 @@ int main(int argc, char* argv[]) {
 #ifdef TEST
     bool* all = (bool*)malloc(NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool));
 #else
-    bool* all = (bool*)malloc(BLOCK_HEIGHT * Y_DIM * X_DIM * sizeof(bool));
+    bool* all = (bool*)malloc(BBOX_BLOCK_HEIGHT * Y_DIM * X_DIM * sizeof(bool));
 #endif
     bool* all_dev;
-    size_t size = BLOCK_HEIGHT * Y_DIM * X_DIM * sizeof(bool);
+    size_t size = BBOX_BLOCK_HEIGHT * Y_DIM * X_DIM * sizeof(bool);
     cudaMalloc(&all_dev, size);
     cudaMemset(all_dev, 0, size);
     cudaMalloc(&triangles_dev, num_triangles * sizeof(triangle));
@@ -78,15 +78,15 @@ int main(int argc, char* argv[]) {
 
     timer_checkpoint(start);
     std::cout << "Slicing...                        ";
-    for (unsigned layer_idx = 0; layer_idx < NUM_LAYERS; layer_idx += BLOCK_HEIGHT) {
+    for (unsigned layer_idx = 0; layer_idx < NUM_LAYERS; layer_idx += BBOX_BLOCK_HEIGHT) {
         rectTriIntersection<<<NUM_BLOCKS, THREADS_PER_BLOCK>>>(points_dev, num_triangles, all_dev, layer_idx);
         cudaDeviceSynchronize();
         checkCudaError();
-        size_t blocksPerGrid = (X_DIM * BLOCK_HEIGHT + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+        size_t blocksPerGrid = (X_DIM * BBOX_BLOCK_HEIGHT + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
         layerExtraction<<<blocksPerGrid, THREADS_PER_BLOCK>>>(all_dev);
         cudaDeviceSynchronize();
         checkCudaError();
-        size_t copy_size = (layer_idx + BLOCK_HEIGHT) < NUM_LAYERS ? BLOCK_HEIGHT : NUM_LAYERS - layer_idx;
+        size_t copy_size = (layer_idx + BBOX_BLOCK_HEIGHT) < NUM_LAYERS ? BBOX_BLOCK_HEIGHT : NUM_LAYERS - layer_idx;
         copy_size = copy_size * X_DIM * Y_DIM * sizeof(bool);
     #ifdef TEST
         bool* host_addr = &all[X_DIM*Y_DIM*layer_idx];

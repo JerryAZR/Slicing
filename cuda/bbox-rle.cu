@@ -34,6 +34,7 @@ int main(int argc, char* argv[]) {
     std::vector<triangle> triangles;
     std::vector<std::vector<double>> point_array(9);
     double decompression_time = 0.0;
+    std::cout << "Block height is " << BBOX_BLOCK_HEIGHT << std::endl;
 
     if (argc == 2) {
         stl_file_name = argv[1];
@@ -56,20 +57,20 @@ int main(int argc, char* argv[]) {
 #ifdef TEST
     bool* all = (bool*)malloc(NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool));
 #else
-    bool* all = (bool*)malloc(BLOCK_HEIGHT * Y_DIM * X_DIM * sizeof(bool));
+    bool* all = (bool*)malloc(BBOX_BLOCK_HEIGHT * Y_DIM * X_DIM * sizeof(bool));
 #endif
     unsigned* trunks_dev;
-    cudaMalloc(&trunks_dev, BLOCK_HEIGHT * Y_DIM * MAX_TRUNK_SIZE * sizeof(unsigned));
+    cudaMalloc(&trunks_dev, BBOX_BLOCK_HEIGHT * Y_DIM * MAX_TRUNK_SIZE * sizeof(unsigned));
     unsigned* trunks_out;
-    cudaMalloc(&trunks_out, BLOCK_HEIGHT * Y_DIM * MAX_TRUNK_SIZE * sizeof(unsigned));
+    cudaMalloc(&trunks_out, BBOX_BLOCK_HEIGHT * Y_DIM * MAX_TRUNK_SIZE * sizeof(unsigned));
     unsigned* trunk_length;
-    cudaMalloc(&trunk_length, BLOCK_HEIGHT * Y_DIM * sizeof(unsigned));
-    cudaMemset(trunk_length, 0, BLOCK_HEIGHT * Y_DIM * sizeof(unsigned));
+    cudaMalloc(&trunk_length, BBOX_BLOCK_HEIGHT * Y_DIM * sizeof(unsigned));
+    cudaMemset(trunk_length, 0, BBOX_BLOCK_HEIGHT * Y_DIM * sizeof(unsigned));
 
 #ifdef TEST
     unsigned* trunks_host = (unsigned*)malloc(NUM_LAYERS * MAX_TRUNK_SIZE * Y_DIM * sizeof(unsigned));
 #else
-    unsigned* trunks_host = (unsigned*)malloc(BLOCK_HEIGHT * MAX_TRUNK_SIZE * Y_DIM * sizeof(unsigned));
+    unsigned* trunks_host = (unsigned*)malloc(BBOX_BLOCK_HEIGHT * MAX_TRUNK_SIZE * Y_DIM * sizeof(unsigned));
 #endif
     cudaMalloc(&triangles_dev, num_triangles * sizeof(triangle));
     cudaMemcpy(triangles_dev, triangles.data(), num_triangles * sizeof(triangle), cudaMemcpyHostToDevice);
@@ -89,20 +90,20 @@ int main(int argc, char* argv[]) {
 
     timer_checkpoint(start);
     std::cout << "Slicing...                            ";
-    for (unsigned layer_idx = 0; layer_idx < NUM_LAYERS; layer_idx += BLOCK_HEIGHT) {
+    for (unsigned layer_idx = 0; layer_idx < NUM_LAYERS; layer_idx += BBOX_BLOCK_HEIGHT) {
         rectTriIntersection<<<NUM_BLOCKS, THREADS_PER_BLOCK>>>
             (points_dev, num_triangles, trunks_dev, trunk_length, layer_idx);
         cudaDeviceSynchronize();
         checkCudaError();
-        size_t blocksPerGrid = (Y_DIM * BLOCK_HEIGHT + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
+        size_t blocksPerGrid = (Y_DIM * BBOX_BLOCK_HEIGHT + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
         trunk_compress<<<blocksPerGrid, THREADS_PER_BLOCK>>>(trunks_dev, trunk_length, trunks_out);
         cudaDeviceSynchronize();
         checkCudaError();
-        size_t copy_layers = (layer_idx + BLOCK_HEIGHT) < NUM_LAYERS ? BLOCK_HEIGHT : NUM_LAYERS - layer_idx;
+        size_t copy_layers = (layer_idx + BBOX_BLOCK_HEIGHT) < NUM_LAYERS ? BBOX_BLOCK_HEIGHT : NUM_LAYERS - layer_idx;
         size_t copy_size = copy_layers * Y_DIM * MAX_TRUNK_SIZE * sizeof(unsigned);
         unsigned* trunks_addr = &trunks_host[0];
         cudaMemcpy(trunks_addr, trunks_out, copy_size, cudaMemcpyDeviceToHost);
-        cudaMemset(trunk_length, 0, BLOCK_HEIGHT * Y_DIM * sizeof(unsigned));
+        cudaMemset(trunk_length, 0, BBOX_BLOCK_HEIGHT * Y_DIM * sizeof(unsigned));
         cudaDeviceSynchronize();
         checkCudaError();
     #ifdef TEST
