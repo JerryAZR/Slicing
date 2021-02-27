@@ -119,7 +119,7 @@ __global__ void trunk_compress(unsigned* trunks, unsigned* trunk_length, unsigne
 }
 
 // single thread ver
-void bbox_ints_decompress_st(unsigned* in, bool* out, unsigned num_trunks) {
+void rleDecodeSt(unsigned* in, bool* out, unsigned num_trunks) {
     for (unsigned y = 0; y < num_trunks; y++) {
         unsigned* in_base = in + (y*MAX_TRUNK_SIZE);
         bool* out_base = out + (y*X_DIM);
@@ -136,7 +136,7 @@ void bbox_ints_decompress_st(unsigned* in, bool* out, unsigned num_trunks) {
 }
 
 // Returns the running time
-double bbox_ints_decompress(unsigned* in, bool* out, unsigned nlayers) {
+double rleDecode(unsigned* in, bool* out, unsigned nlayers) {
     chrono_t start = NOW;
     
     unsigned num_trunks = nlayers * Y_DIM;
@@ -147,14 +147,14 @@ double bbox_ints_decompress(unsigned* in, bool* out, unsigned nlayers) {
     for (unsigned i = 0; i < NUM_CPU_THREADS-1; i++) {
         unsigned* thread_in = in + in_offset;
         bool* thread_out = out + out_offset;
-        threads[i] = std::thread(bbox_ints_decompress_st, thread_in, thread_out, num_per_thread);
+        threads[i] = std::thread(rleDecodeSt, thread_in, thread_out, num_per_thread);
         in_offset += (num_per_thread*MAX_TRUNK_SIZE);
         out_offset += (num_per_thread*X_DIM);
     }
     unsigned remaining = num_trunks - ((NUM_CPU_THREADS-1)*num_per_thread);
     unsigned* thread_in = in + in_offset;
     bool* thread_out = out + out_offset;
-    threads[NUM_CPU_THREADS-1] = std::thread(bbox_ints_decompress_st, thread_in, thread_out, remaining);
+    threads[NUM_CPU_THREADS-1] = std::thread(rleDecodeSt, thread_in, thread_out, remaining);
     for (unsigned i = 0; i < NUM_CPU_THREADS; i++) {
         threads[i].join();
     }

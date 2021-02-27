@@ -33,7 +33,6 @@ int main(int argc, char* argv[]) {
     std::string stl_file_name;
     std::vector<triangle> triangles;
     std::vector<std::vector<double>> point_array(9);
-    double decompression_time = 0.0;
     std::cout << "Block height is " << BBOX_BLOCK_HEIGHT << std::endl;
 
     if (argc == 2) {
@@ -54,10 +53,13 @@ int main(int argc, char* argv[]) {
     triangle* triangles_dev;
     double* points_dev;
     // all[z][y][x]
+#if (COMPRESSION_ONLY == 0)
+    double decompression_time = 0.0;
 #ifdef TEST
     bool* all = (bool*)malloc(NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool));
 #else
     bool* all = (bool*)malloc(BBOX_BLOCK_HEIGHT * Y_DIM * X_DIM * sizeof(bool));
+#endif
 #endif
     unsigned* trunks_dev;
     cudaMalloc(&trunks_dev, BBOX_BLOCK_HEIGHT * Y_DIM * MAX_TRUNK_SIZE * sizeof(unsigned));
@@ -106,12 +108,14 @@ int main(int argc, char* argv[]) {
         cudaMemset(trunk_length, 0, BBOX_BLOCK_HEIGHT * Y_DIM * sizeof(unsigned));
         cudaDeviceSynchronize();
         checkCudaError();
+    #if (COMPRESSION_ONLY == 0)
     #ifdef TEST
         bool* out_addr = &all[layer_idx*X_DIM*Y_DIM];
     #else
         bool* out_addr = &all[0];
     #endif
-        decompression_time += bbox_ints_decompress(trunks_addr, out_addr, copy_layers);
+        decompression_time += rleDecode(trunks_addr, out_addr, copy_layers);
+    #endif
     }
 
     timer_checkpoint(start);
@@ -119,8 +123,9 @@ int main(int argc, char* argv[]) {
     cudaFree(points_dev);
     cudaFree(trunks_dev);
     cudaFree(trunks_out);
-    std::cout << "Total decompression time: " << decompression_time << "ms" << std::endl;
 
+#if (COMPRESSION_ONLY == 0)
+    std::cout << "Total decompression time: " << decompression_time << "ms" << std::endl;
 #ifdef TEST
     checkOutput(triangles_dev, num_triangles, all);
 
@@ -138,9 +143,11 @@ int main(int argc, char* argv[]) {
     //     outfile << "\n\n";
     // }
     // outfile.close();
-#endif
-    cudaFree(triangles_dev);
     free(all);
+#endif
+#endif
+
+    cudaFree(triangles_dev);
     free(trunks_host);
 
     return 0;

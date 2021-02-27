@@ -9,6 +9,7 @@ NEW_DEPS = AlgoGPU/slicer.cu AlgoGPU/triangle.cu AlgoGPU/slicer.cuh AlgoGPU/tria
 all: pps bbox bbox-large pps-large bbox-rle
 main: pps-large-main bbox-large-main bbox-rle-main
 test: pps-test bbox-test pps-large-test bbox-large-test bbox-rle-test
+rle: bbox-rle pps-rle
 
 fps: fps-main fps-test
 pps: pps-main pps-test
@@ -21,6 +22,7 @@ ofps: ofps-main ofps-test
 bbox: bbox-main bbox-test
 bbox-large: bbox-large-main bbox-large-test
 bbox-rle: bbox-rle-main bbox-rle-test
+pps-rle: pps-rle-main pps-rle-test
 
 new-main: AlgoGPU/new-main.cu $(NEW_DEPS)
 	mkdir -p $(OUTDIR)
@@ -41,6 +43,7 @@ new-test: AlgoGPU/new-test.cu $(NEW_DEPS) AlgoGPU/golden.cu AlgoGPU/golden.cuh
 $(OBJDIR)/triangle.o: $(SRCDIR)/triangle.cu $(SRCDIR)/triangle.cuh
 	$(CXX) -c -o $@ $<
 
+.PRECIOUS: $(OBJDIR)/%-test.o
 $(OBJDIR)/%-test.o: $(SRCDIR)/%.cu $(DEPS)
 	$(CXX) -c -DTEST -o $@ $<
 
