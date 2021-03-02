@@ -20,7 +20,7 @@
 #define X_LEN 128
 #define Y_LEN 128
 #define HEIGHT 128
-#define RESOLUTION 0.25
+#define RESOLUTION 0.1
 
 // in pixels
 #define NUM_LAYERS ((long)(HEIGHT / RESOLUTION))
@@ -64,7 +64,7 @@ __global__ void rectTriIntersection(double* tri_global, size_t num_tri, bool* ou
 __global__ void layerExtraction(bool* out);
 __global__ void rectEncoding(bool* in, unsigned* out, unsigned* length);
 void rectEncodingCPU(bool* in, unsigned* out, unsigned* length);
-__global__ void trunk_compress(unsigned* trunks, unsigned* trunk_length, unsigned* out);
+__global__ void trunk_compress(unsigned* trunks, unsigned* trunk_length, unsigned* out, unsigned max_length);
 
 __global__ void triangleSelect(triangle* in, triangle* out, unsigned in_length, unsigned* out_length, unsigned base_layer);
 __global__ void pointSelect(double* in, double* out, unsigned in_length, unsigned* out_length, unsigned base_layer);
@@ -73,7 +73,7 @@ __global__ void pointSelect(double* in, double* out, unsigned in_length, unsigne
 
 __global__ void bbox_ints(bool* in, unsigned* out);
 void bbox_rect_decode(unsigned* in, bool* out, unsigned* length);
-double rleDecode(unsigned* in, bool* out, unsigned nlayers);
+double rleDecode(unsigned* in, bool* out, unsigned nlayers, unsigned max_length);
 
 
 #endif

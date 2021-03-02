@@ -97,12 +97,18 @@ int main(int argc, char* argv[]) {
             (points_dev, num_triangles, trunks_dev, trunk_length, layer_idx);
         cudaDeviceSynchronize();
         checkCudaError();
+        unsigned max_length = thrust::reduce(thrust::device,
+            trunk_length, trunk_length+Y_DIM*BBOX_BLOCK_HEIGHT, 0, thrust::maximum<unsigned>());
+        max_length += 2; // Max number of runs + zero terminate
+        if (max_length > MAX_TRUNK_SIZE) {
+            std::cout << "too many intersections" << std::endl; return 0;
+        }
         size_t blocksPerGrid = (Y_DIM * BBOX_BLOCK_HEIGHT + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
-        trunk_compress<<<blocksPerGrid, THREADS_PER_BLOCK>>>(trunks_dev, trunk_length, trunks_out);
+        trunk_compress<<<blocksPerGrid, THREADS_PER_BLOCK>>>(trunks_dev, trunk_length, trunks_out, max_length);
         cudaDeviceSynchronize();
         checkCudaError();
         size_t copy_layers = (layer_idx + BBOX_BLOCK_HEIGHT) < NUM_LAYERS ? BBOX_BLOCK_HEIGHT : NUM_LAYERS - layer_idx;
-        size_t copy_size = copy_layers * Y_DIM * MAX_TRUNK_SIZE * sizeof(unsigned);
+        size_t copy_size = copy_layers * Y_DIM * max_length * sizeof(unsigned);
         unsigned* trunks_addr = &trunks_host[0];
         cudaMemcpy(trunks_addr, trunks_out, copy_size, cudaMemcpyDeviceToHost);
         cudaMemset(trunk_length, 0, BBOX_BLOCK_HEIGHT * Y_DIM * sizeof(unsigned));
@@ -114,7 +120,7 @@ int main(int argc, char* argv[]) {
     #else
         bool* out_addr = &all[0];
     #endif
-        decompression_time += rleDecode(trunks_addr, out_addr, copy_layers);
+        decompression_time += rleDecode(trunks_addr, out_addr, copy_layers, max_length);
     #endif
     }
 

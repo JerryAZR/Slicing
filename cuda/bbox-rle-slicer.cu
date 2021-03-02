@@ -82,18 +82,18 @@ __global__ void rectTriIntersection(double* tri_global, size_t num_tri, unsigned
     }
 }
 
-__global__ void trunk_compress(unsigned* trunks, unsigned* trunk_length, unsigned* out) {
+__global__ void trunk_compress(unsigned* trunks, unsigned* trunk_length, unsigned* out, unsigned max_length) {
     size_t idx = (size_t)blockDim.x * (size_t)blockIdx.x + (size_t)threadIdx.x;
     size_t y_idx = idx % Y_DIM;
     size_t z_idx = idx / Y_DIM;
     unsigned length = trunk_length[idx];
-    unsigned* trunk_base = out + idx*MAX_TRUNK_SIZE;
+    unsigned* trunk_base = out + idx*max_length;
     unsigned* input_trunk = trunks + z_idx*MAX_TRUNK_SIZE*Y_DIM + y_idx;
     unsigned out_length = 0;
     unsigned prev_idx = 0;
 
     bubblesort(input_trunk, length, Y_DIM);
-    if (length < MAX_TRUNK_SIZE) input_trunk[length*Y_DIM] = X_DIM;
+    input_trunk[length*Y_DIM] = X_DIM;
 
     unsigned i = 0;
     // Manually process the first intersection to avoid problems
@@ -115,13 +115,13 @@ __global__ void trunk_compress(unsigned* trunks, unsigned* trunk_length, unsigne
         trunk_base[out_length++] = run_1s;
         trunk_base[out_length++] = run_0s;
     }
-    if (out_length < MAX_TRUNK_SIZE) trunk_base[out_length] = 0;
+    trunk_base[out_length] = 0;
 }
 
 // single thread ver
-void rleDecodeSt(unsigned* in, bool* out, unsigned num_trunks) {
+void rleDecodeSt(unsigned* in, bool* out, unsigned num_trunks, unsigned max_length) {
     for (unsigned y = 0; y < num_trunks; y++) {
-        unsigned* in_base = in + (y*MAX_TRUNK_SIZE);
+        unsigned* in_base = in + (y*max_length);
         bool* out_base = out + (y*X_DIM);
         bool inside = false;
         unsigned start = 0;
@@ -136,7 +136,7 @@ void rleDecodeSt(unsigned* in, bool* out, unsigned num_trunks) {
 }
 
 // Returns the running time
-double rleDecode(unsigned* in, bool* out, unsigned nlayers) {
+double rleDecode(unsigned* in, bool* out, unsigned nlayers, unsigned max_length) {
     chrono_t start = NOW;
     
     unsigned num_trunks = nlayers * Y_DIM;
@@ -147,14 +147,14 @@ double rleDecode(unsigned* in, bool* out, unsigned nlayers) {
     for (unsigned i = 0; i < NUM_CPU_THREADS-1; i++) {
         unsigned* thread_in = in + in_offset;
         bool* thread_out = out + out_offset;
-        threads[i] = std::thread(rleDecodeSt, thread_in, thread_out, num_per_thread);
-        in_offset += (num_per_thread*MAX_TRUNK_SIZE);
+        threads[i] = std::thread(rleDecodeSt, thread_in, thread_out, num_per_thread, max_length);
+        in_offset += (num_per_thread*max_length);
         out_offset += (num_per_thread*X_DIM);
     }
     unsigned remaining = num_trunks - ((NUM_CPU_THREADS-1)*num_per_thread);
     unsigned* thread_in = in + in_offset;
     bool* thread_out = out + out_offset;
-    threads[NUM_CPU_THREADS-1] = std::thread(rleDecodeSt, thread_in, thread_out, remaining);
+    threads[NUM_CPU_THREADS-1] = std::thread(rleDecodeSt, thread_in, thread_out, remaining, max_length);
     for (unsigned i = 0; i < NUM_CPU_THREADS; i++) {
         threads[i].join();
     }
