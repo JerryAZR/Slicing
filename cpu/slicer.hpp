@@ -5,10 +5,10 @@
 #include <vector>
 
 // in mm
-#define X_LEN 256
+#define X_LEN 128
 #define Y_LEN 128
-#define HEIGHT 100
-#define RESOLUTION 1
+#define HEIGHT 128
+#define RESOLUTION 0.2
 
 // in pixels
 #define NUM_LAYERS (size_t)(HEIGHT / RESOLUTION)
@@ -20,15 +20,13 @@
 #define Y_MIN (long)(-1 * Y_LEN / 2)
 #define Y_MAX (long)(Y_LEN / 2)
 
+#define MAX_TRUNK_SIZE	64
+#define MAX_WORDS ((size_t)(1<<29)) // 2GB
+#define BBOX_BLOCK_HEIGHT (min(NUM_LAYERS, MAX_WORDS/(MAX_TRUNK_SIZE*Y_DIM))) // larger is better
+static_assert(MAX_WORDS/(MAX_TRUNK_SIZE*Y_DIM), "Layer size too large.\n");
 
-// returns the layer of intersection
-int pixelRayIntersection(triangle t, int x, int y);
-int getIntersectionTrunk(int x, int y, triangle* triangles, int num_triangles, int* layers);
-bool isInside(int current, int* trunk, size_t length);
+void bbox_cpu(std::vector<triangle> tri, std::vector<std::vector<unsigned>>& out_compressed, size_t base_z);
+void trunk_compress(vector<vector<unsigned>>& out_compressed);
+void rleDecodeSt(vector<vector<unsigned>>& in, bool* out, const bool* out_end);
 
-void pps(triangle* triangles_global, int num_triangles, bool* out, unsigned id);
-
-void fps1(triangle* triangles, size_t num_triangles, int* all_intersections, size_t* trunk_length, int* locks, long id);
-void fps2(int* all_intersections, size_t* trunk_length, long id);
-void fps3(int* sorted_intersections, size_t* trunk_length, bool* out, long id);
 #endif

@@ -1,7 +1,7 @@
 #ifndef SLICER
 #define SLICER
 
-#define COMPRESSION_ONLY 0
+#define COMPRESSION_ONLY 1
 
 #include "triangle.cuh"
 #include <thrust/device_vector.h>
@@ -20,7 +20,7 @@
 #define X_LEN 128
 #define Y_LEN 128
 #define HEIGHT 128
-#define RESOLUTION 0.1
+#define RESOLUTION 0.01
 
 // in pixels
 #define NUM_LAYERS ((long)(HEIGHT / RESOLUTION))
@@ -33,7 +33,7 @@
 #define Y_MIN ((long)(-1 * Y_DIM / 2))
 #define Y_MAX ((long)(Y_DIM / 2 - 1))
 
-#define MAX_WORDS ((size_t)(1<<31)) // 2GB
+#define MAX_WORDS ((size_t)(1<<29)) // 2GB
 
 #if (COMPRESSION_ONLY)
 #define PPS_BLOCK_HEIGHT (min((long)32, MAX_WORDS/(MAX_TRUNK_SIZE*Y_DIM))) // smaller is better

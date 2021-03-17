@@ -10,6 +10,7 @@ all: pps bbox bbox-large pps-large bbox-rle
 main: pps-large-main bbox-large-main bbox-rle-main
 test: pps-test bbox-test pps-large-test bbox-large-test bbox-rle-test
 rle: bbox-rle pps-rle
+cpu: cpu-test
 
 fps: fps-main fps-test
 pps: pps-main pps-test
@@ -35,6 +36,10 @@ new-test: AlgoGPU/new-test.cu $(NEW_DEPS) AlgoGPU/golden.cu AlgoGPU/golden.cuh
 %-main: $(OBJDIR)/triangle.o $(OBJDIR)/%-slicer.o $(OBJDIR)/%.o
 	mkdir -p $(OUTDIR)
 	$(CXX) $^ -o $(OUTDIR)/$@
+
+cpu-test: cpu/main.cpp cpu/slicer.cpp cpu/slicer.hpp cpu/triangle.cpp cpu/triangle.hpp
+	mkdir -p $(OUTDIR)
+	g++ cpu/*.cpp -o $(OUTDIR)/$@
 
 %-test: $(OBJDIR)/triangle.o $(OBJDIR)/%-slicer.o $(OBJDIR)/golden.o $(OBJDIR)/%-test.o
 	mkdir -p $(OUTDIR)

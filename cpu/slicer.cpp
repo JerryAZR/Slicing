@@ -1,211 +1,138 @@
 #include "slicer.hpp"
 #include <algorithm>
 #include <iostream>
+#include <climits>
+#include <cmath>
+#include <thread>
+#include <cstring>
+#include <chrono>
+#include <assert.h>
+#define NOW (std::chrono::high_resolution_clock::now())
+typedef std::chrono::time_point<std::chrono::high_resolution_clock> chrono_t;
 
-using std::cout;
-using std::endl;
+using std::vector;
+using std::min;
+using std::max;
 
-void pps(triangle* triangles_global, int num_triangles, bool* out, unsigned id) {
-    unsigned idx = id;
-    int y_idx = idx / X_DIM;
-    int x_idx = idx % X_DIM;
-    int x = x_idx - (X_DIM / 2);
-    int y = y_idx - (Y_DIM / 2);
+constexpr double min3(double a, double b, double c) { return min(a, min(b, c)); }
+constexpr double max3(double a, double b, double c) { return max(a, max(b, c)); }
+int pixelRayIntersection(triangle t, int y, int z);
 
-    // Copy triangles to shared memory
-    // Each block has a shared memory storing some triangles.
-    triangle* triangles;
-    size_t num_iters = num_triangles / 256;
-    int length = 0;
-    int layers_local[NUM_LAYERS+1];
-    int* layers = &layers_local[0];
-    for (size_t i = 0; i < num_iters; i++) {
-        triangles = triangles_global + i * 256;
-        // Wait for other threads to complete;
-        if (y_idx < Y_DIM)
-        length += getIntersectionTrunk(x, y, triangles, 256, layers);
-        layers = &layers_local[length]; // update pointer value
-    }
-    size_t remaining = num_triangles - (num_iters * 256);
-    triangles = triangles_global + (num_iters * 256);
+void bbox_cpu(vector<triangle> tris, vector<vector<unsigned>>& out_compressed, size_t base_z) {
+    for (auto it = tris.begin(); it != tris.end(); it++) {
+        triangle t = *it;
+        // Find Bounding Box
+        long yMin = ceil(min3(t.p1.y, t.p2.y, t.p3.y) / RESOLUTION);
+        long zMin = ceil(min3(t.p1.z, t.p2.z, t.p3.z) / RESOLUTION);
+        long yMax = floor(max3(t.p1.y, t.p2.y, t.p3.y) / RESOLUTION);
+        long zMax = floor(max3(t.p1.z, t.p2.z, t.p3.z) / RESOLUTION);
+        // Make sure the bounds are inside the supported space
+        yMax = min(yMax, Y_MAX);
+        yMin = max(yMin, Y_MIN);
+        long zMax_ub = min(NUM_LAYERS-1, (base_z+BBOX_BLOCK_HEIGHT-1));
+        zMax = min(zMax, zMax_ub);
+        zMin = max(zMin, (long)base_z);
+        if (yMax < yMin || zMax < zMin) continue;
 
-    if (remaining) {
-        if (y_idx < Y_DIM)
-        length += getIntersectionTrunk(x, y, triangles, remaining, layers);
-        layers = &layers_local[length]; // update pointer value
-    }
-
-    if (y_idx >= Y_DIM) return;
-
-    layers = &layers_local[0]; // reset to beginning
-    std::sort(layers, layers+length);
-    layers[0] = layers[0] * (length >= 1) + NUM_LAYERS * (length == 0);
-    bool flag = false;
-    bool intersect;
-    size_t layerIdx = 0;
-    size_t outIdx;
-    for (int z = 0; z < NUM_LAYERS; z++) {
-        // If intersect
-        intersect = (z == layers[layerIdx]);
-        outIdx = z*Y_DIM*X_DIM + y_idx*X_DIM + x_idx;
-        out[outIdx] = intersect || flag;
-        flag = intersect ^ flag;
-        if (intersect)
-        layerIdx++;
-    }
-}
-
-int atomicCAS(int* ptr, int cmp, int val) {
-    int temp = *ptr;
-    if (temp == cmp) *ptr = val;
-    return (temp == cmp) ? temp : val;
-}
-
-int atomicExch(int* ptr, int val) {
-    int temp = *ptr;
-    *ptr = val;
-    return temp;
-}
-void fps1(triangle* triangles, size_t num_triangles, int* all_intersections, size_t* trunk_length, int* locks, long id) {
-    // size_t idx = id;
-    // size_t tri_idx = idx / (X_DIM * Y_DIM);
-    // if (tri_idx >= num_triangles) return;
-    // int y_idx = (idx - (tri_idx * X_DIM * Y_DIM)) / X_DIM;
-    // int x_idx = (idx - (tri_idx * X_DIM * Y_DIM)) % X_DIM;
-
-    // int x = x_idx - (X_DIM / 2);
-    // int y = y_idx - (Y_DIM / 2);
-
-    // // all_intersections[y][x][layer]
-    // int* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
-    // int* lock = locks + y_idx * X_DIM + x_idx;
-    // size_t* length = trunk_length + y_idx * X_DIM + x_idx;
-    // int intersection = pixelRayIntersection(triangles[tri_idx], x, y);
-    // bool run = (intersection != -1);
-    // while (run) {
-    //     if(*lock == 0) {
-    //         layers[length[0]] = intersection;
-    //         length[0]++;
-    //         run = false;
-    //     }
-    // }
-    size_t idx = id;
-    size_t tri_idx = idx / (X_DIM * Y_DIM);
-    if (tri_idx >= num_triangles) return;
-    int y_idx = (idx - (tri_idx * X_DIM * Y_DIM)) / X_DIM;
-    int x_idx = (idx - (tri_idx * X_DIM * Y_DIM)) % X_DIM;
-
-    int x = x_idx - (X_DIM / 2);
-    int y = y_idx - (Y_DIM / 2);
-
-    // all_intersections[y][x][layer]
-    int* layers = all_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
-    int* lock = locks + y_idx * X_DIM + x_idx;
-    size_t* length = trunk_length + y_idx * X_DIM + x_idx;
-    int intersection = pixelRayIntersection(triangles[tri_idx], x, y);
-    bool run = (intersection != -1);
-    while (run) {
-        if(atomicCAS(lock, 0, 1) == 0) {
-            layers[length[0]] = intersection;
-            length[0]++;
-	        run = false;
-            atomicExch(lock, 0);
+        // iterate over all pixels inside the bounding box
+        for (long y = yMin; y <= yMax; y++) {
+            for (long z = zMin; z <= zMax; z++) {
+                int curr_intersection = pixelRayIntersection(t, y, z);
+                if (curr_intersection >= X_MIN && curr_intersection <= X_MAX) {
+                    long y_idx = y + (Y_DIM >> 1);
+                    unsigned x_idx = curr_intersection + (X_DIM >> 1);
+                    size_t trunk_idx = (z - base_z)*Y_DIM + y_idx;
+                    out_compressed[trunk_idx].push_back(x_idx);
+                }
+            }
         }
     }
 }
 
+void trunk_compress(vector<vector<unsigned>>& out_compressed) {
+    for (auto it = out_compressed.begin(); it != out_compressed.end(); it++) {
+        vector<unsigned> trunk = *it; // make a copy
+        vector<unsigned> out;
+        std::sort(trunk.begin(), trunk.end());
 
-void fps2(int* all_intersections, size_t* trunk_length, long id) {
-    size_t idx = id;
-    if (idx >= X_DIM * Y_DIM) return;
-    size_t length = trunk_length[idx];
-    int* curr_trunk = all_intersections + (idx * NUM_LAYERS);
-    std::sort(curr_trunk, curr_trunk + length);
-}
+        // Manually process the first intersection to avoid problems
+        unsigned length = trunk.size();
+        // assert(length & 1 == 0);
+        trunk.push_back(X_DIM);
+        out.push_back(trunk[0]);
+        unsigned prev_idx = trunk[0];
+        unsigned i = 0;
 
-struct lessThan
-{
-    lessThan(int x) : target(x) {}
-    bool operator()(const int& curr) { return curr < target; }
-    int target;
-};
-
-void fps3(int* sorted_intersections, size_t* trunk_length, bool* out, long id) {
-    size_t idx = id;
-    int z_idx = idx / (X_DIM * Y_DIM);
-    if (z_idx >= NUM_LAYERS) return;
-    int y_idx = (idx - (z_idx * X_DIM * Y_DIM)) / X_DIM;
-    int x_idx = (idx - (z_idx * X_DIM * Y_DIM)) % X_DIM;
-
-    size_t length = trunk_length[y_idx * X_DIM + x_idx];
-    int* intersection_trunk = sorted_intersections + y_idx * X_DIM * NUM_LAYERS + x_idx * NUM_LAYERS;
-    bool inside = (bool) (1 & std::count_if(intersection_trunk, intersection_trunk + length, lessThan(z_idx)));
-    bool edge = std::binary_search(intersection_trunk, intersection_trunk + length, z_idx);
-    out[idx] = inside || edge;
-    if ((inside || edge) != isInside(z_idx, intersection_trunk, length)) {
-        std::cout << "result mismatch" << std::endl;
+        while (i < length) {
+            // Find the next run of 1's
+            i++;
+            while ((trunk[i] - trunk[i-1] <= 1 || i & 1 == 1) && i < length) {
+                i++;
+            }
+            unsigned run_1s = trunk[i-1] - prev_idx + 1;
+            unsigned run_0s = (i == length) ?
+                    X_DIM - trunk[i-1] - 1 : trunk[i] - trunk[i-1] - 1;
+            prev_idx = trunk[i];
+            out.push_back(run_1s);
+            out.push_back(run_0s);
+        }
+        *it = out;
     }
 }
-int pixelRayIntersection(triangle t, int x, int y) {
+
+/**
+ * pixelRayIntersection: helper function, computes the intersection of given triangle and pixel ray
+ * Inputs:
+ *      t -- input triangle
+ *      x, y -- coordinates of the input pixel ray
+ * Returns:
+ *      The layer on which they intersect, or -1 if no intersection
+ */
+int pixelRayIntersection(triangle t, int y, int z) {
     /*
     Let A, B, C be the 3 vertices of the given triangle
     Let S(x,y,z) be the intersection, where x,y are given
     We want to find some a, b such that AS = a*AB + b*AC
     If a >= 0, b >= 0, and a+b <= 1, S is a valid intersection.
-
-    return the layer of intersection, or -1 if none
     */
+    double y_pos = y * RESOLUTION;
+    double z_pos = z * RESOLUTION;
 
-    // quick check
-    if (   (x < t.p1.x && x < t.p2.x && x < t.p3.x)
-        || (x > t.p1.x && x > t.p2.x && x > t.p3.x)
-        || (y < t.p1.y && y < t.p2.y && y < t.p3.y)
-        || (y > t.p1.y && y > t.p2.y && y > t.p3.y)
-    ) return -1;
+    double y_d = y_pos - t.p1.y;
+    double z_d = z_pos - t.p1.z;
 
-    double x_d = x * RESOLUTION - t.p1.x;
-    double y_d = y * RESOLUTION - t.p1.y;
+    double xx1 = t.p2.x - t.p1.x;
+    double yy1 = t.p2.y - t.p1.y;
+    double zz1 = t.p2.z - t.p1.z;
 
-    double x1 = t.p2.x - t.p1.x;
-    double y1 = t.p2.y - t.p1.y;
-    double z1 = t.p2.z - t.p1.z;
-
-    double x2 = t.p3.x - t.p1.x;
-    double y2 = t.p3.y - t.p1.y;
-    double z2 = t.p3.z - t.p1.z;
-    double a = (x_d * y2 - x2 * y_d) / (x1 * y2 - x2 * y1);
-    double b = (x_d * y1 - x1 * y_d) / (x2 * y1 - x1 * y2);
+    double xx2 = t.p3.x - t.p1.x;
+    double yy2 = t.p3.y - t.p1.y;
+    double zz2 = t.p3.z - t.p1.z;
+    double a = (y_d * zz2 - yy2 * z_d) / (yy1 * zz2 - yy2 * zz1);
+    double b = (y_d * zz1 - yy1 * z_d) / (yy2 * zz1 - yy1 * zz2);
     bool inside = (a >= 0) && (b >= 0) && (a+b <= 1);
-    double intersection = (a * z1 + b * z2) + t.p1.z;
-    // divide by layer width
-    int layer = (intersection / RESOLUTION) * inside - (!inside);
+    double intersection = (a * xx1 + b * xx2) + t.p1.x;
+    // // divide by layer width
+    int layer = inside ? (intersection / RESOLUTION) : INT_MIN;
     return layer;
 }
 
-int getIntersectionTrunk(int x, int y, triangle* triangles, int num_triangles, int* layers) {
-    int idx = 0;
-    for (int i = 0; i < num_triangles; i++) {
-        int layer = pixelRayIntersection(triangles[i], x, y);
-        layers[idx] = layer;
-        idx += (layer != -1);
+// single thread ver
+void rleDecodeSt(vector<vector<unsigned>>& in, bool* out, const bool* out_end) {
+    size_t i = 0;
+    for (auto it = in.begin(); it != in.end(); it++, i++) {
+        auto & in_base = *it;
+        bool* out_base = out + (i*X_DIM);
+        if (out_base == out_end) break;
+        bool inside = false;
+        unsigned start = 0;
+        unsigned length;
+        for (auto it2 = in_base.begin(); it2 != in_base.end(); it2++) {
+            length = *it2;
+            memset(out_base+start, inside, length);
+            inside = !inside;
+            start += length;
+        }
+        assert(start == X_DIM);
     }
-    return idx;
-}
-
-bool isInside(int current, int* trunk, size_t length) {
-    size_t startIdx = 0;
-    size_t endIdx = length;
-    size_t mid;
-    bool goLeft, goRight;
-
-    // perform binary search
-    while (startIdx < endIdx) {
-        mid = (startIdx + endIdx) / 2;
-        if (trunk[mid] == current) return true;
-        goLeft = trunk[mid] > current;
-        startIdx = goLeft ? startIdx : (mid + 1);
-        endIdx = goLeft ? mid : endIdx;
-    }
-
-    return (bool)(startIdx & 1);
 }
