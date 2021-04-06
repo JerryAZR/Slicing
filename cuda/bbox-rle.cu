@@ -136,7 +136,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Total decompression time: " << decompression_time << "ms" << std::endl;
 #ifdef TEST
     checkOutput(triangles_dev, num_triangles, all);
-
+#if (WRITE_BMP == 1)
     Pixel black = BLACK;
     Pixel white = WHITE;
     const char outDir[] = "bmp";
@@ -162,6 +162,7 @@ int main(int argc, char* argv[]) {
         outfile.close();
     }
     std::cout << std::endl;
+#endif
     free(all);
 #endif
 #endif

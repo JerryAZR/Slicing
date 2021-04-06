@@ -2,6 +2,7 @@
 #define SLICER
 
 #define COMPRESSION_ONLY 0
+#define WRITE_BMP 1
 
 #include "triangle.cuh"
 #include <thrust/device_vector.h>
