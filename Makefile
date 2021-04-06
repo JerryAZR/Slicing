@@ -3,7 +3,7 @@ OBJDIR=obj
 OUTDIR=out
 CXX=nvcc
 
-DEPS = $(SRCDIR)/slicer.cuh $(SRCDIR)/triangle.cuh $(SRCDIR)/golden.cuh
+DEPS = $(SRCDIR)/slicer.cuh $(SRCDIR)/triangle.cuh $(SRCDIR)/golden.cuh $(SRCDIR)/bitmap.cuh
 NEW_DEPS = AlgoGPU/slicer.cu AlgoGPU/triangle.cu AlgoGPU/slicer.cuh AlgoGPU/triangle.cuh
 
 all: pps bbox bbox-large pps-large bbox-rle
@@ -41,7 +41,7 @@ cpu-test: cpu/main.cpp cpu/slicer.cpp cpu/slicer.hpp cpu/triangle.cpp cpu/triang
 	mkdir -p $(OUTDIR)
 	g++ cpu/*.cpp -o $(OUTDIR)/$@
 
-%-test: $(OBJDIR)/triangle.o $(OBJDIR)/%-slicer.o $(OBJDIR)/golden.o $(OBJDIR)/%-test.o
+%-test: $(OBJDIR)/triangle.o $(OBJDIR)/%-slicer.o $(OBJDIR)/golden.o $(OBJDIR)/%-test.o $(OBJDIR)/bitmap.o
 	mkdir -p $(OUTDIR)
 	$(CXX) $^ -o $(OUTDIR)/$@
 

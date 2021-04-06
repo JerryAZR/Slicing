@@ -1,9 +1,11 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+// #include <format>
 #include "triangle.cuh"
 #include "slicer.cuh"
 #include "golden.cuh"
+#include "bitmap.cuh"
 #include <vector>
 #include <chrono>
 #define NOW (std::chrono::high_resolution_clock::now())
@@ -135,20 +137,31 @@ int main(int argc, char* argv[]) {
 #ifdef TEST
     checkOutput(triangles_dev, num_triangles, all);
 
-    // std::ofstream outfile;
-    // std::cout << "Writing to output file...                 ";
-    // outfile.open("out.txt");
-    // for (int z = 0; z < NUM_LAYERS; z++) {
-    //     for (int y = Y_DIM-1; y >= 0; y--) {
-    //         for (int x = 0; x < X_DIM; x++) {
-    //             if (all[z*X_DIM*Y_DIM + y*X_DIM + x]) outfile << "XX";
-    //             else outfile << "  ";
-    //         }
-    //         outfile << "\n";
-    //     }
-    //     outfile << "\n\n";
-    // }
-    // outfile.close();
+    Pixel black = BLACK;
+    Pixel white = WHITE;
+    const char outDir[] = "bmp";
+    char fname[128];
+    for (int z = 0; z < NUM_LAYERS; z++) {
+        sprintf(fname, "%s/layer_%d.bmp", outDir, z);
+        std::ofstream outfile(fname, std::ios::out | std::ios::binary);
+        // Write BMP header
+        BmpHeader header;
+        header.setDim(X_DIM, Y_DIM);
+        header.setRes(RESOLUTION);
+        outfile.write((char*)&header, HEADER_SIZE);
+        
+        for (int y = Y_DIM-1; y >= 0; y--) {
+            for (int x = 0; x < X_DIM; x++) {
+                if (all[z*X_DIM*Y_DIM + y*X_DIM + x])
+                    outfile.write((char*) &black, 3);
+                else
+                    outfile.write((char*) &white, 3);
+            }
+        }
+        std::cout << "Writing to output file...  "<< z+1 << "/" << NUM_LAYERS << "\r";
+        outfile.close();
+    }
+    std::cout << std::endl;
     free(all);
 #endif
 #endif

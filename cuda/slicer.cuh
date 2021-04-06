@@ -1,7 +1,7 @@
 #ifndef SLICER
 #define SLICER
 
-#define COMPRESSION_ONLY 1
+#define COMPRESSION_ONLY 0
 
 #include "triangle.cuh"
 #include <thrust/device_vector.h>
@@ -20,7 +20,7 @@
 #define X_LEN 128
 #define Y_LEN 128
 #define HEIGHT 128
-#define RESOLUTION 0.01
+#define RESOLUTION 0.25
 
 // in pixels
 #define NUM_LAYERS ((long)(HEIGHT / RESOLUTION))
