@@ -124,7 +124,7 @@ int main(int argc, char* argv[]) {
         header.setRes(RESOLUTION);
         outfile.write((char*)&header, HEADER_SIZE);
         
-        for (int y = Y_DIM-1; y >= 0; y--) {
+        for (int y = 0; y < Y_DIM; y++) {
             for (int x = 0; x < X_DIM; x++) {
                 if (all[z*X_DIM*Y_DIM + y*X_DIM + x])
                     outfile.write((char*) &black, 3);

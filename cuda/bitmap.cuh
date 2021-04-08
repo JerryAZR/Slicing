@@ -38,7 +38,7 @@ struct Pixel {
 };
 
 
-#define BLACK (Pixel{1,1,1})
-#define WHITE (Pixel{254,254,254})
+#define BLACK (Pixel{0,0,0})
+#define WHITE (Pixel{255,255,255})
 
 #endif
