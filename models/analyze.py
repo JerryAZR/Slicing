@@ -67,16 +67,16 @@ if __name__ == "__main__":
             print("STL file not found. Please try again")
             model_name = input("STL file path:")
             fail = True
-                    
-    print("{} triangles loaded.".format(len(triangle_mesh.v0)))
 
-    results = np.empty(7)
-    analyze_mesh(triangle_mesh.points[0::2], results)
+    num_tris = len(triangle_mesh.v0)
+    print("{}: {} triangles loaded.".format(model_name, num_tris))
+
+    results = np.empty(5)
+    analyze_mesh(triangle_mesh.points[0::1], results)
     x_dim, y_dim, z_dim = results[0:3]
     mean_tri_area, mean_bbox_area = results[3:5]
     tri_ratio = mean_tri_area / (x_dim*y_dim)
     bbox_ratio = mean_bbox_area / (x_dim*y_dim)
-
 
     print("Model dimensions: {} x {} x {}".format(x_dim, y_dim, z_dim))
 
@@ -85,3 +85,7 @@ if __name__ == "__main__":
 
     print("Average bounding box size: {}".format(mean_bbox_area))
     print("Average bbox/layer size ratio: {:E}".format(bbox_ratio))
+
+    with open("model_analysis.csv", "a") as f:
+        f.write("{}, {}, {}, {}, {}, {}, {}, {}, {}\n".format(model_name, num_tris,
+        x_dim, y_dim, z_dim, mean_tri_area, tri_ratio, mean_bbox_area, bbox_ratio))
