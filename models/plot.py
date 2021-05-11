@@ -1,13 +1,14 @@
 from stl import mesh
 from mpl_toolkits import mplot3d
 from matplotlib import pyplot
+from sys import argv
 
 # Create a new plot
 figure = pyplot.figure()
 axes = mplot3d.Axes3D(figure)
 
 # Load the STL files and add the vectors to the plot
-your_mesh = mesh.Mesh.from_file('bunny.stl')
+your_mesh = mesh.Mesh.from_file(argv[1])
 axes.add_collection3d(mplot3d.art3d.Poly3DCollection(your_mesh.vectors))
 
 # Auto scale to the mesh size

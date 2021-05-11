@@ -46,9 +46,6 @@ def analyze_mesh(points, results, use_pgbar=True):
         tri_area = np.linalg.norm(np.cross(vect1, vect2)) / 2
         tri_area_array[i] = tri_area
 
-    mean_tri_area = np.mean(tri_area_array)
-    mean_bbox_area = np.mean(bbox_area_array)
-
     results[0:3] = [max_x-min_x, max_y-min_y, max_z-min_z]
     results[3:5] = [tri_area, bbox_area]
 
@@ -57,6 +54,11 @@ if __name__ == "__main__":
         model_name = input("STL file path:")
     else:
         model_name = sys.argv[1]
+
+    if len(sys.argv) > 2 and sys.argv[2] == "f":
+        step = 4
+    else:
+        step = 1
 
     fail = True
     while fail:
@@ -72,7 +74,7 @@ if __name__ == "__main__":
     print("{}: {} triangles loaded.".format(model_name, num_tris))
 
     results = np.empty(5)
-    analyze_mesh(triangle_mesh.points[0::1], results)
+    analyze_mesh(triangle_mesh.points[0::step], results)
     x_dim, y_dim, z_dim = results[0:3]
     mean_tri_area, mean_bbox_area = results[3:5]
     tri_ratio = mean_tri_area / (x_dim*y_dim)
