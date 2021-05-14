@@ -144,7 +144,7 @@ int main(int argc, char* argv[]) {
 #if (COMPRESSION_ONLY == 0)
     std::cout << "Total decompression time: " << decompression_time << "ms" << std::endl;
 #ifdef TEST
-    checkOutput(triangles_dev, num_triangles, all);
+    // checkOutput(triangles_dev, num_triangles, all);
 #if (WRITE_BMP == 1)
     Pixel black = BLACK;
     Pixel white = WHITE;

@@ -94,6 +94,7 @@ int main(int argc, char* argv[]) {
 
     timer_checkpoint(start);
     std::cout << "Slicing...                            ";
+    size_t compressed_model_size = 0;
     for (unsigned layer_idx = 0; layer_idx < NUM_LAYERS; layer_idx += BBOX_BLOCK_HEIGHT) {
         rectTriIntersection<<<NUM_BLOCKS, THREADS_PER_BLOCK>>>
             (points_dev, num_triangles, trunks_dev, trunk_length, layer_idx);
@@ -111,6 +112,7 @@ int main(int argc, char* argv[]) {
         checkCudaError();
         size_t copy_layers = (layer_idx + BBOX_BLOCK_HEIGHT) < NUM_LAYERS ? BBOX_BLOCK_HEIGHT : NUM_LAYERS - layer_idx;
         size_t copy_size = copy_layers * Y_DIM * max_length * sizeof(unsigned);
+        compressed_model_size += copy_size;
         unsigned* trunks_addr = &trunks_host[0];
         cudaMemcpy(trunks_addr, trunks_out, copy_size, cudaMemcpyDeviceToHost);
         cudaMemset(trunk_length, 0, BBOX_BLOCK_HEIGHT * Y_DIM * sizeof(unsigned));
@@ -127,6 +129,7 @@ int main(int argc, char* argv[]) {
     }
 
     timer_checkpoint(start);
+    std::cout << "Compressed model size: " << compressed_model_size << " bytes." << std::endl;
     cudaFree(trunk_length);
     cudaFree(points_dev);
     cudaFree(trunks_dev);
@@ -135,7 +138,7 @@ int main(int argc, char* argv[]) {
 #if (COMPRESSION_ONLY == 0)
     std::cout << "Total decompression time: " << decompression_time << "ms" << std::endl;
 #ifdef TEST
-    checkOutput(triangles_dev, num_triangles, all);
+    // checkOutput(triangles_dev, num_triangles, all);
 #if (WRITE_BMP == 1)
     Pixel black = BLACK;
     Pixel white = WHITE;
