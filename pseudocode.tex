@@ -1,0 +1,99 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[ruled,vlined]{algorithm2e}
+\title{pseudocode}
+\author{zeruian2 }
+\date{May 2021}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+\begin{algorithm}[H]
+\SetAlgoLined
+\KwIn{allTriangles}
+\KwOut{interesectionTrunk}
+ \tcc{Get coordinates from thread and block index}
+ $pixelRayCoords \leftarrow (threadX, threadY)$\;
+ \tcc{Iterate over all triangles in the model}
+ \ForEach{$tri$ \textbf{in} allTriangles}{
+  $intersection \leftarrow \textbf{computeIntersection}(pixelRayCoords, tri)$\;
+  \If{intersection \textbf{is valid}}{
+   \tcc{Only store the z value of intersection, because x and y can be derived from thread and block index}
+   add $intersection$ to $intersectionTrunk$\;
+  }
+ }
+ \caption{PPS: Ray-Triangle Intersection}
+\end{algorithm}
+
+\begin{algorithm}
+\SetAlgoLined
+\KwIn{intersectionTrunk}
+\KwOut{slicedTrunk}
+\caption{PPS: Trunk Sorting \& Layer Extraction}
+\tcc{Sort the intersections in ascending order by z values}
+$sortedTrunk \leftarrow \textbf{sort}(intersectionTrunk)$\;
+append $numLayers$ to $sortedTrunk$\;
+$idx \leftarrow 0$\;
+\For{$z=0$ \KwTo $numLayers$}{
+\tcc{Find the number of intersections below the current layer}
+\While{$sortedTrunk[idx]<z$}{$idx \leftarrow idx+1$\;}
+\tcc{A pixel is inside the model if it contains an intersection, or if there are odd number of intersections below it}
+$hasIntersection \leftarrow (z==sortedTrunk[idx])$\;
+$isInside \leftarrow (idx \%2 == 1)$\;
+$slicedTrunk[z] \leftarrow (hasIntersection || isInside)$\;
+}
+\end{algorithm}
+
+\begin{algorithm}
+\SetAlgoLined
+\caption{RLE Compression}
+\KwIn{intersectionTrunk}
+\KwOut{compressedTrunk}
+\tcc{Sort the intersections in ascending order by z values}
+$sortedTrunk \leftarrow \textbf{sort}(intersectionTrunk)$\;
+\tcc{Add the first run of pixels outside of the model}
+$compressedTrunk[0] \leftarrow sortedTrunk[0]$\;
+$idx \leftarrow 0$\;
+$prevIdx \leftarrow sortedTrunk[0]$\;
+\While{$idx < \textbf{length}(sortedTrunk)$}{
+ \tcc{Find the next run of pixels outside the model}
+ \tcc{Consecutive runs of pixels inside the model should be merged}
+ $idx \leftarrow idx+1$\;
+ \While{$((sortedTrunk[idx]-sortedTrunk[idx-1]<1) || (idx \%2 ==1))\&\& (idx < \textbf{length}(sortedTrunk))$}
+ {$idx \leftarrow idx+1$\;}
+ $runOfPixelsInside \leftarrow sortedTrunk[idx-1]-prevIdx+1$\;
+ \eIf{$idx == \textbf{length}(sortedTrunk)$}{
+   $runOfPixelsOutside \leftarrow numLayers-sortedTrunk[idx-1]-1$\;
+ }{
+  $runOfPixelsOutside \leftarrow sortedTrunk[idx]-sortedTrunk[idx-1]-1$\;
+ }
+ append $[runOfPixelsInside, runOfPixelsOutside]$ to the end of $compressedTrunk$\;
+}
+\tcc{Zero-terminate $compressedTrunk$}
+append 0 to the end of $compressedTrunk$\;
+\end{algorithm}
+
+\begin{algorithm}
+\SetAlgoLined
+\caption{Bbox-based Slicing: Ray-Triangle Intersection}
+\KwIn{assignedTriangles}
+\KwOut{allIntersectionTrunks (shared among all threads)}
+\tcc{Iterate over all triangles assigned to this thread}
+\ForEach{tri \textbf{in} assignedTriangles}{
+\tcc{Get the XY bounding box of the current triangle}
+$Bbox \leftarrow \textbf{getBoundingBox}(tri)$\;
+\tcc{Iterate over all pixels in the bounding box}
+\ForEach{(x,y) \textbf{in} Bbox}{
+$intersection \leftarrow \textbf{computeIntersection}((x,y), tri)$\;
+\If{intersection \textbf{is valid}}{
+  \tcc{Store the z value of intersection in the right trunk}
+   atomically append $intersection$ to $allIntersectionTrunks[(x,y)]$\;
+  }
+}
+}
+\end{algorithm}
+
+\end{document}
