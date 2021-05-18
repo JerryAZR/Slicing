@@ -1,8 +1,8 @@
 #ifndef SLICER
 #define SLICER
 
-#define COMPRESSION_ONLY 0
-#define WRITE_BMP 1
+#define COMPRESSION_ONLY 1
+#define WRITE_BMP 0
 
 #include "triangle.cuh"
 #include <thrust/device_vector.h>
@@ -10,7 +10,7 @@
 
 #define LOG_THREADS 7
 #define THREADS_PER_BLOCK (1 << LOG_THREADS)
-#define MAX_TRUNK_SIZE	64
+#define MAX_TRUNK_SIZE	96
 #define NUM_BLOCKS  256
 #define NUM_CPU_THREADS 16
 #define RECTS_PER_LAYER 1024
@@ -21,7 +21,7 @@
 #define X_LEN 128
 #define Y_LEN 128
 #define HEIGHT 128
-#define RESOLUTION 0.25
+#define RESOLUTION 0.001953125
 
 // in pixels
 #define NUM_LAYERS ((long)(HEIGHT / RESOLUTION))
@@ -37,11 +37,11 @@
 #define MAX_WORDS ((size_t)(1<<29)) // 2GB
 
 #if (COMPRESSION_ONLY)
-#define PPS_BLOCK_HEIGHT (min((long)32, MAX_WORDS/(MAX_TRUNK_SIZE*Y_DIM))) // smaller is better
+#define PPS_BLOCK_HEIGHT (min(NUM_LAYERS, MAX_WORDS/(MAX_TRUNK_SIZE*Y_DIM))) // smaller is better
 #define BBOX_BLOCK_HEIGHT (min(NUM_LAYERS, MAX_WORDS/(MAX_TRUNK_SIZE*Y_DIM))) // larger is better
 static_assert(MAX_WORDS/(MAX_TRUNK_SIZE*Y_DIM), "Layer size too large.\n");
 #else
-#define PPS_BLOCK_HEIGHT (min((long)32, MAX_WORDS/(X_DIM*Y_DIM))) // smaller is better
+#define PPS_BLOCK_HEIGHT (min(NUM_LAYERS, MAX_WORDS/(X_DIM*Y_DIM))) // smaller is better
 #define BBOX_BLOCK_HEIGHT (min(NUM_LAYERS, MAX_WORDS/(X_DIM*Y_DIM))) // larger is better
 static_assert(MAX_WORDS/(X_DIM*Y_DIM), "Layer size too large.\n");
 #endif
