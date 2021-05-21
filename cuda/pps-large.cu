@@ -29,7 +29,21 @@ void timer_checkpoint(chrono_t & checkpoint) {
     std::cout << std::endl;
 #endif
 }
- 
+
+double get_duration_ms(chrono_t checkpoint) {
+    chrono_t end = NOW;
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - checkpoint);
+    return ((double)duration.count())/1000;
+}
+
+void print_ms(double t) {
+    unsigned long t_int = (unsigned long)t;
+    unsigned ms = t_int % 1000; t_int = t_int / 1000;
+    unsigned s = t_int % 60; t_int = t_int / 60;
+    unsigned min = t_int % 60;
+    unsigned hour = t_int / 60;
+    printf("%u:%02u:%02u.%03u", hour, min, s, ms);
+}
 
 int main(int argc, char* argv[]) {
     std::string stl_file_name;
@@ -57,11 +71,11 @@ int main(int argc, char* argv[]) {
     size_t size = NUM_LAYERS * Y_DIM * X_DIM * sizeof(bool);
 #else 
     // Allocation just enough memory for profiling
-    size_t size = PPS_BLOCK_HEIGHT * Y_DIM * X_DIM * sizeof(bool);
+    size_t size = (PPS_BLOCK_HEIGHT*8) * Y_DIM * X_DIM * sizeof(bool);
 #endif
     bool* all = (bool*)malloc(size);
     bool* all_dev;
-    cudaMalloc(&all_dev, PPS_BLOCK_HEIGHT * Y_DIM * X_DIM * sizeof(bool));
+    cudaMalloc(&all_dev, (PPS_BLOCK_HEIGHT*8) * Y_DIM * X_DIM * sizeof(bool));
     cudaMalloc(&triangles_dev, num_triangles * sizeof(triangle));
     cudaMalloc(&triangles_selected, num_triangles * sizeof(triangle));
     cudaMemcpy(triangles_dev, triangles.data(), num_triangles * sizeof(triangle), cudaMemcpyHostToDevice);
@@ -78,10 +92,10 @@ int main(int argc, char* argv[]) {
     int threadsPerBlock = THREADS_PER_BLOCK;
     int blocksPerGrid;
 
-    blocksPerGrid = (PPS_BLOCK_HEIGHT * X_DIM + threadsPerBlock - 1) / threadsPerBlock;
+    blocksPerGrid = ((PPS_BLOCK_HEIGHT*8) * X_DIM + threadsPerBlock - 1) / threadsPerBlock;
     timer_checkpoint(start);
-    std::cout << "Running pps kernel...                 ";
-    for (unsigned layer_idx = 0; layer_idx < NUM_LAYERS; layer_idx += PPS_BLOCK_HEIGHT) {
+    std::cout << "Running pps kernel...                 " << std::endl;
+    for (unsigned layer_idx = 0; layer_idx < NUM_LAYERS; layer_idx += (PPS_BLOCK_HEIGHT*8)) {
         cudaMemset(out_length_d, 0, sizeof(unsigned));
         checkCudaError();
         triangleSelect<<<128,128>>>(triangles_dev, triangles_selected, num_triangles, out_length_d, layer_idx);
@@ -90,7 +104,7 @@ int main(int argc, char* argv[]) {
         checkCudaError();
         pps<<<blocksPerGrid, threadsPerBlock>>>(triangles_selected, out_length_h, all_dev, layer_idx);
         checkCudaError();
-        size_t copy_size = (layer_idx + PPS_BLOCK_HEIGHT) < NUM_LAYERS ? PPS_BLOCK_HEIGHT : NUM_LAYERS - layer_idx;
+        size_t copy_size = (layer_idx + (PPS_BLOCK_HEIGHT*8)) < NUM_LAYERS ? (PPS_BLOCK_HEIGHT*8) : NUM_LAYERS - layer_idx;
         copy_size = copy_size * X_DIM * Y_DIM * sizeof(bool);
     #ifdef TEST
         bool* host_addr = &all[X_DIM*Y_DIM*layer_idx];
@@ -100,6 +114,14 @@ int main(int argc, char* argv[]) {
         cudaMemcpy(host_addr, all_dev, copy_size, cudaMemcpyDeviceToHost);
         cudaDeviceSynchronize();
         checkCudaError();
+
+        double elapsed_time = get_duration_ms(start);
+        double estimate = elapsed_time / layer_idx * NUM_LAYERS;
+        printf("Progress: %2.2f%%. Time: ", ((double)layer_idx*100)/NUM_LAYERS);
+        print_ms(elapsed_time);
+        printf(" / ");
+        print_ms(estimate);
+        printf("\n"); 
     }
 
     
