@@ -22,6 +22,21 @@ void timer_checkpoint(chrono_t & checkpoint) {
 #endif
 }
 
+double get_duration_ms(chrono_t checkpoint) {
+    chrono_t end = NOW;
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - checkpoint);
+    return ((double)duration.count())/1000;
+}
+
+void print_ms(double t) {
+    unsigned long t_int = (unsigned long)t;
+    unsigned ms = t_int % 1000; t_int = t_int / 1000;
+    unsigned s = t_int % 60; t_int = t_int / 60;
+    unsigned min = t_int % 60;
+    unsigned hour = t_int / 60;
+    printf("%u:%02u:%02u.%03u", hour, min, s, ms);
+}
+
 void checkCudaError() {
     cudaError_t err = cudaGetLastError();
     if (err != cudaSuccess) {
@@ -93,7 +108,7 @@ int main(int argc, char* argv[]) {
     }
 
     timer_checkpoint(start);
-    std::cout << "Slicing...                            ";
+    std::cout << "Slicing...                            " << std::endl;
     unsigned* out_length_d, out_length_h;
     cudaMalloc(&out_length_d, sizeof(unsigned));
 
@@ -133,7 +148,15 @@ int main(int argc, char* argv[]) {
     #endif
         decompression_time += rleDecode(trunks_addr, out_addr, copy_layers, max_length);
     #endif
+        double elapsed_time = get_duration_ms(start);
+        double estimate = elapsed_time / layer_idx * NUM_LAYERS;
+        printf("Progress: %2.2f%%. Time: ", ((double)layer_idx*100)/NUM_LAYERS);
+        print_ms(elapsed_time);
+        printf(" / ");
+        print_ms(estimate);
+        printf("\n");
     }
+    std::cout << std::endl;
 
     timer_checkpoint(start);
     cudaFree(trunk_length);
