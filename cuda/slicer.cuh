@@ -1,7 +1,7 @@
 #ifndef SLICER
 #define SLICER
 
-#define COMPRESSION_ONLY 1
+#define COMPRESSION_ONLY 0
 #define WRITE_BMP 0
 
 #include "triangle.cuh"
@@ -14,14 +14,14 @@
 #define NUM_BLOCKS  256
 #define NUM_CPU_THREADS 16
 #define RECTS_PER_LAYER 1024
-#define MAX_MEM_SIZE (1 << 30)
+#define MAX_MEM_SIZE (((unsigned long)1) << 33)
 
 // in mm
 // Power of 2 recommended for better performance
 #define X_LEN 128
 #define Y_LEN 128
 #define HEIGHT 128
-#define RESOLUTION 0.001953125
+#define RESOLUTION (1.0/32)
 
 // in pixels
 #define NUM_LAYERS ((long)(HEIGHT / RESOLUTION))
@@ -41,9 +41,9 @@
 #define BBOX_BLOCK_HEIGHT (min(NUM_LAYERS, MAX_WORDS/(MAX_TRUNK_SIZE*Y_DIM))) // larger is better
 static_assert(MAX_WORDS/(MAX_TRUNK_SIZE*Y_DIM), "Layer size too large.\n");
 #else
-#define PPS_BLOCK_HEIGHT (min(NUM_LAYERS, MAX_WORDS/(X_DIM*Y_DIM))) // smaller is better
-#define BBOX_BLOCK_HEIGHT (min(NUM_LAYERS, MAX_WORDS/(X_DIM*Y_DIM))) // larger is better
-static_assert(MAX_WORDS/(X_DIM*Y_DIM), "Layer size too large.\n");
+#define PPS_BLOCK_HEIGHT (min(NUM_LAYERS, MAX_MEM_SIZE/(X_DIM*Y_DIM))) // smaller is better
+#define BBOX_BLOCK_HEIGHT (min(NUM_LAYERS, MAX_MEM_SIZE/(X_DIM*Y_DIM))) // larger is better
+static_assert(MAX_MEM_SIZE/(X_DIM*Y_DIM), "Layer size too large.\n");
 #endif
 
 typedef int layer_t;
