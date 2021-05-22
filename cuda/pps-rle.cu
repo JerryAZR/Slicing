@@ -114,6 +114,15 @@ int main(int argc, char* argv[]) {
 
     size_t blocksPerGrid = (Y_DIM * PPS_BLOCK_HEIGHT + THREADS_PER_BLOCK - 1) / THREADS_PER_BLOCK;
     for (unsigned layer_idx = 0; layer_idx < NUM_LAYERS; layer_idx += PPS_BLOCK_HEIGHT) {
+        // Progress Estimate
+        double elapsed_time = get_duration_ms(start);
+        double estimate = elapsed_time / layer_idx * NUM_LAYERS;
+        printf("Progress: %2.2f%%. Time: ", ((double)layer_idx*100)/NUM_LAYERS);
+        print_ms(elapsed_time);
+        printf(" / ");
+        print_ms(estimate);
+        printf("\n");
+
         cudaMemset(out_length_d, 0, sizeof(unsigned));
         checkCudaError();
         triangleSelect<<<128,128>>>(triangles_dev, triangles_selected, num_triangles, out_length_d, layer_idx);
@@ -148,13 +157,6 @@ int main(int argc, char* argv[]) {
     #endif
         decompression_time += rleDecode(trunks_addr, out_addr, copy_layers, max_length);
     #endif
-        double elapsed_time = get_duration_ms(start);
-        double estimate = elapsed_time / layer_idx * NUM_LAYERS;
-        printf("Progress: %2.2f%%. Time: ", ((double)layer_idx*100)/NUM_LAYERS);
-        print_ms(elapsed_time);
-        printf(" / ");
-        print_ms(estimate);
-        printf("\n");
     }
     std::cout << std::endl;
 

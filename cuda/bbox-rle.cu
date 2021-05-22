@@ -111,6 +111,15 @@ int main(int argc, char* argv[]) {
     std::cout << "Slicing...                            " << std::endl;
     size_t compressed_model_size = 0;
     for (unsigned layer_idx = 0; layer_idx < NUM_LAYERS; layer_idx += BBOX_BLOCK_HEIGHT) {
+        // Progress Estimate
+        double elapsed_time = get_duration_ms(start);
+        double estimate = elapsed_time / layer_idx * NUM_LAYERS;
+        printf("Progress: %2.2f%%. Time: ", ((double)layer_idx*100)/NUM_LAYERS);
+        print_ms(elapsed_time);
+        printf(" / ");
+        print_ms(estimate);
+        printf("\n");
+
         rectTriIntersection<<<NUM_BLOCKS, THREADS_PER_BLOCK>>>
             (points_dev, num_triangles, trunks_dev, trunk_length, layer_idx);
         cudaDeviceSynchronize();
@@ -141,13 +150,6 @@ int main(int argc, char* argv[]) {
     #endif
         decompression_time += rleDecode(trunks_addr, out_addr, copy_layers, max_length);
     #endif
-        double elapsed_time = get_duration_ms(start);
-        double estimate = elapsed_time / layer_idx * NUM_LAYERS;
-        printf("Progress: %2.2f%%. Time: ", ((double)layer_idx*100)/NUM_LAYERS);
-        print_ms(elapsed_time);
-        printf(" / ");
-        print_ms(estimate);
-        printf("\n");
     }
     std::cout << std::endl;
 
